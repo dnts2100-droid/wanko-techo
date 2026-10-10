@@ -1,0 +1,19 @@
+{
+  "name": "わんこ手帖",
+  "short_name": "わんこ手帖",
+  "description": "愛犬の日記・体調・写真・病院をまとめて残す記録アプリ",
+  "lang": "ja",
+  "id": "./",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF6F1",
+  "theme_color": "#FFF6F1",
+  "categories": ["lifestyle", "health"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

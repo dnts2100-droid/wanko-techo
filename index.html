@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>わんこ手帖</title>
+<meta name="theme-color" content="#FFF6F1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="わんこ手帖">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+/* Layout: one-column phone app. Polaroid photo collage hero, sticker-like cards on a peach paper with faint paw prints, floating pill tab bar. Bright single theme by design. */
+:root{
+  color-scheme:light;
+  --bg:#FFF6F1; --paper:#FFFFFF; --sheet:#FFF9FB; --ink:#4A3A46; --ink-2:#7E6B79; --ink-3:#B2A1AD; --line:#F6E3EA;
+  --accent:#FF6F9C; --on-accent:#FFFFFF;
+  --accent-soft:color-mix(in srgb,var(--accent) 13%,#fff); --accent-mid:color-mix(in srgb,var(--accent) 30%,#fff); --accent-ink:color-mix(in srgb,var(--accent) 78%,#3b1f2e);
+  --pink:#FF6F9C; --pink-soft:#FFE6EE; --pink-ink:#D94A7B;
+  --yellow:#FFC23D; --yellow-soft:#FFF3D1; --yellow-ink:#B97A00;
+  --mint:#3CCB9F; --mint-soft:#DDF7EE; --mint-ink:#1E9B74;
+  --sky:#5AB2FF; --sky-soft:#E1F0FF; --sky-ink:#2A7ED0;
+  --lav:#A784FF; --lav-soft:#EEE6FF; --lav-ink:#7655D6;
+  --peach:#FF9466; --peach-soft:#FFE8DC; --peach-ink:#D9663A;
+  --ok:#22B07D; --warn:#EE9512; --danger:#F04E5E;
+  --shadow:0 2px 0 rgba(255,140,170,.10),0 10px 26px rgba(214,120,150,.13);
+  --shadow-lg:0 4px 0 rgba(255,140,170,.12),0 18px 40px rgba(214,120,150,.20);
+  --f-round:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",ui-rounded,sans-serif;
+  --f-num:"Fredoka","Zen Maru Gothic",ui-rounded,sans-serif;
+  --r-xl:30px; --r-lg:24px; --r-md:18px; --r-sm:14px;
+  --hero-pos:50% 40%;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg)}
+body{margin:0;font-family:var(--f-round);font-weight:500;font-size:15px;line-height:1.7;color:var(--ink);-webkit-font-smoothing:antialiased;
+  background-color:var(--bg);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='%23FFE3EB'%3E%3Cellipse cx='30' cy='36' rx='7' ry='6'/%3E%3Ccircle cx='21' cy='27' r='3'/%3E%3Ccircle cx='27' cy='22' r='3'/%3E%3Ccircle cx='34' cy='22' r='3'/%3E%3Ccircle cx='40' cy='27' r='3'/%3E%3C/g%3E%3Cg fill='%23FFEFD6' transform='rotate(-18 88 90)'%3E%3Cellipse cx='88' cy='94' rx='7' ry='6'/%3E%3Ccircle cx='79' cy='85' r='3'/%3E%3Ccircle cx='85' cy='80' r='3'/%3E%3Ccircle cx='92' cy='80' r='3'/%3E%3Ccircle cx='98' cy='85' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:120px 120px}
+img{max-width:100%}
+[hidden]{display:none!important}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:3px solid var(--accent-mid);outline-offset:2px;border-radius:10px}
+h1,h2,h3{font-family:var(--f-round);font-weight:900;margin:0;line-height:1.3;text-wrap:balance}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums;font-weight:600}
+.muted{color:var(--ink-2)} .hint{font-size:12.5px;color:var(--ink-3);line-height:1.6}
+svg.i{width:22px;height:22px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg.i.sm{width:17px;height:17px} svg.i.lg{width:30px;height:30px}
+.vh{position:absolute!important;width:1px;height:1px;opacity:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+.app{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:0 calc(120px + env(safe-area-inset-bottom,0px))}
+.stack{display:flex;flex-direction:column;gap:16px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:10px;padding:10px 16px;margin-inline:-16px;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.top .who{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.avatar{width:46px;height:46px;border-radius:50%;overflow:hidden;background:var(--accent-soft);flex:none;display:grid;place-items:center;color:var(--accent);border:3px solid #fff;box-shadow:0 0 0 2px var(--accent-mid)}
+.avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.top .name{font-weight:900;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.top .sub{font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:4px}
+.top .sub::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--mint)}
+.top .sub.saving::before{background:var(--yellow)}
+.icon-btn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);background:#fff;box-shadow:var(--shadow)}
+.icon-btn.flat{box-shadow:none;background:transparent}
+
+/* cards & sections */
+.card{background:var(--paper);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow)}
+.sec-h{display:flex;align-items:center;gap:10px;margin:10px 2px -4px}
+.sec-h h2{font-size:18px;flex:1;min-width:0}
+.sec-h .sticker{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(214,120,150,.25);flex:none;transform:rotate(-6deg);background:var(--accent-soft);display:grid;place-items:center;color:var(--accent)}
+.sec-h .sticker img{width:100%;height:100%;object-fit:cover;display:block}
+.link{color:var(--accent-ink);font-weight:900;font-size:13px;white-space:nowrap}
+
+/* hero collage */
+.collage{position:relative;height:calc((min(100vw,560px) - 32px)*.72 + 150px);margin-top:4px}
+.pol{position:absolute;background:#fff;padding:9px 9px 0;border-radius:14px;box-shadow:var(--shadow-lg);transition:transform .35s cubic-bezier(.3,1.4,.5,1)}
+.pol .ph{position:relative;aspect-ratio:1;border-radius:9px;overflow:hidden;background:var(--accent-soft);display:grid;place-items:center;color:var(--accent)}
+.pol .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:var(--hero-pos)}
+.pol .cap{padding:6px 4px 9px;text-align:center}
+.pol.main{left:2%;top:18px;width:72%;transform:rotate(-3deg);z-index:3}
+.pol.main .cap{padding:8px 6px 12px}
+.pol.main .cap h1{font-size:28px;letter-spacing:.04em;color:var(--ink)}
+.pol.main .cap .meta{font-size:12.5px;color:var(--ink-2);display:flex;flex-wrap:wrap;justify-content:center;gap:2px 10px}
+.pol.s1{right:0;top:0;width:40%;transform:rotate(9deg);z-index:2}
+.pol.s2{right:2%;bottom:4px;width:34%;transform:rotate(-7deg);z-index:2}
+.pol.s1 .cap,.pol.s2 .cap{padding:3px 0 7px;font-size:10.5px;color:var(--ink-3);font-family:var(--f-num)}
+.pol::before{content:"";position:absolute;top:-10px;left:50%;width:62px;height:20px;transform:translateX(-50%) rotate(-4deg);background:color-mix(in srgb,var(--yellow) 55%,transparent);border-radius:3px;z-index:2;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.pol.s1::before{background:color-mix(in srgb,var(--sky) 45%,transparent);width:46px;transform:translateX(-50%) rotate(6deg)}
+.pol.s2::before{background:color-mix(in srgb,var(--mint) 45%,transparent);width:44px;top:auto;bottom:-8px}
+.pol.main:active{transform:rotate(-1deg) scale(.98)}
+.pol.wiggle{animation:wig .5s}
+@keyframes wig{0%{transform:rotate(-3deg)}30%{transform:rotate(2deg) scale(1.02)}60%{transform:rotate(-5deg)}100%{transform:rotate(-3deg)}}
+.photo-btn{position:absolute;left:4%;bottom:0;z-index:5;display:inline-flex;gap:6px;align-items:center;background:#fff;color:var(--accent-ink);border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:900;box-shadow:var(--shadow);cursor:pointer}
+
+.talk{display:flex;gap:10px;align-items:flex-end;width:100%;text-align:left}
+.talk .face{width:52px;height:52px;border-radius:50%;overflow:hidden;flex:none;border:3px solid #fff;box-shadow:var(--shadow);background:var(--accent-soft);display:grid;place-items:center;color:var(--accent)}
+.talk .face img{width:100%;height:100%;object-fit:cover;display:block}
+.bubble{position:relative;flex:1;min-width:0;background:#fff;border-radius:22px 22px 22px 6px;padding:11px 15px;font-weight:700;font-size:14.5px;box-shadow:var(--shadow);text-align:left;color:var(--ink)}
+.bubble small{display:block;font-size:11px;color:var(--ink-3);font-weight:500;margin-top:2px}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{border-radius:var(--r-md);padding:11px 12px;min-width:0}
+.stat b{display:block;font-family:var(--f-num);font-size:25px;font-weight:700;line-height:1.15}
+.stat b small{font-family:var(--f-round);font-size:12px;font-weight:700;margin-left:2px}
+.stat span{font-size:11.5px;font-weight:700;opacity:.85}
+.c-pink{background:var(--pink-soft);color:var(--pink-ink)} .c-yellow{background:var(--yellow-soft);color:var(--yellow-ink)} .c-mint{background:var(--mint-soft);color:var(--mint-ink)}
+.c-sky{background:var(--sky-soft);color:var(--sky-ink)} .c-lav{background:var(--lav-soft);color:var(--lav-ink)} .c-peach{background:var(--peach-soft);color:var(--peach-ink)}
+
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.quick button,.quick label{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 2px 10px;border-radius:var(--r-md);font-size:12.5px;font-weight:900;cursor:pointer;transition:transform .15s}
+.quick button:active,.quick label:active{transform:scale(.94)}
+.quick .qi{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.today{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tick{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:5px 11px;border-radius:999px;background:#fff;color:var(--ink-3);font-weight:700;box-shadow:0 1px 4px rgba(214,120,150,.12)}
+.tick.on{background:var(--mint);color:#fff}
+
+.strip{display:flex;gap:12px;overflow-x:auto;padding:8px 4px 14px;margin-inline:-16px;padding-inline:20px;scroll-snap-type:x mandatory;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip button{flex:none;width:96px;background:#fff;padding:5px 5px 18px;border-radius:10px;box-shadow:var(--shadow);scroll-snap-align:start;position:relative}
+.strip button:nth-child(odd){transform:rotate(-3deg)} .strip button:nth-child(even){transform:rotate(3deg) translateY(4px)}
+.strip img,.strip video{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block}
+.strip span{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-family:var(--f-num);font-size:10px;color:var(--ink-3)}
+
+/* rows */
+.rows{display:flex;flex-direction:column}
+.row{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:2px dotted var(--line);text-align:left;width:100%;color:inherit}
+.row:first-child{border-top:0;padding-top:2px}.row:last-child{padding-bottom:2px}
+.row .body{flex:1;min-width:0}
+.row .t{font-weight:900;font-size:14.5px;line-height:1.45;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .s{font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kicon{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;flex:none}
+.badge{font-family:var(--f-num);font-weight:600;font-size:12px;padding:3px 10px;border-radius:999px;white-space:nowrap;background:var(--line);color:var(--ink-2)}
+.badge.warn{background:#FFF0D6;color:#B86E00}.badge.danger{background:#FFE1E4;color:#D3283A}.badge.ok{background:var(--mint-soft);color:var(--mint-ink)}.badge.acc{background:var(--accent-soft);color:var(--accent-ink)}
+
+.month{font-weight:900;font-size:16px;color:var(--ink-2);margin:18px 6px 8px;display:flex;gap:8px;align-items:baseline}
+.month small{font-family:var(--f-num);font-size:12px;color:var(--ink-3)}
+.entry{background:#fff;border-radius:var(--r-lg);padding:14px 14px 12px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:9px;text-align:left;width:100%;color:inherit}
+.entry .hd{display:flex;align-items:center;gap:10px}
+.entry .date{display:flex;flex-direction:column;align-items:center;width:42px;flex:none;line-height:1.05}
+.entry .date b{font-family:var(--f-num);font-size:24px;font-weight:700}
+.entry .date span{font-size:11px;color:var(--ink-3);font-weight:700}
+.entry .ttl{font-weight:900;font-size:15.5px;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.entry p{margin:0;font-size:14px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:4px 10px;border-radius:999px;background:#F7EEF2;color:var(--ink-2);font-weight:700;white-space:nowrap;display:inline-flex;gap:4px;align-items:center}
+.chip.flag{background:#FFE1E4;color:#D3283A}
+.chip.tag{background:var(--accent-soft);color:var(--accent-ink)}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.thumbs .m{position:relative;aspect-ratio:1;background:var(--line);overflow:hidden;border-radius:12px}
+.thumbs .m img,.thumbs .m video{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs .more{position:absolute;inset:0;display:grid;place-items:center;background:rgba(74,58,70,.5);color:#fff;font-family:var(--f-num);font-weight:700;font-size:18px}
+.play{position:absolute;right:6px;bottom:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.5);display:grid;place-items:center;color:#fff}
+.play svg{width:12px;height:12px;fill:#fff;stroke:none}
+
+.seg{display:flex;background:#fff;border-radius:999px;padding:4px;gap:2px;overflow-x:auto;scrollbar-width:none;box-shadow:var(--shadow)}
+.seg::-webkit-scrollbar{display:none}
+.seg button{flex:1;padding:8px 12px;border-radius:999px;font-size:13px;font-weight:900;color:var(--ink-3);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.seg.sub{box-shadow:none;background:transparent;padding:0;gap:6px}
+.seg.sub button{flex:none;background:#fff;box-shadow:0 1px 4px rgba(214,120,150,.14)}
+.seg.sub button[aria-pressed="true"]{background:var(--ink);color:#fff}
+
+/* calendar */
+.cal-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-h b{font-size:18px;font-weight:900}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal .w{text-align:center;font-size:11px;color:var(--ink-3);font-weight:900}
+.cal .w:first-child{color:var(--pink)} .cal .w:last-child{color:var(--sky)}
+.cal .d{position:relative;aspect-ratio:1;border-radius:12px;background:#FBF4F7;overflow:hidden;font-family:var(--f-num);font-size:12px;font-weight:600;color:var(--ink-2);text-align:left}
+.cal .d img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cal .d .n{position:absolute;left:5px;top:2px;z-index:2}
+.cal .d.has-photo .n{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.cal .d .mood{position:absolute;right:2px;bottom:2px;z-index:2;width:20px;height:20px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--accent)}
+.cal .d .mood svg{width:16px;height:16px}
+.cal .d .dot{position:absolute;left:5px;bottom:5px;width:7px;height:7px;border-radius:50%;background:var(--mint);z-index:2;box-shadow:0 0 0 1.5px #fff}
+.cal .d.rec{background:var(--accent-soft)}
+.cal .d.flag{box-shadow:inset 0 0 0 2.5px var(--danger)}
+.cal .d.today{box-shadow:inset 0 0 0 2.5px var(--ink)}
+.cal .d.blank{background:transparent}
+
+/* album */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid .m{position:relative;aspect-ratio:1;background:var(--line);overflow:hidden;display:block;border-radius:14px}
+.grid .m img,.grid .m video{width:100%;height:100%;object-fit:cover;display:block}
+.grid .fav{position:absolute;left:6px;top:6px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.grid .fav svg{width:16px;height:16px;fill:#fff;stroke:none}
+.grid .deco{position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:50%;background:var(--yellow);display:grid;place-items:center;color:#fff}
+.grid .deco svg{width:13px;height:13px}
+
+/* hospital */
+.cta{display:flex;gap:14px;align-items:center;border-radius:var(--r-lg);padding:16px;text-align:left;width:100%;box-shadow:var(--shadow);color:inherit}
+.cta .ci{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;background:#fff;flex:none}
+.cta b{display:block;font-size:16px;font-weight:900}
+.cta span{font-size:12.5px;opacity:.85}
+.hcard{display:flex;gap:12px;align-items:center;background:#fff;border-radius:var(--r-lg);padding:14px;box-shadow:var(--shadow);text-align:left;width:100%;color:inherit;transition:transform .15s}
+.hcard:active{transform:scale(.98)}
+.hcard .body{flex:1;min-width:0}
+.hcard .t{font-weight:900;font-size:16px;line-height:1.4}
+.hcard .s{font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.act{display:flex;flex-direction:column;align-items:center;gap:4px;padding:11px 2px;border-radius:16px;background:#fff;font-size:12px;font-weight:900;color:var(--ink);text-decoration:none;text-align:center;box-shadow:var(--shadow)}
+.act.primary{background:var(--accent);color:#fff}
+.act[aria-disabled="true"]{opacity:.38;pointer-events:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+.kv dt{color:var(--ink-3);font-size:12px;font-weight:900;padding-top:2px;white-space:nowrap}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.kv a{color:var(--accent-ink);font-weight:700}
+.result{background:#fff;border-radius:var(--r-md);padding:13px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:8px}
+.result .t{font-weight:900;font-size:15.5px;line-height:1.4}
+.result .s{font-size:12.5px;color:var(--ink-2);overflow-wrap:anywhere}
+.result .btns{display:flex;gap:6px;flex-wrap:wrap}
+
+/* chart */
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--ink-3);font-family:var(--f-num);font-size:10px}
+.chart .grid-l{stroke:var(--line);stroke-width:1.2;stroke-dasharray:3 4}
+.chart .ln{stroke:var(--accent);stroke-width:3;fill:none;stroke-linejoin:round;stroke-linecap:round}
+.chart .ar{fill:var(--accent);opacity:.12}
+.chart .pt{fill:#fff;stroke:var(--accent);stroke-width:2.2}
+.chart .end{fill:var(--accent);stroke:#fff;stroke-width:2.5}
+.big-stat{display:flex;align-items:baseline;gap:6px}
+.big-stat b{font-family:var(--f-num);font-size:34px;font-weight:700;line-height:1}
+.delta{font-family:var(--f-num);font-size:14px;font-weight:600}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-grid .s{background:#FBF4F7;border-radius:14px;padding:9px 11px;min-width:0}
+.stat-grid .s span{font-size:11px;color:var(--ink-3);display:block;font-weight:700}
+.stat-grid .s b{font-size:15px;font-weight:900;overflow-wrap:anywhere}
+.stat-grid .s.flag{background:#FFE9EB}.stat-grid .s.flag b{color:#D3283A}
+
+/* badges */
+.stamps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 6px}
+.stamp{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;font-size:10.5px;font-weight:900;color:var(--ink-3);line-height:1.3}
+.stamp .sc{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:#F4ECF0;color:#D5C7CF;border:2.5px dashed #E8D9E0}
+.stamp.on{color:var(--ink-2)}
+.stamp.on .sc{border:3px solid #fff;box-shadow:0 3px 10px rgba(214,120,150,.28);transform:rotate(-8deg);color:#fff}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border-radius:999px;background:var(--accent);color:#fff;font-weight:900;font-size:14.5px;box-shadow:0 4px 0 var(--accent-ink);transition:transform .1s,box-shadow .1s;text-decoration:none;cursor:pointer}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--accent-ink)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 3px 0 #F0DDE5}
+.btn.ghost:active{box-shadow:0 1px 0 #F0DDE5}
+.btn.danger{background:#fff;color:var(--danger);box-shadow:0 3px 0 #F7D2D6}
+.btn.block{width:100%}.btn.sm{padding:9px 15px;font-size:13px}
+.btn[disabled]{opacity:.5;pointer-events:none}
+.empty{text-align:center;padding:24px 16px;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty .ill{width:110px;height:110px;color:var(--accent)}
+.empty .pic{width:120px;background:#fff;padding:6px 6px 20px;border-radius:10px;box-shadow:var(--shadow);transform:rotate(-4deg)}
+.empty .pic img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block}
+.empty h3{font-size:16.5px;color:var(--ink)}
+.banner{display:flex;gap:12px;align-items:center;background:#fff;border-radius:var(--r-md);padding:12px 14px;font-size:13px;box-shadow:var(--shadow)}
+.banner .body{flex:1;min-width:0}
+.banner .bi{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;flex:none}
+.celebrate{border-radius:var(--r-lg);padding:14px 16px;font-weight:900;display:flex;gap:10px;align-items:center;background:linear-gradient(120deg,var(--pink-soft),var(--yellow-soft));color:var(--pink-ink)}
+
+/* bottom nav */
+.nav{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:30}
+.nav .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;background:#fff;border-radius:28px;padding:6px;box-shadow:0 10px 30px rgba(214,120,150,.25)}
+.nav button.tab{display:flex;flex-direction:column;align-items:center;gap:1px;font-size:10.5px;font-weight:900;color:var(--ink-3);padding:6px 0;border-radius:20px}
+.nav button.tab[aria-current="page"]{color:var(--accent-ink);background:var(--accent-soft)}
+.nav .fab{justify-self:center;width:62px;height:62px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;transform:translateY(-18px);border:4px solid #fff;box-shadow:0 8px 20px color-mix(in srgb,var(--accent) 45%,transparent);transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.nav .fab:active{transform:translateY(-18px) scale(.9)}
+.nav .fab svg{width:30px;height:30px;stroke-width:2.8}
+
+/* sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;background:rgba(74,58,70,.38);animation:fade .2s ease}
+.sheet{width:100%;max-width:560px;max-height:94%;background:var(--sheet);border-radius:30px 30px 0 0;display:flex;flex-direction:column;animation:up .3s cubic-bezier(.2,1.2,.3,1);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.full{height:94%}
+.sheet .sh{display:flex;align-items:center;gap:8px;padding:10px 12px 8px 20px;flex:none}
+.sheet .sh h2{font-size:19px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheet .sb{overflow-y:auto;padding:4px 16px 28px;flex:1;overscroll-behavior:contain}
+.grab{width:44px;height:5px;border-radius:3px;background:#EBD6DF;margin:9px auto 0}
+.saved{font-size:12px;color:var(--ink-3);white-space:nowrap}
+@keyframes up{from{transform:translateY(60px);opacity:.3}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+
+/* forms */
+.form{display:flex;flex-direction:column;gap:16px}
+.f{display:flex;flex-direction:column;gap:6px;min-width:0}
+.f>label,.f>.lb{font-size:12.5px;font-weight:900;color:var(--ink-2)}
+.in,select.in,textarea.in{width:100%;background:#fff;border:2px solid var(--line);border-radius:var(--r-sm);padding:11px 13px;font-size:16px;outline:none;min-width:0;font-weight:500}
+.in:focus{border-color:var(--accent-mid);box-shadow:0 0 0 4px var(--accent-soft)}
+textarea.in{min-height:110px;resize:vertical;line-height:1.75}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.unit{position:relative}.unit .in{padding-right:44px}
+.unit span{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--ink-3);font-size:13px;pointer-events:none;font-weight:700}
+.opts{display:flex;flex-wrap:wrap;gap:7px}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;pointer-events:none}
+.opt span{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:#fff;border:2px solid var(--line);font-size:13.5px;font-weight:700;cursor:pointer;user-select:none;transition:transform .12s}
+.opt input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff;animation:pop .25s}
+.opt input:focus-visible+span{outline:3px solid var(--accent-mid);outline-offset:2px}
+.opt.mood span{flex-direction:column;gap:2px;padding:8px 6px;border-radius:18px;min-width:60px;font-size:11px}
+.opt.mood svg{width:32px;height:32px}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:2px solid var(--line);border-radius:var(--r-sm);padding:10px 13px;font-size:14px;font-weight:700}
+.switch input{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:14px;background:#EBDDE3;position:relative;transition:background .2s;flex:none;cursor:pointer;margin:0}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:transform .2s}
+.switch input:checked{background:var(--accent)}
+.switch input:checked::after{transform:translateX(18px)}
+details.hsec{background:var(--mint-soft);border-radius:var(--r-md);padding:12px 14px}
+details.hsec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-weight:900;color:var(--mint-ink)}
+details.hsec>summary::-webkit-details-marker{display:none}
+details.hsec>summary .hint{margin-left:auto;font-weight:700;color:var(--mint-ink);opacity:.7}
+details.hsec .in,details.hsec .opt span{border-color:#C9EEDF}
+.media-edit{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.media-edit:empty{display:none}
+.media-edit .m{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--line)}
+.media-edit .m img,.media-edit .m video{width:100%;height:100%;object-fit:cover;display:block}
+.media-edit .rm{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center}
+.media-edit .rm svg{width:14px;height:14px}
+.media-edit .prog{position:absolute;inset:0;display:grid;place-items:center;background:rgba(74,58,70,.5);color:#fff;font-size:11px;font-weight:900;text-align:center;padding:4px}
+.pick-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pick{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 8px;border-radius:var(--r-sm);background:var(--accent-soft);color:var(--accent-ink);font-weight:900;font-size:13.5px;cursor:pointer;border:2px dashed var(--accent-mid)}
+.paste{min-height:44px;border:2px dashed var(--line);border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;color:var(--ink-3);background:#fff;outline:none;-webkit-user-select:text;user-select:text;overflow:hidden;max-height:76px}
+.paste:focus{border-color:var(--accent-mid);color:var(--ink-2)}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.sugg button{font-size:12px;padding:5px 11px;border-radius:999px;background:#fff;color:var(--ink-2);font-weight:700;box-shadow:0 1px 4px rgba(214,120,150,.14)}
+
+/* detail */
+.detail{display:flex;flex-direction:column;gap:14px}
+.detail .text{white-space:pre-wrap;font-size:15.5px;line-height:1.9;overflow-wrap:anywhere;background:#fff;border-radius:var(--r-md);padding:14px 16px;box-shadow:var(--shadow)}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.gallery .m{position:relative;aspect-ratio:1;border-radius:18px;overflow:hidden;background:var(--line)}
+.gallery .m:only-child{grid-column:span 2;aspect-ratio:4/3}
+.gallery img,.gallery video{width:100%;height:100%;object-fit:cover;display:block}
+.hhead{background:var(--yellow-soft);border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:8px}
+.hhead h3{font-size:21px}
+
+/* lightbox */
+.lbx{position:fixed;inset:0;z-index:70;background:#1E1620;color:#fff;display:flex;flex-direction:column;animation:fade .2s}
+.lbx .bar{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px}
+.lbx .bar .t{flex:1;min-width:0;font-size:13px;line-height:1.4}
+.lbx .bar button{color:#fff;width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.12)}
+.lbx .stage{flex:1;display:grid;place-items:center;min-height:0;position:relative;touch-action:pan-y}
+.lbx .stage img,.lbx .stage video{max-width:100%;max-height:100%;object-fit:contain}
+.lbx .foot{display:flex;gap:8px;justify-content:center;padding:10px 12px calc(14px + env(safe-area-inset-bottom,0px));flex-wrap:wrap}
+.lbx .foot button{color:#fff;background:rgba(255,255,255,.14);border-radius:999px;padding:9px 14px;font-size:12.5px;font-weight:900;display:flex;gap:6px;align-items:center}
+.lbx .foot button.on{background:var(--accent)}
+.lbx .nv{position:absolute;top:50%;transform:translateY(-50%);width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;display:grid;place-items:center}
+.lbx .nv.p{left:8px}.lbx .nv.n{right:8px}
+
+/* search */
+.sbox{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--line);border-radius:999px;padding:4px 6px 4px 14px}
+.sbox input{flex:1;border:0;background:transparent;outline:none;font-size:16px;padding:8px 0;min-width:0}
+mark{background:color-mix(in srgb,var(--yellow) 55%,transparent);color:inherit;border-radius:4px;padding:0 1px}
+.sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sum .s{background:#FBF4F7;border-radius:14px;padding:10px 12px}
+.sum .s span{font-size:11px;color:var(--ink-3);display:block;font-weight:700}
+.sum .s b{font-family:var(--f-num);font-size:21px;font-weight:700}
+.sum .s b small{font-family:var(--f-round);font-size:12px;color:var(--ink-2);font-weight:700;margin-left:2px}
+
+.toast{position:fixed;left:50%;bottom:calc(104px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--ink);color:#fff;padding:8px 16px 8px 8px;border-radius:999px;font-size:13px;font-weight:900;box-shadow:var(--shadow-lg);animation:pop .3s;max-width:calc(100% - 32px);display:flex;align-items:center;gap:8px}
+.toast .tp{width:30px;height:30px;border-radius:50%;overflow:hidden;flex:none;background:var(--accent);display:grid;place-items:center}
+.toast .tp img{width:100%;height:100%;object-fit:cover}
+.walkbar{display:flex;align-items:center;gap:12px;background:var(--mint);color:#fff;border-radius:var(--r-md);padding:10px 12px 10px 16px;box-shadow:var(--shadow)}
+.walkbar b{font-family:var(--f-num);font-size:22px}
+.walkbar .body{flex:1}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.swatch{width:42px;height:42px;border-radius:50%;border:4px solid #fff;box-shadow:0 0 0 2px var(--line)}
+.swatch[aria-pressed="true"]{box-shadow:0 0 0 3px var(--ink)}
+.confirm{background:#fff;border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow);margin-top:12px}
+.confirm .btns{display:flex;gap:8px;justify-content:flex-end}
+.deco-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.deco-grid .m{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--line)}
+.deco-grid img{width:100%;height:100%;object-fit:cover;display:block}
+.deco-grid .rm{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center}
+.deco-grid .rm svg{width:12px;height:12px}
+.deco-grid label{aspect-ratio:1;border-radius:12px;border:2px dashed var(--accent-mid);display:grid;place-items:center;color:var(--accent);cursor:pointer;background:#fff}
+.thumbs-pdf{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.thumbs-pdf img{width:100%;border-radius:6px;box-shadow:var(--shadow);background:#fff}
+canvas.confetti{position:fixed;inset:0;pointer-events:none;z-index:95;width:100%;height:100%}
+.pop-in{animation:pop .35s both}
+
+/* PDF report pages (rendered off-screen, captured to PDF) */
+.rp-root{position:absolute;left:-20000px;top:0;width:794px}
+.rp-page{width:794px;height:1123px;background:#fff;color:#3B2F38;font-family:var(--f-round);font-weight:500;position:relative;padding:40px 46px 58px;box-sizing:border-box;display:flex;flex-direction:column;margin-bottom:24px;line-height:1.55}
+.rp-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#9B8A95;border-bottom:3px solid #FFD3E1;padding-bottom:7px;margin-bottom:14px;font-weight:700}
+.rp-head b{color:#E0507E;font-size:12px}
+.rp-body{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+.rp-foot{position:absolute;bottom:22px;left:46px;right:46px;display:flex;justify-content:space-between;font-size:10px;color:#B2A1AD}
+.rp-h{font-size:15px;font-weight:900;color:#D94A7B;margin:4px 0 6px;display:flex;align-items:center;gap:6px}
+.rp-h::before{content:"";width:8px;height:16px;border-radius:4px;background:#FF8FB1}
+.rp-prof{display:flex;gap:18px;align-items:center;background:#FFF4F7;border-radius:16px;padding:16px}
+.rp-photo{width:112px;height:112px;border-radius:50%;overflow:hidden;border:4px solid #fff;flex:none;background:#FFE1EA}
+.rp-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.rp-name{font-size:26px;font-weight:900;line-height:1.2}
+.rp-sub{font-size:12px;color:#7E6B79;margin:2px 0 6px}
+.rp-kv{border-collapse:collapse;font-size:11.5px}
+.rp-kv td{padding:1px 12px 1px 0;vertical-align:top}
+.rp-kv td:first-child{color:#9B8A95;white-space:nowrap;font-weight:700}
+.rp-note{border:2px solid #FFC23D;background:#FFFAEB;border-radius:12px;padding:10px 14px;font-size:12.5px;white-space:pre-wrap}
+.rp-note b{display:block;color:#B97A00;font-size:12px;margin-bottom:2px}
+.rp-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.rp-tile{background:#F8F2F5;border-radius:10px;padding:7px 10px}
+.rp-tile span{display:block;font-size:10px;color:#9B8A95;font-weight:700}
+.rp-tile b{font-family:var(--f-num);font-size:18px;font-weight:600}
+.rp-tile.flag{background:#FFE9EB}.rp-tile.flag b{color:#D3283A}
+.rp table.t{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:fixed}
+.rp table.t th{background:#FFEAF1;text-align:left;padding:5px 5px;font-weight:900;color:#7E6B79;font-size:10px}
+.rp table.t td{padding:5px 5px;border-bottom:1px solid #F3E4EA;vertical-align:top;overflow-wrap:anywhere}
+.rp table.t tr.flag td{background:#FFF5F6}
+.rp .fl{color:#D3283A;font-weight:900}
+.rp-diary{border-left:4px solid #FFC2D4;padding:4px 0 4px 12px;font-size:11.5px}
+.rp-diary b{font-size:12px}
+.rp-diary p{margin:2px 0 0;white-space:pre-wrap;color:#5C4B57}
+.rp-photos{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rp-photos figure{margin:0}
+.rp-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;display:block}
+.rp-photos figcaption{font-size:10px;color:#7E6B79;margin-top:3px}
+.alert{display:flex;gap:12px;align-items:center;border-radius:var(--r-md);padding:12px 14px;font-size:13px;box-shadow:var(--shadow);background:#FFF0D6;color:#7A4B00}
+.alert.danger{background:#FFE1E4;color:#9B1C2B}
+.alert .body{flex:1;min-width:0}.alert b{display:block;font-size:14px}
+.update{position:fixed;left:12px;right:12px;top:calc(10px + env(safe-area-inset-top,0px));z-index:80;max-width:520px;margin:0 auto;display:flex;gap:10px;align-items:center;background:var(--ink);color:#fff;border-radius:20px;padding:10px 10px 10px 16px;box-shadow:var(--shadow-lg);animation:pop .3s;font-weight:700;font-size:13.5px}
+.update span{flex:1}
+.steps{display:flex;flex-direction:column;gap:10px}
+.step{display:flex;gap:12px;align-items:flex-start;background:#fff;border-radius:var(--r-md);padding:12px 14px;box-shadow:var(--shadow)}
+.step .no{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--f-num);font-weight:700;flex:none}
+.step b{display:block}
+.fatal{position:fixed;inset:auto 12px calc(100px + env(safe-area-inset-bottom,0px)) 12px;z-index:99;background:#fff;border-radius:20px;padding:14px;box-shadow:var(--shadow-lg);display:flex;gap:10px;align-items:center;font-size:13px;font-weight:700}
+.fatal span{flex:1}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top" id="top"></header>
+  <main id="view" class="stack"></main>
+</div>
+<nav class="nav" aria-label="メイン"><div class="in" id="nav"></div></nav>
+<input type="file" id="heroInput" class="vh" accept="image/*" tabindex="-1" aria-hidden="true">
+<input type="file" id="quickSnap" class="vh" accept="image/*,video/*" multiple tabindex="-1" aria-hidden="true">
+<input type="file" id="decoInput" class="vh" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+
+<script>
+"use strict";
+/* ================= utilities ================= */
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const pad=n=>String(n).padStart(2,"0");
+const ymd=(d=new Date())=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYmd=s=>{if(!s)return null;const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const today=()=>ymd();
+const diffDays=(a,b)=>Math.round((parseYmd(b)-parseYmd(a))/864e5);
+const shiftDays=(s,n)=>{const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const WD=["日","月","火","水","木","金","土"];
+function fmtDate(s,opt={}){const d=parseYmd(s);if(!d)return"";const y=d.getFullYear(),now=new Date().getFullYear();
+ return `${y!==now||opt.year?y+"年":""}${d.getMonth()+1}月${d.getDate()}日${opt.wd===false?"":`(${WD[d.getDay()]})`}`}
+const fmtJ=s=>{const d=parseYmd(s);return d?`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`:""};
+function addInterval(s,iv){const d=parseYmd(s)||new Date();const n={w1:[0,7],w2:[0,14],m1:[1,0],m2:[2,0],m3:[3,0],m6:[6,0],y1:[12,0]}[iv];if(!n)return s;
+ if(n[0]){const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n[0]);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last))}else d.setDate(d.getDate()+n[1]);return ymd(d)}
+function relDays(n){if(n===0)return"今日";if(n===1)return"明日";if(n===-1)return"昨日";return n>0?`あと${n}日`:`${-n}日すぎ`}
+const yen=n=>n==null||n===""?"":"¥"+Number(n).toLocaleString("ja-JP");
+function debounce(fn,ms){let t;const f=(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)};f.flush=(...a)=>{clearTimeout(t);return fn(...a)};f.cancel=()=>clearTimeout(t);return f}
+const LS={get(k,d){try{const v=localStorage.getItem("wt:"+k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem("wt:"+k,JSON.stringify(v))}catch{}},del(k){try{localStorage.removeItem("wt:"+k)}catch{}}};
+const buzz=(ms=12)=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch{}};
+function fmtBytes(n){return n>1073741824?(n/1073741824).toFixed(1)+"GB":n>1048576?(n/1048576).toFixed(1)+"MB":Math.round(n/1024)+"KB"}
+function toast(msg){$$(".toast").forEach(e=>e.remove());const t=document.createElement("div");t.className="toast";const p=photoPool(1)[0];
+ t.innerHTML=`<span class="tp">${p?photoEl(p):ic("paw","sm")}</span><span></span>`;t.lastChild.textContent=msg;document.body.append(t);Media.hydrate(t);setTimeout(()=>t.remove(),2600)}
+async function copyText(text,okMsg="コピーしました"){try{await navigator.clipboard.writeText(text);toast(okMsg)}catch{
+ const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;opacity:0";document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch{}ta.remove();toast(ok?okMsg:"コピーできませんでした")}}
+function isStandalone(){try{return matchMedia("(display-mode: standalone)").matches||navigator.standalone===true}catch{return false}}
+function haversine(a,b,c,d){const R=6371,t=x=>x*Math.PI/180;const x=Math.sin(t(c-a)/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(t(d-b)/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+function loadScript(src){return new Promise((res,rej)=>{if($$("script").some(s=>s.src===src&&s.dataset.ok))return res();const s=document.createElement("script");s.src=src;s.onload=()=>{s.dataset.ok="1";res()};s.onerror=()=>{s.remove();rej(new Error("load"))};document.head.append(s)})}
+
+/* ================= environment / app install ================= */
+const APP_VERSION="4.0";
+const UA=navigator.userAgent||"";
+const ENV={ios:/iPhone|iPad|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1),android:/Android/i.test(UA),
+ line:/\bLine\//i.test(UA),inApp:/\bLine\/|FBAN|FBAV|Instagram|Twitter|MicroMessenger|; wv\)/i.test(UA)};
+const appUrl=()=>location.origin+location.pathname.replace(/index\.html$/,"");
+let installEvt=null;
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;try{scheduleRender()}catch{}});
+window.addEventListener("appinstalled",()=>{installEvt=null;LS.set("a2hsDismissed",true);toast("ホーム画面に追加しました");scheduleRender()});
+async function installApp(){if(installEvt){installEvt.prompt();try{const c=await installEvt.userChoice;if(c&&c.outcome==="accepted")LS.set("a2hsDismissed",true)}catch{}installEvt=null;scheduleRender();return}openInstallGuide()}
+function openInstallGuide(){const ios=`<div class="card"><b>iPhone（Safari）</b><ol style="margin:6px 0 0;padding-left:1.2em;line-height:1.9"><li>画面下の共有ボタン（四角から上向き矢印）をタップ</li><li>下にスクロールして「ホーム画面に追加」をタップ</li><li>右上の「追加」をタップ</li></ol><div class="hint">LINEの中などでは追加できません。Safariで開いてください。</div></div>`;
+ const and=`<div class="card"><b>Android（Chrome）</b><ol style="margin:6px 0 0;padding-left:1.2em;line-height:1.9"><li>右上の︙（メニュー）をタップ</li><li>「アプリをインストール」または「ホーム画面に追加」をタップ</li><li>「インストール」をタップ</li></ol></div>`;
+ openSheet({title:"ホーム画面に追加",body:`<div class="detail">${ENV.ios?ios:ENV.android?and:ios+and}<div class="hint">追加したアイコンから開くと、アプリのように全画面で使えて、記録も消えにくくなります。以後はアイコンから開いてください。</div></div>`})}
+async function shareApp(){const url=appUrl()+"?openExternalBrowser=1";const text=`愛犬の日記・体調・写真・病院をまとめて記録できるアプリ「わんこ手帖」です。スマホのブラウザで開いて、ホーム画面に追加して使ってね。`;
+ try{if(navigator.share){await navigator.share({title:"わんこ手帖",text,url});return}}catch(e){if(e&&e.name==="AbortError")return}copyText(text+"\n"+url,"紹介文とURLをコピーしました。LINEなどに貼り付けて送ってください")}
+function registerSW(){if(!("serviceWorker" in navigator)||!(location.protocol==="https:"||location.hostname==="localhost"))return;
+ navigator.serviceWorker.register("sw.js").then(reg=>{const watch=w=>{if(!w)return;w.addEventListener("statechange",()=>{if(w.state==="installed"&&navigator.serviceWorker.controller)showUpdate(w)})};
+  if(reg.waiting&&navigator.serviceWorker.controller)showUpdate(reg.waiting);reg.addEventListener("updatefound",()=>watch(reg.installing));
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")reg.update().catch(()=>{})})}).catch(()=>{});
+ let reloaded=false;navigator.serviceWorker.addEventListener("controllerchange",()=>{if(reloaded)return;reloaded=true;location.reload()})}
+function showUpdate(w){if($(".update"))return;const d=document.createElement("div");d.className="update";d.innerHTML=`<span>新しいバージョンがあります</span><button class="btn sm">更新する</button>`;document.body.append(d);
+ $("button",d).onclick=()=>{d.querySelector("span").textContent="更新しています…";w.postMessage("skipWaiting");setTimeout(()=>location.reload(),2500)}}
+let fatalShown=false;function showFatal(){if(fatalShown)return;fatalShown=true;const d=document.createElement("div");d.className="fatal";d.innerHTML=`<span>表示がうまくいきませんでした。記録は保存されています。</span><button class="btn sm">再読み込み</button>`;document.body.append(d);$("button",d).onclick=()=>location.reload()}
+window.addEventListener("error",e=>{if(e&&e.message&&!/Script error|ResizeObserver/i.test(e.message))showFatal()});
+window.addEventListener("unhandledrejection",e=>{const r=e&&e.reason;if(r&&(r.name==="AbortError"||r.name==="NotAllowedError"))return;console.warn(r)});
+
+/* ================= icons ================= */
+const IC={
+home:'<path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1z"/>',
+book:'<path d="M5 5.5A2.5 2.5 0 0 1 7.5 3H19v15H7.5A2.5 2.5 0 0 0 5 20.5z"/><path d="M5 20.5A2.5 2.5 0 0 1 7.5 18H19v3H7.5"/><path d="M9 8h6"/>',
+heart:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/><path d="M7.5 12h2.2l1.3-2.2 2 4 1.3-1.8h2.2"/>',
+camera:'<path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2L9 5h6l1.3 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.5" r="3.5"/>',
+cross:'<rect x="4" y="4" width="16" height="16" rx="5"/><path d="M12 8.5v7M8.5 12h7"/>',
+search:'<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/>',
+plus:'<path d="M12 5v14M5 12h14"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>',
+phone:'<path d="M5 4h3.5l1.5 4-2 1.3a10 10 0 0 0 6.7 6.7L16 14l4 1.5V19a1 1 0 0 1-1 1A15 15 0 0 1 4 5a1 1 0 0 1 1-1z"/>',
+pin:'<path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+globe:'<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.5 5.5 3.5 8.5s-1.1 5.9-3.5 8.5c-2.4-2.6-3.5-5.5-3.5-8.5S9.6 6.1 12 3.5z"/>',
+cal:'<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M8.5 3v4M15.5 3v4"/>',
+paw:'<ellipse cx="12" cy="15.5" rx="4.2" ry="3.6"/><circle cx="6.3" cy="10.6" r="1.8"/><circle cx="9.6" cy="6.8" r="1.8"/><circle cx="14.4" cy="6.8" r="1.8"/><circle cx="17.7" cy="10.6" r="1.8"/>',
+x:'<path d="M6 6l12 12M18 6 6 18"/>',left:'<path d="m15 5-7 7 7 7"/>',right:'<path d="m9 5 7 7-7 7"/>',
+trash:'<path d="M5 7h14M10 7V5h4v2M7 7l1 12.5h8L17 7"/>',
+star:'<path d="m12 4 2.4 5 5.4.6-4 3.7 1.1 5.4L12 16l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6z"/>',
+fav:'<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+image:'<rect x="4" y="5" width="16" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m4.5 17 4.5-4.5 3 3 2.5-2.5 5 4.5"/>',
+copy:'<rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/>',
+clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+edit:'<path d="M5 19h3.5L19 8.5 15.5 5 5 15.5z"/><path d="m13.5 7 3.5 3.5"/>',
+bell:'<path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+spark:'<path d="M12 3.5 13.8 10l6.7 2-6.7 2L12 20.5 10.2 14l-6.7-2 6.7-2z"/>',
+dl:'<path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19.5h14"/>',up:'<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 19.5h14"/>',
+pill:'<rect x="3.5" y="8.5" width="17" height="7" rx="3.5" transform="rotate(-35 12 12)"/><path d="m9.5 8.4 5 7.2"/>',
+syringe:'<path d="m14 4 6 6M17 7l-9.5 9.5-3 .5.5-3L14.5 4.5M10 10l1.5 1.5M12.5 7.5 14 9M4.5 19.5 7 17"/>',
+id:'<rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><circle cx="9" cy="11" r="2"/><path d="M6 15.5a3 3 0 0 1 6 0M14 10h3.5M14 13h3.5"/>',
+walk:'<circle cx="13" cy="4.8" r="1.8"/><path d="m9 21 2.5-6.5L14 17v4M8 11l3-4 3 1 2 3.5h2.5M11 7l-1 5.5"/>',
+note:'<path d="M6 4h9l4 4v12H6z"/><path d="M14.5 4v4.5H19M9 12.5h7M9 16h5"/>',
+playf:'<path d="M8 5.5v13l11-6.5z"/>',stop:'<rect x="7" y="7" width="10" height="10" rx="2"/>',
+route:'<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7"/>',
+pdf:'<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 13h6M9 16.5h4"/>',
+locate:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
+trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M9 20h6M10 17h4v3h-4z"/>',
+grid:'<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
+list:'<path d="M9 7h11M9 12h11M9 17h11"/><circle cx="5" cy="7" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="17" r="1"/>',
+chart:'<path d="M4 19h16"/><path d="m5 15 4-4 3 3 6-7"/>',
+bone:'<path d="M7.5 9.5 14.5 16.5M6 11a2.5 2.5 0 1 1-1.5-4.5A2.5 2.5 0 1 1 9 5l-0 0M18 13a2.5 2.5 0 1 1 1.5 4.5A2.5 2.5 0 1 1 15 19"/>',
+share:'<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M6 12v7h12v-7"/>',
+};
+const ic=(n,c="")=>`<svg class="i ${c}" viewBox="0 0 24 24" aria-hidden="true">${IC[n]||""}</svg>`;
+const MOODS=[
+ {v:"great",l:"ごきげん",svg:'<circle cx="12" cy="12" r="9"/><path d="M8 10.2q1-1.4 2 0M14 10.2q1-1.4 2 0"/><path d="M7.5 13.5q4.5 5 9 0z" fill="currentColor"/>'},
+ {v:"happy",l:"たのしい",svg:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/><path d="M8.5 14q3.5 3 7 0"/>'},
+ {v:"calm",l:"のんびり",svg:'<circle cx="12" cy="12" r="9"/><path d="M7.8 10.5h2.4M13.8 10.5h2.4M9.5 15h5"/>'},
+ {v:"sleepy",l:"ねむい",svg:'<circle cx="12" cy="12" r="9"/><path d="M8 10.5q1 1 2 0M14 10.5q1 1 2 0"/><circle cx="12" cy="15.3" r="1.3"/><path d="M17 4h2.5L17 6.5h2.5"/>'},
+ {v:"sad",l:"しょんぼり",svg:'<circle cx="12" cy="12" r="9"/><circle cx="9" cy="10.5" r="1" fill="currentColor"/><circle cx="15" cy="10.5" r="1" fill="currentColor"/><path d="M8.8 16q3.2-2.6 6.4 0"/>'},
+];
+const moodSvg=(v,size=22)=>{const m=MOODS.find(x=>x.v===v);return m?`<svg class="i" style="width:${size}px;height:${size}px" viewBox="0 0 24 24" aria-label="${m.l}">${m.svg}</svg>`:""};
+const DOG_ILL=`<svg viewBox="0 0 120 120" fill="none" aria-hidden="true"><path d="M28 42c-9 2-14 18-9 33 3 9 12 7 14-2l5-22" fill="currentColor" opacity=".55"/><path d="M92 42c9 2 14 18 9 33-3 9-12 7-14-2l-5-22" fill="currentColor" opacity=".55"/><ellipse cx="60" cy="62" rx="30" ry="28" fill="currentColor" opacity=".25"/><circle cx="48" cy="58" r="4" fill="currentColor"/><circle cx="72" cy="58" r="4" fill="currentColor"/><circle cx="46.5" cy="56.5" r="1.3" fill="#fff"/><circle cx="70.5" cy="56.5" r="1.3" fill="#fff"/><ellipse cx="60" cy="70" rx="6" ry="4.5" fill="currentColor"/><path d="M60 74v4M53 80q7 5 14 0" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><ellipse cx="40" cy="70" rx="5" ry="3" fill="#FF9DB8" opacity=".6"/><ellipse cx="80" cy="70" rx="5" ry="3" fill="#FF9DB8" opacity=".6"/></svg>`;
+
+/* ================= constants ================= */
+const KIND={diary:{l:"日記",i:"book",c:"pink"},snap:{l:"スナップ",i:"camera",c:"sky"},walk:{l:"お散歩",i:"walk",c:"mint"},visit:{l:"通院",i:"cross",c:"peach"},care:{l:"ケア予定",i:"bell",c:"lav"},hospital:{l:"病院",i:"cross",c:"yellow"}};
+const APPETITE=["しっかり","ふつう","少なめ","食べない"],ENERGY=["元気","ふつう","ぐったり"],POOP=["良好","かため","やわらかめ","下痢","なし"],PEE=["ふつう","多い","少ない","色が気になる"],WATER=["ふつう","多い","少ない"],
+ WEATHER=["晴れ","くもり","雨","雪"],VISIT_PURPOSE=["診察","ワクチン","健康診断","検査","手術","歯科","その他"],HOSP_TYPE=["動物病院","夜間救急","トリミング","ペットホテル","ドッグラン","しつけ教室","その他"],
+ IVL=[["","くり返さない"],["w1","毎週"],["w2","2週ごと"],["m1","毎月"],["m2","2か月ごと"],["m3","3か月ごと"],["m6","半年ごと"],["y1","毎年"]],
+ CARE_PRESET=[["混合ワクチン","y1"],["狂犬病予防注射","y1"],["フィラリア予防薬","m1"],["ノミ・ダニ予防","m1"],["トリミング","m1"],["爪切り","w2"],["健康診断","y1"],["耳そうじ","w2"],["シャンプー","w2"]],
+ SIZE=[["small","小型犬"],["medium","中型犬"],["large","大型犬"]],
+ PALETTES=[["いちご","#FF6F9C"],["ひまわり","#F5A31F"],["ソーダ","#3FA2F7"],["メロン","#25BF8A"],["ぶどう","#9C7CF4"],["さんご","#FF7F6E"]];
+const HEALTH_KEYS=["weight","temp","appetite","energy","poop","pee","water","food","vomit","medicine","symptoms"];
+const hasHealth=r=>HEALTH_KEYS.some(k=>r[k]!==undefined&&r[k]!==null&&String(r[k]).trim()!=="");
+function isFlag(r){return(r.kind==="diary")&&(r.appetite==="食べない"||r.energy==="ぐったり"||r.poop==="下痢"||Number(r.vomit)>0||r.pee==="色が気になる"||!!(r.symptoms||"").trim())}
+
+/* ================= storage (IndexedDB on this phone) ================= */
+const Local={db:null,ok:false,
+ open(){return new Promise((res,rej)=>{let rq;try{rq=indexedDB.open("wanko-techo",1)}catch(e){return rej(e)}
+  rq.onupgradeneeded=()=>{const d=rq.result;if(!d.objectStoreNames.contains("recs"))d.createObjectStore("recs",{keyPath:"id"});if(!d.objectStoreNames.contains("blobs"))d.createObjectStore("blobs")};
+  rq.onsuccess=()=>{this.db=rq.result;this.ok=true;res()};rq.onerror=()=>rej(rq.error)})},
+ tx(store,mode,fn){return new Promise((res,rej)=>{if(!this.db)return rej(new Error("no idb"));const t=this.db.transaction(store,mode);const r=fn(t.objectStore(store));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})},
+ all(){return this.tx("recs","readonly",s=>s.getAll())},put(r){return this.tx("recs","readwrite",s=>s.put(r))},del(id){return this.tx("recs","readwrite",s=>s.delete(id))},
+ putBlob(k,b){return this.tx("blobs","readwrite",s=>s.put(b,k))},getBlob(k){return this.tx("blobs","readonly",s=>s.get(k))},delBlob(k){return this.tx("blobs","readwrite",s=>s.delete(k))},
+};
+const Store={recs:new Map(),pending:0,queues:new Map(),
+ list(kind){const a=[];for(const r of this.recs.values())if(!kind||r.kind===kind||(Array.isArray(kind)&&kind.includes(r.kind)))a.push(r);
+  return a.sort((x,y)=>(y.date||"").localeCompare(x.date||"")||(y.time||"").localeCompare(x.time||"")||(y.createdAt||0)-(x.createdAt||0))},
+ get(id){return this.recs.get(id)},
+ _q(id,fn){const prev=this.queues.get(id)||Promise.resolve();const p=prev.then(fn,fn);this.queues.set(id,p.catch(()=>{}));return p},
+ async put(doc){doc=JSON.parse(JSON.stringify(doc));doc.updatedAt=Date.now();if(!doc.createdAt)doc.createdAt=doc.updatedAt;
+  this.recs.set(doc.id,doc);scheduleRender();this.pending++;setSync();
+  try{if(Local.ok)await this._q(doc.id,()=>Local.put(doc))}
+  catch(e){toast(e&&e.name==="QuotaExceededError"?"スマホの空き容量が足りません":"保存に失敗しました");throw e}
+  finally{this.pending--;setSync();badgeCheck()}},
+ async del(id){const r=this.recs.get(id);this.recs.delete(id);scheduleRender();this.pending++;setSync();
+  try{if(Local.ok)await this._q(id,()=>Local.del(id));if(r&&r.media)for(const m of r.media)Media.remove(m.ref)}catch{toast("削除に失敗しました")}finally{this.pending--;setSync()}},
+};
+function setSync(){const el=$("#syncState");if(!el)return;el.className="sub"+(Store.pending?" saving":"");el.textContent=Store.pending?"保存中…":Local.ok?dogSub():"保存できない状態です"}
+
+/* ================= media ================= */
+const Media={urls:new Map(),loading:new Map(),
+ url(ref){return this.urls.get(ref)||""},
+ load(ref){if(this.urls.has(ref))return Promise.resolve(this.urls.get(ref));if(this.loading.has(ref))return this.loading.get(ref);
+  const p=(async()=>{let u="";try{if(ref&&ref.startsWith("l:")){const b=await Local.getBlob(ref.slice(2));if(b)u=URL.createObjectURL(b)}}catch{}if(u)this.urls.set(ref,u);this.loading.delete(ref);return u})();this.loading.set(ref,p);return p},
+ hydrate(root=document){for(const el of $$("[data-ref]",root)){if(el.getAttribute("src"))continue;const ref=el.dataset.ref;this.load(ref).then(u=>{if(u&&el.isConnected&&!el.getAttribute("src"))el.src=u})}},
+ async save(file,onProg){const type=file.type||"";const isVid=type.startsWith("video")||/\.(mov|mp4|m4v|webm)$/i.test(file.name||"");let blob=file,w=0,h=0;
+  if(!isVid){onProg&&onProg("縮小中");const r=await compressImage(file);blob=r.blob;w=r.w;h=r.h}
+  onProg&&onProg("保存中");const k=uid();if(Local.ok)await Local.putBlob(k,blob);const ref="l:"+k;this.urls.set(ref,URL.createObjectURL(blob));return{ref,type:isVid?"video":"image",w,h}},
+ remove(ref){if(!ref)return;const s=settings();if(s.hero===ref||(s.decor||[]).includes(ref))return;for(const r of Store.recs.values())if(r.media&&r.media.some(m=>m.ref===ref))return;
+  if(ref.startsWith("l:")&&Local.ok)Local.delBlob(ref.slice(2)).catch(()=>{})},
+};
+function mediaEl(m,{controls=false,cls=""}={}){if(!m||!m.ref)return"";const u=Media.url(m.ref);const src=u?` src="${esc(u)}"`:"";
+ if(m.type==="video")return`<video class="${cls}" data-ref="${esc(m.ref)}"${src} ${controls?"controls playsinline":"muted playsinline preload=\"metadata\""}></video>`;
+ return`<img class="${cls}" data-ref="${esc(m.ref)}"${src} alt="" decoding="async">`}
+const photoEl=(ref,cls="")=>ref?mediaEl({ref,type:"image"},{cls}):"";
+function blobToDataURL(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)})}
+async function compressImage(file,max=1800,q=.86){
+ let src=null;try{src=await createImageBitmap(file,{imageOrientation:"from-image"})}catch{
+  src=await new Promise((res,rej)=>{const im=new Image();im.onload=()=>res(im);im.onerror=rej;im.src=URL.createObjectURL(file)}).catch(()=>null)}
+ if(!src)return{blob:file,w:0,h:0};const W=src.width,H=src.height,s=Math.min(1,max/Math.max(W,H));const w=Math.round(W*s),h=Math.round(H*s);
+ const c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(src,0,0,w,h);const blob=await new Promise(r=>c.toBlob(r,"image/jpeg",q));return{blob:blob||file,w,h}}
+function filesFromEvent(e){const out=[];const dt=e.clipboardData||e.dataTransfer;if(!dt)return out;
+ if(dt.files&&dt.files.length)out.push(...dt.files);else if(dt.items)for(const it of dt.items){if(it.kind==="file"){const f=it.getAsFile();if(f)out.push(f)}}
+ return out.filter(f=>/^(image|video)\//.test(f.type)||/\.(jpe?g|png|heic|heif|webp|gif|mp4|mov|webm)$/i.test(f.name||""))}
+function pasteZone(id,label="写真をコピーして、ここを長押し →「ペースト」でも追加できます"){return`<div class="paste" id="${id}" contenteditable="true" role="textbox" aria-label="写真の貼り付け欄" data-ph="${esc(label)}">${esc(label)}</div>`}
+function bindPaste(el,onFiles){if(!el)return;const ph=el.dataset.ph;
+ el.addEventListener("focus",()=>{if(el.textContent===ph)el.textContent=""});el.addEventListener("blur",()=>{el.textContent=ph});
+ el.addEventListener("paste",e=>{const fs=filesFromEvent(e);e.preventDefault();if(fs.length){el.blur();onFiles(fs)}else toast("写真が見つかりませんでした")});
+ el.addEventListener("drop",e=>{const fs=filesFromEvent(e);e.preventDefault();if(fs.length)onFiles(fs)})}
+function onFileInput(inp,fn){let last=0;["change","input"].forEach(ev=>inp.addEventListener(ev,()=>{const fs=[...(inp.files||[])];if(!fs.length||Date.now()-last<600)return;last=Date.now();inp.value="";fn(fs)}))}
+
+/* ================= derived ================= */
+const profile=()=>Store.get("profile")||{id:"profile",kind:"profile"};
+const settings=()=>Store.get("settings")||{id:"settings",kind:"settings"};
+const dogName=()=>profile().name||"うちの子";
+function ageText(b){const d=parseYmd(b);if(!d)return"";const n=new Date();let m=(n.getFullYear()-d.getFullYear())*12+n.getMonth()-d.getMonth();if(n.getDate()<d.getDate())m--;if(m<0)return"";const y=Math.floor(m/12),mm=m%12;return y?`${y}歳${mm?mm+"か月":""}`:`${mm}か月`}
+function humanAge(b,size){const d=parseYmd(b);if(!d)return null;const yrs=(new Date()-d)/(365.25*864e5);if(yrs<0)return null;const rate={small:4,medium:5,large:7}[size||"small"];let h;
+ if(yrs<=1)h=yrs*15;else if(yrs<=2)h=15+(yrs-1)*(size==="large"?6:9);else h=(size==="large"?21:24)+(yrs-2)*rate;return Math.round(h)}
+function nextAnniv(s){const d=parseYmd(s);if(!d)return null;const n=parseYmd(today());let t=new Date(n.getFullYear(),d.getMonth(),d.getDate());if(t<n)t=new Date(n.getFullYear()+1,d.getMonth(),d.getDate());return{days:Math.round((t-n)/864e5),years:t.getFullYear()-d.getFullYear()}}
+function recDays(){return new Set(Store.list(["diary","snap","walk"]).map(r=>r.date))}
+function streak(){const days=recDays();let n=0;const d=new Date();if(!days.has(ymd(d)))d.setDate(d.getDate()-1);while(days.has(ymd(d))){n++;d.setDate(d.getDate()-1)}return n}
+function bestStreak(){const ds=[...recDays()].sort();let best=0,cur=0,prev=null;for(const d of ds){cur=prev&&diffDays(prev,d)===1?cur+1:1;best=Math.max(best,cur);prev=d}return best}
+function weightSeries(from,to){const m=new Map();for(const r of Store.list(["diary","visit"]))if(r.weight&&!isNaN(+r.weight)&&(!from||r.date>=from)&&(!to||r.date<=to)&&!m.has(r.date))m.set(r.date,+r.weight);
+ return[...m].map(([date,v])=>({date,v})).sort((a,b)=>a.date.localeCompare(b.date))}
+function upcoming(){const t=today();const out=[];for(const c of Store.list("care"))if(c.next)out.push({type:"care",rec:c,date:c.next,days:diffDays(t,c.next)});
+ for(const v of Store.list("visit"))if(v.nextDate&&v.nextDate>=t)out.push({type:"appt",rec:v,date:v.nextDate,days:diffDays(t,v.nextDate)});return out.sort((a,b)=>a.date.localeCompare(b.date))}
+const hospName=id=>{const h=Store.get(id);return h?h.name:""};
+function allMedia(){const out=[];for(const r of Store.list())if(r.media)r.media.forEach((m,i)=>out.push({rec:r,m,i}));return out}
+function allTags(){const c=new Map();for(const r of Store.recs.values())(r.tags||[]).forEach(t=>c.set(t,(c.get(t)||0)+1));return[...c].sort((a,b)=>b[1]-a[1]).map(x=>x[0])}
+function healthLine(r){const a=[];if(r.weight)a.push(`${r.weight}kg`);if(r.appetite)a.push("食欲"+r.appetite);if(r.poop)a.push("便"+r.poop);if(+r.vomit)a.push(`嘔吐${r.vomit}回`);return a.join("・")}
+function recTitle(r){switch(r.kind){
+ case"diary":return r.title||(r.text||"").split("\n")[0].slice(0,30)||healthLine(r)||"日記";
+ case"snap":return r.caption||"スナップ";case"walk":return`お散歩 ${r.minutes||0}分`+(r.distance?` · ${r.distance}km`:"");
+ case"visit":return`${r.purpose||"通院"}${r.hospital?" · "+hospName(r.hospital):""}`;case"care":return r.title||"ケア";case"hospital":return r.name||"病院";default:return""}}
+function recText(r){return[r.text,r.symptoms,r.diagnosis,r.treatment,r.memo,r.note,r.caption].filter(Boolean).join(" / ")}
+/* photos used to decorate the app */
+function photoPool(n=24){const s=settings();const out=[];const add=r=>{if(r&&!out.includes(r))out.push(r)};
+ (s.decor||[]).forEach(add);if(!out.length){add(s.hero);allMedia().filter(x=>x.m.type==="image"&&x.m.fav).forEach(x=>add(x.m.ref));allMedia().filter(x=>x.m.type==="image").forEach(x=>add(x.m.ref))}
+ return out.slice(0,n)}
+const pp=i=>{const p=photoPool();return p.length?p[((i%p.length)+p.length)%p.length]:""};
+function stickerHead(title,i,right=""){const r=pp(i+UI.shuffle);return`<div class="sec-h"><span class="sticker">${r?photoEl(r):ic("paw","sm")}</span><h2>${title}</h2>${right}</div>`}
+
+/* ================= dog talk & badges ================= */
+function dogSub(){const st=streak();return st>1?`${st}日連続で記録中`:"このスマホに自動保存"}
+function dogTalk(){const p=profile();const h=new Date().getHours();const t=today();const L=[];
+ upcoming().filter(u=>u.days>=0&&u.days<=1).forEach(u=>L.push(u.type==="care"?`${u.days?"あした":"きょう"}は「${u.rec.title}」の日だよ。わすれないでね`:`${u.days?"あした":"きょう"}は病院の日。いい子にしてるね`));
+ const od=upcoming().filter(u=>u.days<0&&u.type==="care");if(od.length)L.push(`「${od[0].rec.title}」、まだだよ…？`);
+ const todays=Store.list().filter(r=>r.date===t);
+ if(!todays.some(r=>r.kind==="walk")&&h>=15&&h<22)L.push("おさんぽ、まだかな…？ずっと待ってるよ");
+ if(!todays.some(r=>r.kind==="diary")&&h>=19)L.push("きょうの日記、書いてくれる？");
+ const bd=nextAnniv(p.birthday);if(bd&&bd.days===0)L.unshift(`きょうは${bd.years}歳のお誕生日！ありがとう、だいすき！`);else if(bd&&bd.days<=14)L.push(`お誕生日まであと${bd.days}日！ごちそうかな？`);
+ L.push(h<5?"すやすや…ねむい…":h<10?"おはよう！きょうもいっぱい遊ぼうね":h<17?"きょうはなにしてあそぶ？":h<21?"おかえり！きょうもおつかれさま":"そろそろねむくなってきた…おやすみ");
+ L.push("なでなでしてくれたら、うれしいな","しっぽ、ぶんぶんしてるよ","いつもありがとう。だいすきだよ","おやつの時間って、まだ？","写真、かわいく撮ってね");
+ return L}
+const BADGES=[
+ ["first","はじめての日記","book","pink",s=>s.diary>=1],["d30","日記30回","book","pink",s=>s.diary>=30],["d100","日記100回","trophy","pink",s=>s.diary>=100],
+ ["s3","3日連続","spark","yellow",s=>s.best>=3],["s7","7日連続","spark","yellow",s=>s.best>=7],["s30","30日連続","trophy","yellow",s=>s.best>=30],
+ ["p10","写真10枚","camera","sky",s=>s.photos>=10],["p100","写真100枚","camera","sky",s=>s.photos>=100],
+ ["w10","お散歩10回","walk","mint",s=>s.walks>=10],["km50","お散歩50km","walk","mint",s=>s.km>=50],
+ ["hosp","病院を登録","cross","peach",s=>s.hosp>=1],["care","ケア5回達成","check","lav",s=>s.care>=5]];
+function badgeStats(){const w=Store.list("walk");return{diary:Store.list("diary").length,best:bestStreak(),photos:allMedia().length,walks:w.length,km:w.reduce((a,r)=>a+(+r.distance||0),0),
+ hosp:Store.list("hospital").length,care:Store.list("care").reduce((a,c)=>a+(c.history||[]).length,0)}}
+const badgeCheck=debounce(()=>{const s=badgeStats();const got=BADGES.filter(b=>b[4](s)).map(b=>b[0]);const known=LS.get("badges",null);LS.set("badges",got);
+ if(known===null)return;const nw=got.filter(g=>!known.includes(g));if(nw.length){const b=BADGES.find(x=>x[0]===nw[0]);toast(`スタンプ「${b[1]}」をゲット！`);confetti();buzz(30)}},700);
+
+/* ================= render ================= */
+const UI={tab:LS.get("tab","home"),recFilter:"all",recView:"list",albumFilter:"all",calMonth:today().slice(0,7),talk:0,shuffle:0,heroIdx:0};
+let rq=0;function scheduleRender(){if(rq)return;rq=requestAnimationFrame(()=>{rq=0;render()})}
+function applyTheme(){const s=settings();document.documentElement.style.setProperty("--accent",s.accent||PALETTES[0][1]);if(s.heroPos!=null)document.documentElement.style.setProperty("--hero-pos",`50% ${s.heroPos}%`)}
+function render(){try{renderInner()}catch(e){console.error(e);showFatal()}}
+function renderInner(){applyTheme();renderTop();renderNav();const v=$("#view");const sy=window.scrollY;
+ v.innerHTML=({home:viewHome,records:viewRecords,album:viewAlbum,hospital:viewHospital}[UI.tab]||viewHome)();
+ Media.hydrate(v);bindView(v);if(UI._keepScroll)window.scrollTo(0,sy);UI._keepScroll=true;setSync()}
+function renderTop(){const s=settings();
+ $("#top").innerHTML=`<div class="who"><button class="avatar" data-act="profile" aria-label="プロフィール">${s.hero?photoEl(s.hero):ic("paw")}</button>
+  <div style="min-width:0"><div class="name">${esc(profile().name||"わんこ手帖")}</div><div class="sub" id="syncState"></div></div></div>
+  <button class="icon-btn" data-act="search" aria-label="検索・まとめ">${ic("search")}</button><button class="icon-btn" data-act="settings" aria-label="設定">${ic("gear")}</button>`;
+ Media.hydrate($("#top"));bindView($("#top"))}
+function renderNav(){const t=(k,l,i)=>`<button class="tab" data-tab="${k}" ${UI.tab===k?'aria-current="page"':""}>${ic(i)}<span>${l}</span></button>`;
+ $("#nav").innerHTML=t("home","ホーム","home")+t("records","きろく","book")+`<button class="fab" data-act="add" aria-label="記録を追加">${ic("plus")}</button>`+t("album","アルバム","image")+t("hospital","病院","cross");
+ $$("#nav [data-tab]").forEach(b=>b.onclick=()=>{UI.tab=b.dataset.tab;LS.set("tab",UI.tab);UI._keepScroll=false;buzz(8);render();window.scrollTo({top:0})});
+ $("#nav [data-act=add]").onclick=()=>{buzz(10);openAddMenu()}}
+
+/* ---------- home ---------- */
+function viewHome(){const p=profile(),s=settings(),t=today();const age=ageText(p.birthday),ha=humanAge(p.birthday,p.size);
+ const together=p.adoptedOn?diffDays(p.adoptedOn,t)+1:null;const bd=nextAnniv(p.birthday),ad=nextAnniv(p.adoptedOn);const st=streak();
+ const pool=photoPool();const main=s.hero&&UI.heroIdx===0?s.hero:(pool.length?pool[UI.heroIdx%pool.length]:s.hero);
+ const others=pool.filter(r=>r!==main);const o1=others[(UI.shuffle)%Math.max(1,others.length)],o2=others[(UI.shuffle+1)%Math.max(1,others.length)];
+ let h="";
+ if(ENV.inApp)h+=`<div class="alert danger">${ic("globe")}<div class="body"><b>${ENV.line?"LINEの中で開いています":"アプリの中のブラウザで開いています"}</b>このままだと記録が消えることがあります。${ENV.ios?"右下の共有ボタンから「Safariで開く」":"右上の︙から「ブラウザで開く」"}を選んでください。</div><a class="btn sm" href="${esc(appUrl()+"?openExternalBrowser=1")}" target="_blank" rel="noopener">開く</a></div>`;
+ if(!Local.ok)h+=`<div class="alert danger">${ic("x")}<div class="body"><b>この画面では記録を保存できません</b>プライベートモード（シークレット）を使っている場合は、通常のタブで開いてください。</div></div>`;
+ if(!p.name)h+=`<div class="banner"><span class="bi c-pink">${ic("paw")}</span><div class="body"><b>うちの子を登録しよう</b><div class="hint">名前・誕生日・写真で、年齢や記念日を自動で数えます</div></div><button class="btn sm" data-act="profile">登録</button></div>`;
+ h+=`<section class="collage" aria-label="うちの子の写真">
+  <div class="pol s1">${o1?`<div class="ph">${photoEl(o1)}</div>`:`<div class="ph c-sky">${ic("camera","lg")}</div>`}<div class="cap">${o1?"":"写真をふやそう"}</div></div>
+  <button class="pol main" data-act="heroNext" aria-label="写真を切り替える"><div class="ph">${main?photoEl(main):`<div style="width:62%">${DOG_ILL}</div>`}</div>
+   <div class="cap"><h1>${esc(p.name||"うちの子")}</h1><div class="meta">${p.breed?`<span>${esc(p.breed)}</span>`:""}${age?`<span>${age}</span>`:""}${ha!=null?`<span>人間なら${ha}歳</span>`:""}</div></div></button>
+  <div class="pol s2">${o2&&o2!==o1?`<div class="ph">${photoEl(o2)}</div>`:`<div class="ph c-mint">${ic("paw","lg")}</div>`}<div class="cap">${esc(fmtDate(t,{wd:false}))}</div></div>
+  <label class="photo-btn" for="heroInput" role="button" tabindex="0">${ic("camera","sm")}${s.hero?"メイン写真を変える":"写真を設定"}</label></section>`;
+ const lines=dogTalk();const line=lines[UI.talk%lines.length];
+ h+=`<button class="talk" data-act="talk" aria-label="うちの子のひとこと"><span class="face">${pp(3)?photoEl(pp(3)):ic("paw")}</span><span class="bubble">${esc(line)}<small>${esc(p.name||"うちの子")} より ・ タップでつぎのひとこと</small></span></button>`;
+ if(bd&&bd.days===0||ad&&ad.days===0)h+=`<div class="celebrate" data-confetti>${ic("spark","lg")}<div>${bd&&bd.days===0?`${esc(p.name||"うちの子")}、${bd.years}歳のお誕生日おめでとう！`:`うちの子記念日、${ad.years}周年！`}</div></div>`;
+ const cells=[];if(together!=null)cells.push(`<div class="stat c-pink"><b>${together.toLocaleString()}<small>日</small></b><span>いっしょの日々</span></div>`);
+ if(bd)cells.push(`<div class="stat c-yellow"><b>${bd.days}<small>日</small></b><span>${bd.days===0?"きょう誕生日":"誕生日まで"}</span></div>`);
+ cells.push(`<div class="stat c-mint"><b>${st}<small>日</small></b><span>連続記録</span></div>`);
+ if(cells.length<3)cells.push(`<div class="stat c-sky"><b>${allMedia().length}<small>枚</small></b><span>写真・動画</span></div>`);
+ if(cells.length<3)cells.push(`<div class="stat c-lav"><b>${Store.list(["diary","walk","snap"]).length}<small>件</small></b><span>きろく</span></div>`);
+ h+=`<div class="stats">${cells.slice(0,3).join("")}</div>`;
+ const walk=LS.get("walkStart",null);
+ if(walk)h+=`<div class="walkbar">${ic("walk")}<div class="body"><div style="font-size:12px;font-weight:700">お散歩中</div><b id="walkTimer">${fmtElapsed(Date.now()-walk)}</b></div><button class="btn sm ghost" data-act="walkStop">${ic("stop","sm")}おわり</button></div>`;
+ h+=`<div class="quick">
+  <button class="c-pink" data-new="diary"><span class="qi">${ic("book")}</span>日記・体調</button>
+  <label class="c-sky" for="quickSnap" role="button" tabindex="0"><span class="qi">${ic("camera")}</span>写真・動画</label>
+  <button class="c-mint" data-act="${walk?"walkStop":"walkStart"}"><span class="qi">${ic("walk")}</span>${walk?"散歩おわり":"お散歩"}</button>
+  <button class="c-peach" data-new="visit"><span class="qi">${ic("cross")}</span>通院</button></div>`;
+ const todays=Store.list().filter(r=>r.date===t);const has=f=>todays.some(f);
+ h+=`<div class="today"><span class="hint" style="font-weight:900;margin-right:2px">きょう</span>${[["日記",r=>r.kind==="diary"&&(r.text||r.title||r.mood)],["体重",r=>r.weight],["写真",r=>r.media&&r.media.length],["お散歩",r=>r.kind==="walk"]].map(([l,f])=>`<span class="tick ${has(f)?"on":""}">${has(f)?ic("check","sm"):""}${l}</span>`).join("")}</div>`;
+ if(!isStandalone()&&!ENV.inApp&&!LS.get("a2hsDismissed",false))h+=`<div class="banner"><span class="bi c-yellow">${ic("home")}</span><div class="body"><b>ホーム画面に追加しよう</b><div class="hint">アプリのように開けて、記録も消えにくくなります</div></div><button class="btn sm" data-act="a2hs">${installEvt?"追加する":"方法"}</button></div>`;
+ {const lb=LS.get("lastBackup",null);const cnt=Store.list(["diary","snap","walk","visit"]).length;if(cnt>=10&&(!lb||diffDays(lb.slice(0,10),t)>30))h+=`<div class="banner"><span class="bi c-mint">${ic("dl")}</span><div class="body"><b>そろそろバックアップを</b><div class="hint">${lb?"前回から30日以上たちました":"まだ一度もバックアップしていません"}</div></div><button class="btn sm" data-act="settings">保存</button></div>`}
+ if([...Store.recs.values()].some(r=>r.sample))h+=`<div class="banner"><span class="bi c-lav">${ic("spark")}</span><div class="body">サンプルデータを表示中です</div><button class="btn sm ghost" data-act="clearSample">消す</button></div>`;
+ const media=allMedia().slice(0,14);
+ if(media.length){UI.homeStrip=media;h+=stickerHead("さいきんの写真",0,`<button class="link" data-act="goAlbum">アルバム</button>`)+`<div class="strip">${media.map((x,i)=>`<button data-strip="${i}">${mediaEl(x.m)}<span>${esc(fmtDate(x.rec.date,{wd:false}))}</span></button>`).join("")}</div>`}
+ const up=upcoming().filter(u=>u.days<=45).slice(0,5);
+ h+=stickerHead("これからの予定",1,`<button class="link" data-act="goHospital">すべて</button>`)+`<div class="card">${up.length?`<div class="rows">${up.map(upRow).join("")}</div>`:`<div class="empty" style="padding:6px"><div class="hint">ワクチン・お薬の日や通院予約を登録すると、近い順に並びます</div><button class="btn sm ghost" data-new="care">${ic("plus","sm")}ケア予定を追加</button></div>`}</div>`;
+ const ws=weightSeries();
+ h+=stickerHead("体重",2,`<button class="link" data-act="goWeight">グラフ</button>`)+`<div class="card">${ws.length?weightCard(ws.slice(-30),true):`<div class="hint">日記の「体調チェック」で体重を入れると、ここに推移が出ます</div>`}</div>`;
+ const mem=memory();if(mem)h+=stickerHead(esc(mem.label),4)+`<button class="card" style="padding:10px 10px 14px;width:100%;text-align:left;display:block;transform:rotate(-1deg)" data-lb="${esc(mem.rec.id)}:${mem.i}"><div style="aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:var(--line)">${mediaEl(mem.m,{cls:"cover"})}</div><div style="padding:8px 4px 0;font-weight:900">${esc(recTitle(mem.rec))}<div class="hint">${fmtDate(mem.rec.date,{year:true})}</div></div></button>`;
+ const bs=badgeStats();
+ h+=stickerHead("スタンプカード",5,`<span class="hint">${BADGES.filter(b=>b[4](bs)).length}/${BADGES.length}</span>`)+`<div class="card"><div class="stamps">${BADGES.map(b=>{const on=b[4](bs);return`<div class="stamp ${on?"on":""}"><span class="sc" ${on?`style="background:var(--${b[3]})"`:""}>${ic(b[2])}</span>${b[1]}</div>`}).join("")}</div></div>`;
+ const recent=Store.list(["diary","snap","walk","visit"]).slice(0,4);
+ h+=stickerHead("さいきんの記録",6,`<button class="link" data-act="goRecords">きろくへ</button>`);
+ h+=recent.length?`<div class="card"><div class="rows">${recent.map(rowRec).join("")}</div></div>`:
+  `<div class="card empty">${pp(0)?`<div class="pic">${photoEl(pp(0))}</div>`:`<div class="ill">${DOG_ILL}</div>`}<h3>まだ記録がありません</h3><div class="hint">日記・写真・お散歩を残していくと、ここに並びます</div><div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center"><button class="btn sm" data-new="diary">最初の日記を書く</button><button class="btn sm ghost" data-act="sample">サンプルで試す</button></div></div>`;
+ return h}
+function memory(){const md=today().slice(5);const all=allMedia().filter(x=>x.m.type==="image");if(!all.length)return null;
+ const same=all.filter(x=>x.rec.date&&x.rec.date.slice(5)===md&&x.rec.date<today());if(same.length){const x=same[0];return{...x,label:`${new Date().getFullYear()-+x.rec.date.slice(0,4)}年前のきょう`}}
+ const old=all.filter(x=>x.rec.date&&diffDays(x.rec.date,today())>=14);if(!old.length)return null;const seed=+today().replace(/-/g,"");const favs=old.filter(x=>x.m.fav);const p2=favs.length?favs:old;return{...p2[seed%p2.length],label:"あの日のうちの子"}}
+function fmtElapsed(ms){const s=Math.floor(ms/1000);return`${Math.floor(s/60)}:${pad(s%60)}`}
+function upRow(u){const r=u.rec;const cls=u.days<0?"danger":u.days<=7?"warn":"acc";
+ if(u.type==="care")return`<button class="row" data-open="${esc(r.id)}"><span class="kicon c-lav">${ic(/ワクチン|注射/.test(r.title)?"syringe":/薬|予防/.test(r.title)?"pill":"bell")}</span><div class="body"><div class="t">${esc(r.title)}</div><div class="s">${fmtDate(u.date)}${r.interval?" · "+(IVL.find(x=>x[0]===r.interval)||["",""])[1]:""}</div></div><span class="badge ${cls}">${relDays(u.days)}</span></button>`;
+ return`<button class="row" data-open="${esc(r.id)}"><span class="kicon c-peach">${ic("cal")}</span><div class="body"><div class="t">通院予約${r.hospital?" · "+esc(hospName(r.hospital)):""}</div><div class="s">${fmtDate(u.date)}${r.nextTime?" "+esc(r.nextTime):""}${r.nextMemo?" · "+esc(r.nextMemo):""}</div></div><span class="badge ${cls}">${relDays(u.days)}</span></button>`}
+function kIcon(r,size=""){const k=KIND[r.kind];return`<span class="kicon c-${k.c}" ${size}>${r.kind==="diary"&&r.mood?moodSvg(r.mood):ic(k.i)}</span>`}
+function rowRec(r){const flag=isFlag(r);return`<button class="row" data-open="${esc(r.id)}">${kIcon(r)}<div class="body"><div class="t">${esc(recTitle(r))}</div><div class="s">${fmtDate(r.date)} · ${KIND[r.kind].l}${recText(r)?" · "+esc(recText(r)):""}</div></div>${flag?'<span class="badge danger">要確認</span>':r.media&&r.media.length?`<span class="badge">${ic("image","sm")}</span>`:""}</button>`}
+function weightCard(ws,compact){const last=ws[ws.length-1],first=ws[0];const d=last.v-first.v;
+ return`<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:6px"><div class="big-stat"><b>${+last.v.toFixed(2)}</b><span class="muted" style="font-weight:900">kg</span></div>
+ <div style="text-align:right"><div class="delta" style="color:${Math.abs(d)<.005?"var(--ink-2)":d>0?"var(--warn)":"var(--ok)"}">${d>0?"+":""}${d.toFixed(2)} kg</div><div class="hint">${fmtDate(first.date,{wd:false})}から</div></div></div>${chartSvg(ws,compact?120:180)}`}
+function niceStep(x){const p=Math.pow(10,Math.floor(Math.log10(x||1)));const n=x/p;return(n<1.5?1:n<3?2:n<7?5:10)*p}
+function chartSvg(ws,H=160,opt={}){const W=opt.W||340,pl=34,pr=14,pt=12,pb=22;if(ws.length<2)return`<div class="hint">記録が2回以上になると線でつながります</div>`;
+ const vs=ws.map(p=>p.v);let lo=Math.min(...vs),hi=Math.max(...vs);const padv=Math.max(.1,(hi-lo)*.25);lo-=padv;hi+=padv;
+ const t0=+parseYmd(ws[0].date),t1=+parseYmd(ws[ws.length-1].date);const X=d=>pl+(W-pl-pr)*((+parseYmd(d)-t0)/Math.max(1,t1-t0)),Y=v=>pt+(H-pt-pb)*(1-(v-lo)/(hi-lo));
+ const step=niceStep((hi-lo)/3);const ticks=[];for(let v=Math.ceil(lo/step)*step;v<=hi+1e-9;v+=step)ticks.push(+v.toFixed(3));
+ const path=ws.map((p,i)=>`${i?"L":"M"}${X(p.date).toFixed(1)},${Y(p.v).toFixed(1)}`).join("");const L=ws[ws.length-1];
+ const area=path+`L${X(L.date).toFixed(1)},${H-pb}L${X(ws[0].date).toFixed(1)},${H-pb}Z`;const dl=d=>{const x=parseYmd(d);return`${x.getMonth()+1}/${x.getDate()}`};
+ const c=opt.colors||{};const st=(k,v)=>c[k]?` style="${v}"`:"";
+ return`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="体重の推移">${ticks.map(v=>`<line class="grid-l" x1="${pl}" x2="${W-pr}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}"${st("grid",`stroke:${c.grid};stroke-width:1;stroke-dasharray:3 4`)}/><text x="${pl-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end"${st("text",`fill:${c.text};font-size:10px`)}>${v}</text>`).join("")}
+ <path class="ar" d="${area}"${st("line",`fill:${c.line};opacity:.12`)}/><path class="ln" d="${path}"${st("line",`stroke:${c.line};stroke-width:2.5;fill:none`)}/>${ws.length<=31?ws.slice(0,-1).map(p=>`<circle class="pt" cx="${X(p.date).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="2.8"${st("line",`fill:#fff;stroke:${c.line};stroke-width:2`)}/>`).join(""):""}
+ <circle class="end" cx="${X(L.date).toFixed(1)}" cy="${Y(L.v).toFixed(1)}" r="4.5"${st("line",`fill:${c.line}`)}/><text x="${pl}" y="${H-5}"${st("text",`fill:${c.text};font-size:10px`)}>${dl(ws[0].date)}</text><text x="${W-pr}" y="${H-5}" text-anchor="end"${st("text",`fill:${c.text};font-size:10px`)}>${dl(L.date)}</text></svg>`}
+
+/* ---------- records ---------- */
+function viewRecords(){const f=UI.recFilter,v=UI.recView;
+ let h=`<div class="seg" role="group" aria-label="種類">${[["all","すべて"],["diary","日記"],["walk","お散歩"],["snap","スナップ"]].map(([k,l])=>`<button data-rf="${k}" aria-pressed="${f===k}">${l}</button>`).join("")}</div>
+ <div class="seg sub">${[["list","リスト","list"],["cal","カレンダー","cal"],["chart","体調グラフ","chart"]].map(([k,l,i])=>`<button data-rv="${k}" aria-pressed="${v===k}" style="display:inline-flex;gap:4px;align-items:center">${ic(i,"sm")}${l}</button>`).join("")}</div>`;
+ if(v==="chart")return h+healthCharts();
+ const list=Store.list(f==="all"?["diary","snap","walk","visit"]:f);
+ if(v==="cal")return h+calendarView(list);
+ if(!list.length)return h+`<div class="card empty">${pp(1)?`<div class="pic">${photoEl(pp(1))}</div>`:`<div class="ill">${DOG_ILL}</div>`}<h3>${f==="all"?"記録":KIND[f].l}はまだありません</h3><button class="btn sm" data-new="${f==="all"?"diary":f}">${ic("plus","sm")}${f==="all"?"日記":KIND[f].l}を追加</button></div>`;
+ return h+groupByMonth(list,entryCard)}
+function groupByMonth(list,fn){let out="",cur="";for(const r of list){const m=(r.date||"").slice(0,7);if(m!==cur){if(cur)out+="</div>";cur=m;const[y,mo]=m.split("-");
+ out+=`<div class="month">${+mo}月<small>${y}</small><small>${list.filter(x=>(x.date||"").startsWith(m)).length}件</small></div><div class="stack" style="gap:12px">`}out+=fn(r)}return out+(cur?"</div>":"")}
+function healthChips(r){const c=[];if(r.weight)c.push(`<span class="chip">${ic("heart","sm")}${esc(r.weight)}kg</span>`);if(r.temp)c.push(`<span class="chip">${esc(r.temp)}℃</span>`);
+ if(r.appetite)c.push(`<span class="chip ${r.appetite==="食べない"?"flag":""}">食欲 ${esc(r.appetite)}</span>`);if(r.energy)c.push(`<span class="chip ${r.energy==="ぐったり"?"flag":""}">${esc(r.energy)}</span>`);
+ if(r.poop)c.push(`<span class="chip ${r.poop==="下痢"?"flag":""}">便 ${esc(r.poop)}</span>`);if(r.pee&&r.pee!=="ふつう")c.push(`<span class="chip ${r.pee==="色が気になる"?"flag":""}">尿 ${esc(r.pee)}</span>`);
+ if(+r.vomit)c.push(`<span class="chip flag">嘔吐 ${esc(r.vomit)}回</span>`);if(r.medicine)c.push(`<span class="chip">${ic("pill","sm")}${esc(r.medicine)}</span>`);return c.join("")}
+function entryCard(r){const d=parseYmd(r.date);const media=r.media||[];let chips="";
+ if(r.kind==="diary")chips=healthChips(r);
+ if(r.kind==="walk")chips=[r.minutes&&`<span class="chip">${esc(r.minutes)}分</span>`,r.distance&&`<span class="chip">${esc(r.distance)}km</span>`,r.course&&`<span class="chip">${esc(r.course)}</span>`].filter(Boolean).join("");
+ if(r.kind==="visit")chips=[r.diagnosis&&`<span class="chip">${esc(r.diagnosis)}</span>`,r.cost&&`<span class="chip">${yen(r.cost)}</span>`].filter(Boolean).join("");
+ chips+=(r.tags||[]).map(t=>`<span class="chip tag">#${esc(t)}</span>`).join("");
+ const body=r.kind==="diary"?[r.text,r.symptoms&&"気になる症状："+r.symptoms].filter(Boolean).join("\n"):r.kind==="snap"?"":r.note||r.memo||r.treatment||"";
+ const title=r.kind==="diary"?(r.title||(r.text?"":hasHealth(r)?"体調の記録":"日記")):recTitle(r);
+ return`<button class="entry" data-open="${esc(r.id)}"><div class="hd"><div class="date"><b>${d?d.getDate():""}</b><span>${d?WD[d.getDay()]:""}</span></div>
+  ${kIcon(r,'style="width:34px;height:34px;border-radius:12px"')}<div class="ttl">${esc(title||"")}</div>${r.weather?`<span class="chip">${esc(r.weather)}</span>`:""}${isFlag(r)?'<span class="badge danger">要確認</span>':""}</div>
+  ${body?`<p>${esc(body)}</p>`:""}${chips?`<div class="chips">${chips}</div>`:""}${media.length?thumbs(media):""}</button>`}
+function thumbs(media){const n=media.length;return`<div class="thumbs">${media.slice(0,4).map((m,i)=>`<div class="m">${mediaEl(m)}${m.type==="video"?`<span class="play">${ic("playf")}</span>`:""}${i===3&&n>4?`<span class="more">+${n-4}</span>`:""}</div>`).join("")}</div>`}
+function calendarView(list){const[y,mo]=UI.calMonth.split("-").map(Number);const first=new Date(y,mo-1,1);const days=new Date(y,mo,0).getDate();const t=today();
+ const by=new Map();list.forEach(r=>{if(!r.date||!r.date.startsWith(UI.calMonth))return;const a=by.get(r.date)||[];a.push(r);by.set(r.date,a)});
+ let cells=WD.map(w=>`<div class="w">${w}</div>`).join("")+Array(first.getDay()).fill('<div class="d blank"></div>').join("");
+ for(let d=1;d<=days;d++){const k=`${UI.calMonth}-${pad(d)}`;const rs=by.get(k)||[];const ph=rs.flatMap(r=>(r.media||[]).filter(m=>m.type==="image"))[0];const mood=(rs.find(r=>r.mood)||{}).mood;
+  cells+=`<button class="d ${rs.length?"rec":""} ${ph?"has-photo":""} ${rs.some(isFlag)?"flag":""} ${k===t?"today":""}" data-day="${k}" aria-label="${d}日 ${rs.length}件">${ph?mediaEl(ph):""}<span class="n">${d}</span>${mood?`<span class="mood">${moodSvg(mood,16)}</span>`:""}${rs.some(r=>r.kind==="walk")?'<span class="dot"></span>':""}</button>`}
+ const cnt=[...by.values()].flat().length;
+ return`<div class="card"><div class="cal-h"><button class="icon-btn" data-cal="-1" aria-label="前の月">${ic("left")}</button><b>${y}年 ${mo}月</b><button class="icon-btn" data-cal="1" aria-label="次の月">${ic("right")}</button></div><div class="cal">${cells}</div>
+ <div class="hint" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px 12px"><span>この月 ${cnt}件</span><span><span style="color:var(--mint)">●</span> お散歩</span><span><span style="color:var(--danger)">□</span> 要確認の体調</span><span>日付をタップで一覧</span></div></div>`}
+function healthCharts(){const ws=weightSeries();const d=Store.list("diary");const last30=d.filter(r=>diffDays(r.date,today())<30&&hasHealth(r));
+ const cnt=f=>last30.filter(f).length;const walks=Store.list("walk").filter(r=>diffDays(r.date,today())<7);const wmin=walks.reduce((a,r)=>a+(+r.minutes||0),0);
+ return`<div class="card"><div class="hint" style="font-weight:900;margin-bottom:6px">体重の推移</div>${ws.length?weightCard(ws,false):'<div class="hint">体重の記録がありません。日記の「体調チェック」で入力できます</div>'}</div>
+ <div class="card"><div class="hint" style="font-weight:900;margin-bottom:10px">直近30日の体調</div><div class="stat-grid">
+  <div class="s"><span>体調を記録</span><b class="num">${new Set(last30.map(r=>r.date)).size}日</b></div>
+  <div class="s ${cnt(r=>r.appetite==="食べない"||r.appetite==="少なめ")?"flag":""}"><span>食欲低下</span><b class="num">${cnt(r=>r.appetite==="食べない"||r.appetite==="少なめ")}回</b></div>
+  <div class="s ${cnt(r=>r.poop==="下痢"||r.poop==="やわらかめ")?"flag":""}"><span>軟便・下痢</span><b class="num">${cnt(r=>r.poop==="下痢"||r.poop==="やわらかめ")}回</b></div>
+  <div class="s ${cnt(r=>+r.vomit>0)?"flag":""}"><span>嘔吐</span><b class="num">${last30.reduce((a,r)=>a+(+r.vomit||0),0)}回</b></div>
+  <div class="s ${cnt(r=>r.energy==="ぐったり")?"flag":""}"><span>ぐったり</span><b class="num">${cnt(r=>r.energy==="ぐったり")}回</b></div>
+  <div class="s"><span>今週のお散歩</span><b class="num">${wmin}分</b></div></div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px"><button class="btn block sm" data-act="report">${ic("pdf","sm")}獣医さんに見せるPDFをつくる</button><button class="btn ghost block sm" data-act="vetCopy">${ic("copy","sm")}2週間分をテキストでコピー</button></div></div>`}
+
+/* ---------- album ---------- */
+function viewAlbum(){const f=UI.albumFilter;let items=allMedia();if(f==="image")items=items.filter(x=>x.m.type==="image");if(f==="video")items=items.filter(x=>x.m.type==="video");if(f==="fav")items=items.filter(x=>x.m.fav);
+ const deco=settings().decor||[];
+ let h=`<div class="seg">${[["all","すべて"],["image","写真"],["video","動画"],["fav","お気に入り"]].map(([k,l])=>`<button data-af="${k}" aria-pressed="${f===k}">${l}</button>`).join("")}</div>
+ <div class="pick-row"><label class="pick" for="quickSnap" role="button" tabindex="0">${ic("plus","sm")}写真・動画を追加</label><button class="pick" data-act="decoInfo">${ic("star","sm")}デコ写真 ${deco.length?deco.length+"枚":"おまかせ"}</button></div>`;
+ if(!items.length)return h+`<div class="card empty"><div class="ill">${DOG_ILL}</div><h3>${f==="fav"?"お気に入りはまだありません":"写真・動画はまだありません"}</h3><div class="hint">${f==="fav"?"写真を開いてハートを押すと、ここに集まります":"日記・スナップに追加した写真と動画が、ぜんぶここに集まります"}</div></div>`;
+ UI.albumItems=items;let cur="",out="";items.forEach((x,idx)=>{const m=(x.rec.date||"").slice(0,7);if(m!==cur){if(cur)out+="</div>";cur=m;const[y,mo]=m.split("-");out+=`<div class="month">${+mo}月<small>${y}</small></div><div class="grid">`}
+  out+=`<button class="m" data-lbi="${idx}" aria-label="${esc(recTitle(x.rec))}">${mediaEl(x.m)}${x.m.type==="video"?`<span class="play">${ic("playf")}</span>`:""}${x.m.fav?`<span class="fav">${ic("fav")}</span>`:""}${deco.includes(x.m.ref)?`<span class="deco">${ic("star")}</span>`:""}</button>`});
+ return h+`<div class="hint" style="margin:0 4px">${items.length}点 ・ 写真を開いて「デコに使う」を押すと、アプリのあちこちに飾られます</div>`+out+(cur?"</div>":"")}
+
+/* ---------- hospital ---------- */
+function viewHospital(){const hs=Store.list("hospital").sort((a,b)=>(b.primary?1:0)-(a.primary?1:0)||(a.name||"").localeCompare(b.name||"","ja"));
+ const visits=Store.list("visit");const yr=String(new Date().getFullYear());const cost=visits.filter(v=>(v.date||"").startsWith(yr)).reduce((a,v)=>a+(+v.cost||0),0);const up=upcoming();
+ let h=`<button class="cta c-yellow" data-act="hsearch"><span class="ci">${ic("search","lg")}</span><div style="flex:1"><b>病院・お店をさがす</b><span>現在地や駅名から、動物病院・夜間救急・トリミングなどを検索して、そのまま登録できます</span></div>${ic("right")}</button>`;
+ h+=stickerHead("登録した病院",0,`<button class="link" data-new="hospital">＋ 手入力</button>`);
+ h+=hs.length?`<div class="stack" style="gap:10px">${hs.map(hospCard).join("")}</div>`:`<div class="card empty"><div class="ill" style="width:64px;height:64px;color:var(--yellow-ink)">${ic("cross","lg")}</div><h3>かかりつけを登録しよう</h3><div class="hint">上の「病院・お店をさがす」から、検索してワンタップで登録できます</div></div>`;
+ h+=`<button class="cta c-pink" data-act="report"><span class="ci">${ic("pdf","lg")}</span><div style="flex:1"><b>獣医さんに見せるレポート</b><span>好きな期間の体調・体重・通院・お薬・写真をPDFにまとめます</span></div>${ic("right")}</button>`;
+ h+=stickerHead("予防・ケア予定",1,`<button class="link" data-new="care">＋ 追加</button>`)+`<div class="card" id="care">${up.length?`<div class="rows">${up.map(upRow).join("")}</div>`:`<div class="hint">ワクチン・フィラリア・ノミダニ予防などを登録すると、次の予定日を自動で数えます</div>`}</div>`;
+ h+=stickerHead("通院記録",2,`<button class="link" data-new="visit">＋ 記録</button>`);
+ h+=`<div class="sum"><div class="s"><span>${yr}年の通院</span><b>${visits.filter(v=>(v.date||"").startsWith(yr)).length}<small>回</small></b></div><div class="s"><span>${yr}年の医療費</span><b>${cost.toLocaleString()}<small>円</small></b></div></div>`;
+ h+=visits.length?`<div class="card"><div class="rows">${visits.slice(0,30).map(v=>`<button class="row" data-open="${esc(v.id)}"><span class="kicon c-peach">${ic(v.purpose==="ワクチン"?"syringe":"cross")}</span><div class="body"><div class="t">${esc(v.purpose||"通院")}${v.diagnosis?" · "+esc(v.diagnosis):""}</div><div class="s">${fmtDate(v.date)}${v.hospital?" · "+esc(hospName(v.hospital)):""}</div></div>${v.cost?`<span class="badge">${yen(v.cost)}</span>`:""}</button>`).join("")}</div></div>`:`<div class="card"><div class="hint">診察内容・処方・費用・次回予約を残せます。領収書や検査結果の写真も添付できます</div></div>`;
+ return h}
+function hospCard(h){return`<button class="hcard" data-open="${esc(h.id)}"><span class="kicon c-yellow">${ic(h.type==="トリミング"?"spark":h.type==="ドッグラン"?"paw":"cross")}</span><div class="body"><div class="t">${esc(h.name)}${h.primary?` <span class="badge acc" style="vertical-align:2px">かかりつけ</span>`:""}</div>
+ <div class="s">${esc(h.type||"動物病院")}${h.hours?" · "+esc(h.hours):""}</div>${h.address?`<div class="s">${esc(h.address)}</div>`:""}${closedToday(h)?`<div class="s" style="color:var(--danger);font-weight:900">きょうは休診日かも</div>`:""}</div>${ic("right","sm")}</button>`}
+const closedToday=h=>Array.isArray(h.closed)&&h.closed.includes(WD[new Date().getDay()]);
+const telHref=p=>"tel:"+String(p||"").replace(/[^\d+]/g,"");
+function mapQuery(h){return h.address?[h.name,h.address].join(" "):h.lat?`${h.lat},${h.lon}`:h.name||""}
+const mapHref=h=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(mapQuery(h));
+const routeHref=h=>"https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(h.lat?`${h.lat},${h.lon}`:mapQuery(h));
+function safeUrl(u){u=String(u||"").trim();if(!u)return"";if(!/^https?:\/\//i.test(u))u="https://"+u;try{const x=new URL(u);return/^https?:$/.test(x.protocol)?x.href:""}catch{return""}}
+
+/* ---------- bindings ---------- */
+function bindView(root){
+ $$("[data-new]",root).forEach(b=>b.onclick=e=>{e.stopPropagation();openEditor(b.dataset.new)});
+ $$("[data-open]",root).forEach(b=>b.onclick=()=>openDetail(b.dataset.open));
+ $$("[data-rf]",root).forEach(b=>b.onclick=()=>{UI.recFilter=b.dataset.rf;render()});
+ $$("[data-rv]",root).forEach(b=>b.onclick=()=>{UI.recView=b.dataset.rv;render()});
+ $$("[data-af]",root).forEach(b=>b.onclick=()=>{UI.albumFilter=b.dataset.af;render()});
+ $$("[data-cal]",root).forEach(b=>b.onclick=()=>{const[y,m]=UI.calMonth.split("-").map(Number);const d=new Date(y,m-1+(+b.dataset.cal),1);UI.calMonth=ymd(d).slice(0,7);render()});
+ $$("[data-day]",root).forEach(b=>b.onclick=()=>openDay(b.dataset.day));
+ $$("[data-lbi]",root).forEach(b=>b.onclick=()=>openLightbox(UI.albumItems,+b.dataset.lbi));
+ $$("[data-strip]",root).forEach(b=>b.onclick=()=>openLightbox(UI.homeStrip,+b.dataset.strip));
+ $$("[data-lb]",root).forEach(b=>b.onclick=()=>{const[id,i]=b.dataset.lb.split(":");const r=Store.get(id);if(r)openLightbox(r.media.map((m,j)=>({rec:r,m,i:j})),+i)});
+ $$("[data-copy]",root).forEach(b=>b.onclick=e=>{e.stopPropagation();copyText(b.dataset.copy,"コピーしました")});
+ $$("[data-act]",root).forEach(b=>b.onclick=e=>{e.stopPropagation();ACT[b.dataset.act]&&ACT[b.dataset.act](b)});
+ const cf=$("[data-confetti]",root);if(cf&&!UI.confettiDone){UI.confettiDone=true;confetti()}}
+const ACT={
+ profile:()=>openProfile(),settings:()=>openSettings(),search:()=>openSearch(),add:()=>openAddMenu(),report:()=>openReport(),hsearch:()=>openHospitalSearch(),
+ heroNext:b=>{const n=photoPool().length;if(n<2){$("#heroInput").click();return}UI.heroIdx=(UI.heroIdx+1)%n;UI.shuffle++;buzz(8);render();const m=$(".pol.main");if(m){m.classList.add("wiggle")}},
+ talk:()=>{UI.talk++;buzz(6);render()},
+ goHospital:()=>{UI.tab="hospital";LS.set("tab",UI.tab);UI._keepScroll=false;render();window.scrollTo({top:0})},
+ goAlbum:()=>{UI.tab="album";LS.set("tab",UI.tab);UI._keepScroll=false;render();window.scrollTo({top:0})},
+ goWeight:()=>{UI.tab="records";UI.recView="chart";LS.set("tab",UI.tab);UI._keepScroll=false;render();window.scrollTo({top:0})},
+ goRecords:()=>{UI.tab="records";UI.recView="list";UI.recFilter="all";LS.set("tab",UI.tab);UI._keepScroll=false;render();window.scrollTo({top:0})},
+ walkStart:()=>{LS.set("walkStart",Date.now());buzz(20);toast("いってきます！お散歩タイマー開始");render()},
+ walkStop:()=>{const s=LS.get("walkStart",null);LS.del("walkStart");const min=s?Math.max(1,Math.round((Date.now()-s)/60000)):"";const d=new Date(s||Date.now());openEditor("walk",null,{minutes:String(min),time:`${pad(d.getHours())}:${pad(d.getMinutes())}`});render()},
+ sample:()=>insertSample(),clearSample:()=>clearSample(),vetCopy:()=>copyText(vetSummary(14),"2週間分の体調まとめをコピーしました"),
+ decoInfo:()=>openDecor(),
+ a2hs:()=>{if(installEvt){installApp();return}LS.set("a2hsDismissed",true);openInstallGuide();render()},
+ a2hsOld:()=>{openSheet({title:"ホーム画面に追加",body:`<div class="detail"><div class="card"><b>iPhone（Safari）</b><ol style="margin:6px 0 0;padding-left:1.2em;line-height:1.9"><li>画面下の共有ボタン（四角から矢印）をタップ</li><li>「ホーム画面に追加」をタップ</li><li>右上の「追加」をタップ</li></ol></div><div class="card"><b>Android（Chrome）</b><ol style="margin:6px 0 0;padding-left:1.2em;line-height:1.9"><li>右上の︙メニューをタップ</li><li>「ホーム画面に追加」または「アプリをインストール」をタップ</li></ol></div><div class="hint">追加したアイコンから開くと、記録がこのスマホに保存され続けます。ブラウザで開いたページとホーム画面のアイコンでは、データが別々になる場合があります。以後はアイコンから開いてください。</div></div>`});render()},
+};
+setInterval(()=>{const el=$("#walkTimer");const s=LS.get("walkStart",null);if(el&&s)el.textContent=fmtElapsed(Date.now()-s)},1000);
+async function setHeroFile(f){if(!f)return;toast("写真を保存しています…");try{const m=await Media.save(f);const s=settings();const old=s.hero;s.hero=m.ref;UI.heroIdx=0;await Store.put(s);if(old&&old!==m.ref)setTimeout(()=>Media.remove(old),500);toast("メイン写真を変えました");buzz(20)}catch(e){toast("保存できませんでした")}}
+onFileInput($("#heroInput"),fs=>setHeroFile(fs[0]));
+onFileInput($("#quickSnap"),fs=>{const S=openEditor("snap");S._addFiles&&S._addFiles(fs)});
+onFileInput($("#decoInput"),async fs=>{const s=settings();const d=[...(s.decor||[])];for(const f of fs){try{const m=await Media.save(f);d.push(m.ref)}catch{}}s.decor=d.slice(0,24);await Store.put(s);toast("デコ写真を追加しました");const S=sheets.find(x=>x.kind==="decor");if(S){S.close();openDecor()}});
+
+/* ================= sheets ================= */
+const sheets=[];
+function openSheet({title,body,full=false,right="",onClose,onMount,kind}){const wrap=document.createElement("div");wrap.className="sheet-wrap";
+ wrap.innerHTML=`<div class="sheet ${full?"full":""}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="grab"></div><div class="sh"><h2>${esc(title)}</h2>${right}<button class="icon-btn flat" data-close aria-label="閉じる">${ic("x")}</button></div><div class="sb">${body}</div></div>`;
+ document.body.append(wrap);document.body.style.overflow="hidden";const S={wrap,el:$(".sheet",wrap),sb:$(".sb",wrap),onClose,close,kind};
+ function close(){if(S.closed)return;S.closed=true;try{S.onClose&&S.onClose()}catch{}wrap.remove();sheets.splice(sheets.indexOf(S),1);if(!sheets.length)document.body.style.overflow=""}
+ wrap.addEventListener("click",e=>{if(e.target===wrap)close()});$("[data-close]",wrap).onclick=close;
+ let sy=null;[$(".grab",wrap),$(".sh",wrap)].forEach(g=>{g.addEventListener("touchstart",e=>{sy=e.touches[0].clientY},{passive:true});g.addEventListener("touchend",e=>{if(sy!=null&&e.changedTouches[0].clientY-sy>70)close();sy=null})});
+ sheets.push(S);Media.hydrate(wrap);onMount&&onMount(S);return S}
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches("label[for][role=button]")){e.preventDefault();e.target.click();return}
+ if(e.key==="Escape"){const lb=$(".lbx");if(lb){lb._close();return}const s=sheets[sheets.length-1];s&&s.close()}});
+function closeAllSheets(){[...sheets].reverse().forEach(s=>s.close())}
+function openAddMenu(){const items=[["diary","日記・体調","きょうのできごと、体重・食欲・うんちなど","pink","book"],["snap","写真・動画","アルバムに追加","sky","camera"],["walk","お散歩","時間・距離・コース","mint","walk"],["visit","通院記録","診察・処方・費用・次回予約","peach","cross"],["care","ケア予定","ワクチン・お薬・トリミング","lav","bell"],["hsearch","病院をさがして登録","検索してワンタップで登録","yellow","search"]];
+ openSheet({title:"なにを記録する？",body:`<div class="stack" style="gap:8px">${items.map(([k,l,s,c,i])=>`<button class="hcard" data-k="${k}"><span class="kicon c-${c}">${ic(i)}</span><div class="body"><div class="t">${l}</div><div class="s">${s}</div></div>${ic("right","sm")}</button>`).join("")}</div>`,
+  onMount:S=>$$("[data-k]",S.el).forEach(b=>b.onclick=()=>{S.close();b.dataset.k==="hsearch"?openHospitalSearch():openEditor(b.dataset.k)})})}
+
+/* ---------- form fields ---------- */
+const F={
+ date:(n,l,v)=>`<div class="f"><label for="f_${n}">${l}</label><input class="in" type="date" id="f_${n}" name="${n}" value="${esc(v||"")}"></div>`,
+ time:(n,l,v)=>`<div class="f"><label for="f_${n}">${l}</label><input class="in" type="time" id="f_${n}" name="${n}" value="${esc(v||"")}"></div>`,
+ text:(n,l,v,ph="",type="text",extra="")=>`<div class="f"><label for="f_${n}">${l}</label><input class="in" type="${type}" id="f_${n}" name="${n}" value="${esc(v||"")}" placeholder="${esc(ph)}" ${extra}></div>`,
+ num:(n,l,v,unit,step="any",ph="")=>`<div class="f"><label for="f_${n}">${l}</label><div class="unit"><input class="in" type="number" inputmode="decimal" step="${step}" id="f_${n}" name="${n}" value="${esc(v??"")}" placeholder="${esc(ph)}"><span>${unit}</span></div></div>`,
+ area:(n,l,v,ph="",rows=5)=>`<div class="f"><label for="f_${n}">${l}</label><textarea class="in" id="f_${n}" name="${n}" rows="${rows}" placeholder="${esc(ph)}">${esc(v||"")}</textarea></div>`,
+ opts:(n,l,list,v,multi=false)=>`<div class="f"><div class="lb">${l}</div><div class="opts">${list.map(o=>{const[val,lab]=Array.isArray(o)?o:[o,o];const on=multi?(v||[]).includes(val):v===val;
+  return`<label class="opt"><input type="${multi?"checkbox":"radio"}" name="${n}" value="${esc(val)}" ${on?"checked":""} data-toggle><span>${esc(lab)}</span></label>`}).join("")}</div></div>`,
+ select:(n,l,list,v)=>`<div class="f"><label for="f_${n}">${l}</label><select class="in" id="f_${n}" name="${n}">${list.map(([val,lab])=>`<option value="${esc(val)}" ${v===val?"selected":""}>${esc(lab)}</option>`).join("")}</select></div>`,
+ sw:(n,l,v)=>`<label class="switch">${l}<input type="checkbox" name="${n}" ${v?"checked":""}></label>`,
+ tags:v=>{const tg=allTags().filter(t=>!(v||[]).includes(t)).slice(0,10);return`<div class="f"><label for="f_tags">タグ（スペース区切り）</label><input class="in" id="f_tags" name="tags" value="${esc((v||[]).join(" "))}" placeholder="例：はじめて ドッグラン 皮膚">${tg.length?`<div class="sugg">${tg.map(t=>`<button type="button" data-tag="${esc(t)}">#${esc(t)}</button>`).join("")}</div>`:""}</div>`},
+ media:(l="写真・動画")=>`<div class="f"><div class="lb">${l}</div><div class="media-edit" id="mediaEdit"></div><div class="pick-row"><label class="pick" for="mediaInput" role="button" tabindex="0">${ic("image","sm")}アルバムから</label><label class="pick" for="camInput" role="button" tabindex="0">${ic("camera","sm")}カメラで撮る</label></div>${pasteZone("mediaPaste")}<input type="file" id="mediaInput" class="vh" accept="image/*,video/*" multiple tabindex="-1" aria-hidden="true"><input type="file" id="camInput" class="vh" accept="image/*" capture="environment" tabindex="-1" aria-hidden="true"></div>`,
+};
+const moodField=v=>`<div class="f"><div class="lb">きょうの様子</div><div class="opts">${MOODS.map(m=>`<label class="opt mood"><input type="radio" name="mood" value="${m.v}" ${v===m.v?"checked":""} data-toggle><span><svg class="i" viewBox="0 0 24 24">${m.svg}</svg>${m.l}</span></label>`).join("")}</div></div>`;
+const healthFields=r=>`<div class="two">${F.num("weight","体重",r.weight,"kg","0.01","5.20")}${F.num("temp","体温",r.temp,"℃","0.1","38.5")}</div>`
+ +F.opts("appetite","食欲",APPETITE,r.appetite)+F.opts("energy","元気",ENERGY,r.energy)+F.opts("poop","うんち",POOP,r.poop)+F.opts("pee","おしっこ",PEE,r.pee)+F.opts("water","飲水",WATER,r.water)
+ +`<div class="two">${F.num("food","ごはん量",r.food,"g","1")}${F.num("vomit","嘔吐",r.vomit,"回","1","0")}</div>`+F.text("medicine","お薬・サプリ",r.medicine,"例：点耳薬 1日2回")+F.area("symptoms","気になる症状",r.symptoms,"例：右耳をよくかく、夜に咳が2回",2);
+function formHTML(kind,r){switch(kind){
+ case"diary":return`<div class="two">${F.date("date","日付",r.date)}${F.time("time","時刻",r.time)}</div>`+F.media()+moodField(r.mood)+F.opts("weather","天気",WEATHER,r.weather)+F.text("title","タイトル",r.title,"例：はじめての海")+F.area("text","日記",r.text,"きょうのできごと、表情、しぐさ…",5)
+  +`<details class="hsec" open><summary>${ic("heart","sm")}体調チェック<span class="hint">わかる項目だけでOK</span></summary><div class="form" style="margin-top:12px">${healthFields(r)}</div></details>`+F.tags(r.tags);
+ case"snap":return F.media()+F.date("date","日付",r.date)+F.text("caption","ひとこと",r.caption,"例：寝ぐせがすごい")+F.tags(r.tags);
+ case"walk":return`<div class="two">${F.date("date","日付",r.date)}${F.time("time","出発",r.time)}</div><div class="two">${F.num("minutes","時間",r.minutes,"分","1")}${F.num("distance","距離",r.distance,"km","0.1")}</div>`+F.text("course","コース",r.course,"例：川沿い〜公園")+F.area("note","メモ",r.note,"会ったお友だち、拾い食いなど",3)+F.media()+F.tags(r.tags);
+ case"visit":{const hs=Store.list("hospital");return F.date("date","受診日",r.date)+F.select("hospital","病院",[["","（選択してください）"],...hs.map(h=>[h.id,h.name])],r.hospital)+(hs.length?"":`<div class="hint">病院が未登録です。「病院」タブの検索から登録できます</div>`)+F.opts("purpose","目的",VISIT_PURPOSE,r.purpose)
+  +F.area("symptoms","症状・受診理由",r.symptoms,"",2)+F.text("diagnosis","診断名",r.diagnosis)+F.area("treatment","処置・処方",r.treatment,"例：抗生剤 7日分、点耳薬",3)
+  +`<div class="two">${F.num("cost","費用",r.cost,"円","1")}${F.num("weight","体重",r.weight,"kg","0.01")}</div>`
+  +`<div class="card" style="display:flex;flex-direction:column;gap:12px"><div class="hint" style="font-weight:900">次回の予約</div><div class="two">${F.date("nextDate","日付",r.nextDate)}${F.time("nextTime","時刻",r.nextTime)}</div>${F.text("nextMemo","内容",r.nextMemo,"例：再診・抜糸")}</div>`
+  +F.area("memo","先生に言われたこと・メモ",r.memo,"",3)+F.media("写真（領収書・検査結果・お薬）")+F.tags(r.tags)}
+ case"care":return`<div class="f"><div class="lb">よく使う項目</div><div class="sugg">${CARE_PRESET.map(([t,iv])=>`<button type="button" data-preset="${esc(t)}" data-iv="${iv}">${esc(t)}</button>`).join("")}</div></div>`
+  +F.text("title","項目",r.title,"例：フィラリア予防薬")+F.date("next","次の予定日",r.next)+F.select("interval","くり返し",IVL,r.interval||"")+F.text("lastDone","前回実施日",r.lastDone,"","date")+F.area("memo","メモ",r.memo,"例：体重5kg用、ごはんに混ぜる",3);
+ case"hospital":return F.text("name","名前",r.name,"例：さくら動物病院")+F.opts("type","種類",HOSP_TYPE,r.type||"動物病院")+F.sw("primary","かかりつけにする",r.primary)
+  +F.text("phone","電話番号",r.phone,"03-1234-5678","tel",'inputmode="tel"')+F.text("booking","Web予約ページのURL",r.booking,"https://…","url",'inputmode="url"')+F.text("web","ホームページ",r.web,"https://…","url",'inputmode="url"')
+  +F.text("address","住所",r.address)+F.text("hours","診療時間",r.hours,"例：9:00–12:00 / 16:00–19:00")+F.opts("closed","休診日",WD,r.closed||[],true)+F.text("doctor","担当の先生",r.doctor)+F.text("patientNo","診察券番号",r.patientNo)+F.area("memo","メモ",r.memo,"例：駐車場あり、予約優先",3);
+}}
+function collect(form,base){const fd=new FormData(form);const r={...base};const keys=new Set([...$$("[name]",form)].map(e=>e.name));
+ for(const k of keys){const els=$$(`[name="${k}"]`,form);const e0=els[0];
+  if(e0.type==="checkbox"&&els.length===1&&(k==="primary"||k==="neutered"))r[k]=e0.checked;else if(e0.type==="checkbox")r[k]=fd.getAll(k);else if(e0.type==="radio")r[k]=fd.get(k)||"";
+  else if(k==="tags")r[k]=String(fd.get(k)||"").split(/[\s,、　#]+/).map(s=>s.trim()).filter(Boolean);else r[k]=String(fd.get(k)??"").trim()}return r}
+function meaningful(r){const skip=new Set(["id","kind","date","time","createdAt","updatedAt","media","interval","type","sample","lat","lon","osm"]);if(r.media&&r.media.length)return true;
+ return Object.entries(r).some(([k,v])=>!skip.has(k)&&(Array.isArray(v)?v.length:v!==""&&v!=null&&v!==false))}
+
+/* ---------- editor (auto-saving) ---------- */
+function openEditor(kind,id,preset={}){const ex=id?Store.get(id):null;const now=new Date();
+ const r=ex?JSON.parse(JSON.stringify(ex)):{id:uid(),kind,date:today(),time:kind==="diary"?`${pad(now.getHours())}:${pad(now.getMinutes())}`:"",media:[],...preset};if(!r.media)r.media=[];
+ let created=!!ex||meaningful(r)&&kind==="hospital";let state=r;
+ const T={diary:"日記・体調",snap:"写真・動画",walk:"お散歩",visit:"通院記録",care:"ケア予定",hospital:"病院"};
+ const S=openSheet({title:(ex?"":"新しい")+T[kind],full:true,right:`<span class="saved" id="savedState">${ex?"自動保存":"入力すると自動保存"}</span>`,
+  body:`<form class="form" id="ed" autocomplete="off" onsubmit="return false">${formHTML(kind,r)}
+   <div style="display:flex;gap:8px;margin-top:6px"><button type="button" class="btn block" data-done>${ic("check","sm")}できた！</button>${ex?`<button type="button" class="btn danger" data-del aria-label="削除">${ic("trash","sm")}</button>`:""}</div>
+   <div class="hint" style="text-align:center">入力した内容はその場で自動保存されます</div></form>`,onClose:()=>save.flush()});
+ const form=$("#ed",S.el),saved=$("#savedState",S.el);
+ const save=debounce(async()=>{state=collect(form,{...state,media:state.media});if(!created&&!meaningful(state))return;created=true;saved.textContent="保存中…";try{await Store.put(state);saved.textContent="保存しました"}catch{saved.textContent="未保存"}},500);
+ form.addEventListener("input",()=>{saved.textContent="編集中…";save()});form.addEventListener("change",()=>save());
+ $$("[data-toggle]",form).forEach(inp=>{if(inp.type!=="radio")return;inp.addEventListener("click",()=>{if(inp.dataset.was==="1"){inp.checked=false;inp.dataset.was="0";save()}else{$$(`[name="${inp.name}"]`,form).forEach(x=>x.dataset.was="0");inp.dataset.was="1";buzz(6)}});if(inp.checked)inp.dataset.was="1"});
+ $$("[data-tag]",form).forEach(b=>b.onclick=()=>{const t=$("#f_tags",form);t.value=(t.value.trim()+" "+b.dataset.tag).trim();b.remove();save()});
+ $$("[data-preset]",form).forEach(b=>b.onclick=()=>{$("#f_title",form).value=b.dataset.preset;$("#f_interval",form).value=b.dataset.iv;if(!$("#f_next",form).value)$("#f_next",form).value=today();save()});
+ $("[data-done]",S.el).onclick=()=>{save.flush();buzz(15);S.close();if(created&&!ex)toast(kind==="diary"?"日記を保存しました":"保存しました")};
+ const del=$("[data-del]",S.el);if(del)del.onclick=()=>confirmBox(S,"この記録を削除しますか？添付した写真・動画も削除されます。","削除する",async()=>{save.cancel();S.onClose=null;closeAllSheets();await Store.del(state.id);toast("削除しました")});
+ if(kind==="hospital"&&!ex&&meaningful(r))save();
+ const me=$("#mediaEdit",form);if(me)S._addFiles=setupMediaEditor(S,me,()=>state.media,m=>{state.media=m;save.flush()});
+ return S}
+function setupMediaEditor(S,box,get,set){const pending=[];
+ const draw=()=>{box.innerHTML=get().map((m,i)=>`<div class="m">${mediaEl(m)}${m.type==="video"?`<span class="play">${ic("playf")}</span>`:""}<button type="button" class="rm" data-rm="${i}" aria-label="削除">${ic("x")}</button></div>`).join("")+pending.map(p=>`<div class="m"><div class="prog">${esc(p.msg)}</div></div>`).join("");
+  Media.hydrate(box);$$("[data-rm]",box).forEach(b=>b.onclick=()=>{const ms=get().slice();const[m]=ms.splice(+b.dataset.rm,1);set(ms);draw();setTimeout(()=>Media.remove(m.ref),800)})};
+ let busy=Promise.resolve();
+ const addAll=async files=>{for(const f of files){const p={msg:"準備中"};pending.push(p);draw();
+  try{const m=await Media.save(f,msg=>{p.msg=msg;const el=$$(".prog",box)[pending.indexOf(p)];if(el)el.textContent=msg});set([...get(),m]);buzz(8)}catch{toast("保存できませんでした")}pending.splice(pending.indexOf(p),1);draw()}};
+ const addFiles=files=>{busy=busy.then(()=>addAll(files))};
+ [$("#mediaInput",S.el),$("#camInput",S.el)].forEach(inp=>inp&&onFileInput(inp,addFiles));bindPaste($("#mediaPaste",S.el),addFiles);draw();return addFiles}
+function confirmBox(S,msg,okLabel,onOk){const old=$(".confirm",S.el);if(old){old.remove();return}const c=document.createElement("div");c.className="confirm";
+ c.innerHTML=`<div style="font-weight:700">${esc(msg)}</div><div class="btns"><button class="btn ghost sm" data-no>やめる</button><button class="btn sm" style="background:var(--danger);box-shadow:0 3px 0 #B8323F" data-yes>${esc(okLabel)}</button></div>`;
+ $(".sb",S.el).append(c);c.scrollIntoView({behavior:"smooth",block:"end"});$("[data-no]",c).onclick=()=>c.remove();$("[data-yes]",c).onclick=onOk}
+
+/* ---------- detail ---------- */
+function openDetail(id){const r=Store.get(id);if(!r)return;if(r.kind==="hospital")return openHospitalDetail(r);
+ const kv=[];const add=(k,v)=>{if(v!==undefined&&v!==null&&v!==""&&!(Array.isArray(v)&&!v.length))kv.push([k,v])};let stats="";let body="";
+ if(r.kind==="diary"){body=r.text;add("天気",r.weather);
+  const s=[["体重",r.weight&&r.weight+"kg"],["体温",r.temp&&r.temp+"℃"],["食欲",r.appetite,r.appetite==="食べない"],["元気",r.energy,r.energy==="ぐったり"],["うんち",r.poop,r.poop==="下痢"],["おしっこ",r.pee,r.pee==="色が気になる"],["飲水",r.water],["ごはん",r.food&&r.food+"g"],["嘔吐",+r.vomit?r.vomit+"回":"",+r.vomit>0]].filter(x=>x[1]);
+  stats=s.length?`<div class="card" style="background:var(--mint-soft)"><div class="hint" style="font-weight:900;color:var(--mint-ink);margin-bottom:8px">体調チェック</div><div class="stat-grid">${s.map(([k,v,f])=>`<div class="s ${f?"flag":""}" style="background:#fff"><span>${k}</span><b>${esc(v)}</b></div>`).join("")}</div></div>`:"";add("お薬",r.medicine);add("気になる症状",r.symptoms)}
+ if(r.kind==="snap")body=r.caption;
+ if(r.kind==="walk"){add("時間",r.minutes&&r.minutes+"分");add("距離",r.distance&&r.distance+"km");add("出発",r.time);add("コース",r.course);add("メモ",r.note)}
+ if(r.kind==="visit"){add("病院",hospName(r.hospital));add("目的",r.purpose);add("症状",r.symptoms);add("診断",r.diagnosis);add("処置・処方",r.treatment);add("費用",r.cost&&yen(r.cost));add("体重",r.weight&&r.weight+"kg");add("次回予約",r.nextDate&&`${fmtDate(r.nextDate,{year:true})} ${r.nextTime||""} ${r.nextMemo||""}`.trim());add("メモ",r.memo)}
+ if(r.kind==="care"){add("次の予定日",r.next&&`${fmtDate(r.next,{year:true})}（${relDays(diffDays(today(),r.next))}）`);add("くり返し",(IVL.find(x=>x[0]===(r.interval||""))||[])[1]);add("前回実施日",r.lastDone&&fmtDate(r.lastDone,{year:true}));add("履歴",(r.history||[]).slice(-6).reverse().map(d=>fmtDate(d,{year:true,wd:false})).join("、"));add("メモ",r.memo)}
+ const media=r.media||[];const h=r.kind==="visit"&&r.hospital?Store.get(r.hospital):null;
+ const html=`<div class="detail"><div class="muted" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-weight:700">${kIcon(r,'style="width:34px;height:34px;border-radius:12px"')}${r.kind==="care"?"ケア予定":fmtDate(r.date,{year:true})}${r.time&&r.kind!=="walk"?" "+esc(r.time):""}${r.mood?" · "+MOODS.find(m=>m.v===r.mood).l:""}${isFlag(r)?' <span class="badge danger">要確認</span>':""}</div>
+  ${media.length?`<div class="gallery">${media.map((m,i)=>`<button class="m" data-mi="${i}">${mediaEl(m)}${m.type==="video"?`<span class="play">${ic("playf")}</span>`:""}</button>`).join("")}</div>`:""}
+  ${body?`<div class="text">${esc(body)}</div>`:""}${stats}
+  ${kv.length?`<div class="card"><dl class="kv">${kv.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></div>`:""}
+  ${(r.tags||[]).length?`<div class="chips">${r.tags.map(t=>`<button class="chip tag" data-tagsearch="${esc(t)}">#${esc(t)}</button>`).join("")}</div>`:""}
+  ${r.kind==="care"&&r.next?`<button class="btn block" data-cdone>${ic("check","sm")}やった！${r.interval?"（次回を自動で設定）":""}</button>`:""}
+  ${r.kind==="visit"&&r.nextDate?`<a class="btn ghost block" href="${esc(gcal(r))}" target="_blank" rel="noopener">${ic("cal","sm")}次回予約をGoogleカレンダーに追加</a>`:""}
+  ${h&&h.phone?`<a class="btn ghost block" href="${esc(telHref(h.phone))}">${ic("phone","sm")}${esc(h.name)}に電話</a>`:""}
+  <button class="btn ghost block" data-edit>${ic("edit","sm")}編集する</button></div>`;
+ openSheet({title:r.kind==="diary"?(r.title||"日記"):recTitle(r),body:html,full:media.length>0,onMount:S=>{
+  $("[data-edit]",S.el).onclick=()=>{S.close();openEditor(r.kind,r.id)};
+  $$("[data-mi]",S.el).forEach(b=>b.onclick=()=>openLightbox(media.map((m,j)=>({rec:r,m,i:j})),+b.dataset.mi));
+  $$("[data-tagsearch]",S.el).forEach(b=>b.onclick=()=>{closeAllSheets();openSearch({q:"#"+b.dataset.tagsearch})});
+  const cd=$("[data-cdone]",S.el);if(cd)cd.onclick=async()=>{const c=JSON.parse(JSON.stringify(r));const t=today();c.lastDone=t;c.history=[...(c.history||[]),t].slice(-40);
+   if(c.interval)c.next=addInterval(c.next<t?t:c.next,c.interval);else c.next="";await Store.put(c);S.close();buzz(25);toast(c.next?`えらい！次回は${fmtDate(c.next)}`:"完了にしました")}}})}
+function openDay(date){const rs=Store.list().filter(r=>r.date===date&&["diary","snap","walk","visit"].includes(r.kind));
+ openSheet({title:fmtDate(date,{year:true}),body:`<div class="stack" style="gap:12px">${rs.length?rs.map(entryCard).join(""):`<div class="card empty"><div class="hint">この日の記録はありません</div></div>`}<button class="btn block" data-newday>${ic("plus","sm")}この日の日記を書く</button></div>`,full:rs.length>1,
+  onMount:S=>{$$("[data-open]",S.el).forEach(b=>b.onclick=()=>openDetail(b.dataset.open));$("[data-newday]",S.el).onclick=()=>{S.close();openEditor("diary",null,{date,time:""})}}})}
+function gcal(v){const d=(v.nextDate||"").replace(/-/g,"");let dates;if(v.nextTime){const[hh,mm]=v.nextTime.split(":").map(Number);const e=new Date(2000,0,1,hh,mm+60);dates=`${d}T${pad(hh)}${pad(mm)}00/${d}T${pad(e.getHours())}${pad(e.getMinutes())}00`}
+ else dates=`${d}/${shiftDays(v.nextDate,1).replace(/-/g,"")}`;const h=Store.get(v.hospital);
+ return"https://calendar.google.com/calendar/render?"+new URLSearchParams({action:"TEMPLATE",text:`${dogName()} 通院${v.nextMemo?"（"+v.nextMemo+"）":""}`,dates,details:h&&h.phone?`電話 ${h.phone}`:"",location:h?[h.name,h.address].filter(Boolean).join(" "):""}).toString()}
+
+/* ---------- hospital detail (edit only from here) ---------- */
+function openHospitalDetail(h0){const S=openSheet({title:"病院の詳細",full:true,body:"",kind:"hdetail"});
+ const draw=()=>{const h=Store.get(h0.id);if(!h){S.close();return}const visits=Store.list("visit").filter(v=>v.hospital===h.id);const cost=visits.reduce((a,v)=>a+(+v.cost||0),0);
+  const book=safeUrl(h.booking),web=safeUrl(h.web);const next=visits.filter(v=>v.nextDate&&v.nextDate>=today()).sort((a,b)=>a.nextDate.localeCompare(b.nextDate))[0];
+  const kv=[];const add=(k,v)=>{if(v&&(!Array.isArray(v)||v.length))kv.push([k,v])};
+  add("住所",h.address?`<a href="${esc(mapHref(h))}" target="_blank" rel="noopener">${esc(h.address)}</a>`:"");
+  add("電話",h.phone?`<span style="user-select:all;font-family:var(--f-num);font-weight:600;font-size:16px">${esc(h.phone)}</span> <button class="chip" data-copy="${esc(h.phone)}">${ic("copy","sm")}コピー</button>`:"");
+  add("診療時間",esc(h.hours||""));add("休診日",Array.isArray(h.closed)&&h.closed.length?esc(h.closed.join("・")+"曜"):"");
+  add("Web予約",book?`<a href="${esc(book)}" target="_blank" rel="noopener">予約ページを開く</a>`:"");add("ホームページ",web?`<a href="${esc(web)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//,"").slice(0,40))}</a>`:"");
+  add("担当の先生",esc(h.doctor||""));add("診察券番号",esc(h.patientNo||""));add("メモ",esc(h.memo||""));
+  S.sb.innerHTML=`<div class="detail"><div class="hhead"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="badge" style="background:#fff;color:var(--yellow-ink)">${esc(h.type||"動物病院")}</span>${h.primary?'<span class="badge acc">かかりつけ</span>':""}${closedToday(h)?'<span class="badge danger">きょうは休診日かも</span>':""}</div><h3>${esc(h.name)}</h3>${next?`<div style="font-weight:900;color:var(--peach-ink)">次の予約：${fmtDate(next.nextDate)} ${esc(next.nextTime||"")}</div>`:""}</div>
+   <div class="actions"><a class="act primary" href="${h.phone?esc(telHref(h.phone)):"#"}" ${h.phone?"":'aria-disabled="true"'}>${ic("phone")}電話</a>
+   <a class="act" href="${esc(book||web||"#")}" target="_blank" rel="noopener" ${book||web?"":'aria-disabled="true"'}>${ic("cal")}${book?"Web予約":"Web"}</a>
+   <a class="act" href="${esc(mapHref(h))}" target="_blank" rel="noopener">${ic("pin")}地図</a><a class="act" href="${esc(routeHref(h))}" target="_blank" rel="noopener">${ic("route")}経路</a></div>
+   ${kv.length?`<div class="card"><dl class="kv">${kv.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl></div>`:`<div class="card hint">電話番号や診療時間は「編集する」から追加できます</div>`}
+   <div class="sec-h" style="margin:4px 2px -4px"><h2>通院の履歴</h2><span class="hint">${visits.length}回 · ${yen(cost)||"¥0"}</span></div>
+   <div class="card">${visits.length?`<div class="rows">${visits.map(v=>`<button class="row" data-open="${esc(v.id)}"><div class="body"><div class="t">${esc(v.purpose||"通院")}${v.diagnosis?" · "+esc(v.diagnosis):""}</div><div class="s">${fmtDate(v.date,{year:true})}</div></div>${v.cost?`<span class="badge">${yen(v.cost)}</span>`:""}</button>`).join("")}</div>`:'<div class="hint">まだ通院記録がありません</div>'}</div>
+   <button class="btn block" data-newvisit>${ic("plus","sm")}この病院の通院を記録</button>
+   <div style="display:flex;gap:8px"><button class="btn ghost block" data-edit>${ic("edit","sm")}編集する</button><button class="btn ghost" data-pri style="white-space:nowrap">${ic("star","sm")}${h.primary?"解除":"かかりつけ"}</button></div>
+   ${h.osm?`<div class="hint">検索データ © OpenStreetMap contributors</div>`:""}</div>`;
+  bindView(S.sb);$("[data-edit]",S.sb).onclick=()=>{const E=openEditor("hospital",h.id);const oc=E.onClose;E.onClose=()=>{oc&&oc();setTimeout(draw,50)}};
+  $("[data-newvisit]",S.sb).onclick=()=>{S.close();openEditor("visit",null,{hospital:h.id})};
+  $("[data-pri]",S.sb).onclick=async()=>{const x=JSON.parse(JSON.stringify(h));x.primary=!x.primary;await Store.put(x);draw()}};
+ draw();return S}
+
+/* ---------- hospital search (OpenStreetMap) ---------- */
+const OVERPASS=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://maps.mail.ru/osm/tools/overpass/api/interpreter"];
+const HCAT={vet:{l:"動物病院",q:'nwr["amenity"="veterinary"]',type:"動物病院"},er:{l:"夜間救急",q:'nwr["amenity"="veterinary"]',type:"夜間救急",filter:t=>/夜間|救急|24|emergency/i.test((t.name||"")+(t.opening_hours||""))},
+ groom:{l:"トリミング",q:'nwr["shop"="pet_grooming"];nwr["shop"="pet"]',type:"トリミング"},hotel:{l:"ペットホテル",q:'nwr["amenity"="animal_boarding"]',type:"ペットホテル"},run:{l:"ドッグラン",q:'nwr["leisure"="dog_park"]',type:"ドッグラン"}};
+async function fetchJSON(url,opt,ms=25000){const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),ms);try{const r=await fetch(url,{...opt,signal:ctl.signal});if(!r.ok)throw new Error("http "+r.status);return await r.json()}finally{clearTimeout(t)}}
+async function overpass(q){let last;for(const u of OVERPASS){try{return await fetchJSON(u,{method:"POST",body:"data="+encodeURIComponent(q),headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"}})}catch(e){last=e}}throw last}
+async function geocode(text){const j=await fetchJSON("https://nominatim.openstreetmap.org/search?"+new URLSearchParams({q:text,format:"jsonv2",limit:"5",countrycodes:"jp","accept-language":"ja"}));if(!j.length)throw{code:"notfound"};return j}
+function jpHours(s){if(!s)return"";return s.replace(/\bMo\b/g,"月").replace(/\bTu\b/g,"火").replace(/\bWe\b/g,"水").replace(/\bTh\b/g,"木").replace(/\bFr\b/g,"金").replace(/\bSa\b/g,"土").replace(/\bSu\b/g,"日").replace(/\bPH\b/g,"祝").replace(/\boff\b/g,"休").replace(/;\s*/g," / ")}
+function closedFromHours(s){if(!s)return[];const m=[...s.matchAll(/((?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*,\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))*)\s+(?:off|closed)/g)];const map={Su:"日",Mo:"月",Tu:"火",We:"水",Th:"木",Fr:"金",Sa:"土"};return[...new Set(m.flatMap(x=>x[1].split(/\s*,\s*/).map(d=>map[d])))]}
+function osmAddr(t){if(t["addr:full"])return t["addr:full"];const a=[t["addr:province"],t["addr:city"],t["addr:county"],t["addr:suburb"],t["addr:quarter"],t["addr:neighbourhood"]].filter(Boolean).join("");
+ const n=[t["addr:block_number"],t["addr:housenumber"]].filter(Boolean).join("-");return(a+(n?" "+n:"")).trim()}
+function osmToHospital(el,cat,center){const t=el.tags||{};const lat=el.lat??el.center?.lat,lon=el.lon??el.center?.lon;
+ return{osm:`${el.type}/${el.id}`,name:t["name:ja"]||t.name||"",type:cat.type,phone:t.phone||t["contact:phone"]||"",web:t.website||t["contact:website"]||t.url||"",hours:jpHours(t.opening_hours||""),closed:closedFromHours(t.opening_hours||""),
+  address:osmAddr(t),lat,lon,dist:center&&lat!=null?haversine(center.lat,center.lon,lat,lon):null}}
+function openHospitalSearch(){const st={cat:LS.get("hcat","vet"),radius:LS.get("hrad",3),center:null,label:"",results:[],busy:false,msg:""};
+ const S=openSheet({title:"病院・お店をさがす",full:true,kind:"hsearch",body:`<div class="stack" style="gap:12px">
+  <div class="sbox">${ic("search","sm")}<input id="hq" type="text" placeholder="駅名・地名・病院名（例：三軒茶屋）" enterkeyhint="search"><button class="btn sm" id="hgo">検索</button></div>
+  <button class="btn ghost block" id="hloc">${ic("locate","sm")}現在地の近くでさがす</button>
+  <div class="opts" id="hcat">${Object.entries(HCAT).map(([k,c])=>`<label class="opt"><input type="radio" name="hcat" value="${k}" ${st.cat===k?"checked":""}><span>${c.l}</span></label>`).join("")}</div>
+  <div class="seg sub" id="hrad">${[1,3,5,10].map(r=>`<button data-r="${r}" aria-pressed="${st.radius===r}">${r}km以内</button>`).join("")}</div>
+  <div id="hres"></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:8px"><div class="hint">見つからないときは</div><a class="btn ghost block sm" id="gmap" href="https://www.google.com/maps/search/${encodeURIComponent("動物病院")}" target="_blank" rel="noopener">${ic("pin","sm")}Googleマップでさがす</a><button class="btn ghost block sm" id="hmanual">${ic("edit","sm")}手入力で登録する</button></div>
+  <div class="hint" style="text-align:center">検索データ © OpenStreetMap contributors（登録されていない病院もあります）</div></div>`});
+ const el=S.el,q=$("#hq",el);
+ const drawRes=()=>{const box=$("#hres",el);const reg=Store.list("hospital");
+  if(st.busy){box.innerHTML=`<div class="card empty"><div class="ill" style="width:70px;height:70px;animation:wig 1s infinite">${DOG_ILL}</div><div class="hint">${esc(st.msg||"さがしています…")}</div></div>`;return}
+  if(st.msg&&!st.results.length){box.innerHTML=`<div class="card empty"><div class="hint">${esc(st.msg)}</div></div>`;return}
+  if(!st.results.length){box.innerHTML="";return}
+  box.innerHTML=`<div class="hint" style="margin:0 4px 8px">${esc(st.label)} の近く ・ ${st.results.length}件</div><div class="stack" style="gap:10px">${st.results.map((r,i)=>{const done=reg.find(h=>h.osm===r.osm||h.name===r.name);
+   return`<div class="result"><div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="t">${esc(r.name)}</div><div class="s">${r.dist!=null?`<b>${r.dist<1?Math.round(r.dist*1000)+"m":r.dist.toFixed(1)+"km"}</b> · `:""}${esc(r.address||"住所情報なし")}</div>${r.hours?`<div class="s">${ic("clock","sm")} ${esc(r.hours)}</div>`:""}${r.phone?`<div class="s">${ic("phone","sm")} ${esc(r.phone)}</div>`:""}</div></div>
+   <div class="btns">${done?`<button class="btn sm ok" data-openh="${esc(done.id)}" style="background:var(--mint);box-shadow:0 3px 0 var(--mint-ink)">${ic("check","sm")}登録済み・ひらく</button>`:`<button class="btn sm" data-reg="${i}">${ic("plus","sm")}登録する</button>`}
+   <a class="btn ghost sm" href="${esc(mapHref(r))}" target="_blank" rel="noopener">${ic("pin","sm")}地図</a>${r.phone?`<a class="btn ghost sm" href="${esc(telHref(r.phone))}">${ic("phone","sm")}電話</a>`:""}</div></div>`}).join("")}</div>`;
+  $$("[data-reg]",box).forEach(b=>b.onclick=async()=>{const r=st.results[+b.dataset.reg];const{dist,...rest}=r;const doc={id:uid(),kind:"hospital",...rest,primary:!Store.list("hospital").length};await Store.put(doc);buzz(25);toast(`「${r.name}」を登録しました`);drawRes()});
+  $$("[data-openh]",box).forEach(b=>b.onclick=()=>openHospitalDetail({id:b.dataset.openh}))};
+ const search=async center=>{st.center=center;st.busy=true;st.results=[];st.msg="近くの"+HCAT[st.cat].l+"をさがしています…";drawRes();
+  const cat=HCAT[st.cat];const R=st.radius*1000;const parts=cat.q.split(";").map(x=>`${x}(around:${R},${center.lat},${center.lon});`).join("");
+  try{const j=await overpass(`[out:json][timeout:25];(${parts});out center tags 80;`);
+   let res=(j.elements||[]).filter(e=>e.tags&&(e.tags.name||e.tags["name:ja"])).map(e=>osmToHospital(e,cat,center));if(cat.filter)res=res.filter((r,i)=>cat.filter((j.elements.find(e=>`${e.type}/${e.id}`===r.osm)||{}).tags||{}));
+   const seen=new Set();res=res.filter(r=>{const k=r.name;if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>(a.dist??99)-(b.dist??99)).slice(0,40);
+   st.results=res;st.msg=res.length?"":`${st.radius}km以内に見つかりませんでした。範囲を広げるか、Googleマップでさがしてください`}
+  catch(e){st.msg="検索サービスにつながりませんでした。通信状態を確認して、もう一度お試しください"}
+  st.busy=false;drawRes()};
+ const byText=async()=>{const text=q.value.trim();if(!text){q.focus();return}LS.set("hq",text);st.busy=true;st.msg="場所をさがしています…";st.results=[];drawRes();
+  $("#gmap",el).href="https://www.google.com/maps/search/"+encodeURIComponent(text+" "+HCAT[st.cat].l);
+  try{const g=await geocode(text);const vet=g.find(x=>x.type==="veterinary"||x.category==="amenity"&&x.type==="veterinary");const p=vet||g[0];st.label=(p.name||text);await search({lat:+p.lat,lon:+p.lon})}
+  catch(e){st.busy=false;st.msg=e&&e.code==="notfound"?`「${text}」が見つかりませんでした。駅名や市区町村名で試してください`:"検索サービスにつながりませんでした。通信状態を確認してください";drawRes()}};
+ $("#hgo",el).onclick=byText;q.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();q.blur();byText()}});q.value=LS.get("hq","");
+ $("#hloc",el).onclick=()=>{if(!navigator.geolocation){toast("この端末では現在地が使えません");return}st.busy=true;st.msg="現在地を確認しています…";drawRes();
+  navigator.geolocation.getCurrentPosition(p=>{st.label="現在地";search({lat:p.coords.latitude,lon:p.coords.longitude})},err=>{st.busy=false;st.msg=err.code===1?"位置情報の利用が許可されていません。駅名や地名で検索してください":"現在地を取得できませんでした。駅名や地名で検索してください";drawRes()},{enableHighAccuracy:false,timeout:15000,maximumAge:300000})};
+ $$("#hcat input",el).forEach(i=>i.onchange=()=>{st.cat=i.value;LS.set("hcat",st.cat);if(st.center)search(st.center)});
+ $$("#hrad [data-r]",el).forEach(b=>b.onclick=()=>{st.radius=+b.dataset.r;LS.set("hrad",st.radius);$$("#hrad [data-r]",el).forEach(x=>x.setAttribute("aria-pressed",x===b));if(st.center)search(st.center)});
+ $("#hmanual",el).onclick=()=>{S.close();openEditor("hospital",null,{type:HCAT[st.cat].type})};
+ S._search=search;return S}
+
+/* ---------- lightbox ---------- */
+function openLightbox(items,idx){if(!items||!items.length)return;let i=idx;const el=document.createElement("div");el.className="lbx";el.setAttribute("role","dialog");el.setAttribute("aria-label","写真");document.body.append(el);
+ const draw=()=>{const x=items[i];const r=Store.get(x.rec.id)||x.rec;const m=(r.media||[])[x.i]||x.m;const deco=(settings().decor||[]).includes(m.ref);
+  el.innerHTML=`<div class="bar"><button data-x aria-label="閉じる">${ic("x")}</button><div class="t"><b>${esc(recTitle(r))}</b><div style="opacity:.7">${fmtDate(r.date,{year:true})} · ${i+1}/${items.length}</div></div></div>
+  <div class="stage">${mediaEl(m,{controls:true})}${items.length>1?`<button class="nv p" data-p aria-label="前へ">${ic("left")}</button><button class="nv n" data-n aria-label="次へ">${ic("right")}</button>`:""}</div>
+  <div class="foot"><button data-fav class="${m.fav?"on":""}">${ic("fav","sm")}${m.fav?"お気に入り":"お気に入りに"}</button>${m.type==="image"?`<button data-deco class="${deco?"on":""}">${ic("star","sm")}${deco?"デコに使用中":"デコに使う"}</button><button data-hero>${ic("home","sm")}メイン写真に</button>`:""}<button data-rec>${ic("note","sm")}記録</button></div>`;
+  Media.hydrate(el);$("[data-x]",el).onclick=close;const p=$("[data-p]",el),n=$("[data-n]",el);if(p)p.onclick=()=>{i=(i-1+items.length)%items.length;draw()};if(n)n.onclick=()=>{i=(i+1)%items.length;draw()};
+  $("[data-fav]",el).onclick=async()=>{const rr=JSON.parse(JSON.stringify(Store.get(r.id)));rr.media[x.i].fav=!rr.media[x.i].fav;await Store.put(rr);items[i]={...x,rec:rr,m:rr.media[x.i]};buzz(10);draw()};
+  const db=$("[data-deco]",el);if(db)db.onclick=async()=>{const s=settings();const d=new Set(s.decor||[]);d.has(m.ref)?d.delete(m.ref):d.add(m.ref);s.decor=[...d].slice(-24);await Store.put(s);buzz(10);toast(d.has(m.ref)?"アプリのデコに使います":"デコから外しました");draw()};
+  const hb=$("[data-hero]",el);if(hb)hb.onclick=async()=>{const s=settings();s.hero=m.ref;UI.heroIdx=0;await Store.put(s);toast("メイン写真にしました")};
+  $("[data-rec]",el).onclick=()=>{close();openDetail(r.id)}};
+ function close(){el.remove()}el._close=close;
+ let sx=null;el.addEventListener("touchstart",e=>{if(e.target.closest(".stage"))sx=e.touches[0].clientX},{passive:true});
+ el.addEventListener("touchend",e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;if(Math.abs(dx)>50&&items.length>1){i=(i+(dx<0?1:-1)+items.length)%items.length;draw()}});draw()}
+
+/* ---------- search & summary ---------- */
+function openSearch(init={}){const st={q:init.q||"",kinds:[],period:"all",flag:false};
+ const kindOpts=[["diary","日記・体調"],["snap","スナップ"],["walk","お散歩"],["visit","通院"],["care","ケア"],["hospital","病院"]];
+ const S=openSheet({title:"検索・まとめ",full:true,body:`<div class="stack" style="gap:12px">
+  <div class="sbox">${ic("search","sm")}<input id="sq" type="text" placeholder="キーワード・#タグ・病名・お薬など" value="${esc(st.q)}" enterkeyhint="search"><button class="icon-btn flat" id="sqx" aria-label="クリア" style="width:34px;height:34px">${ic("x","sm")}</button></div>
+  <div class="opts" id="sk">${kindOpts.map(([k,l])=>`<label class="opt"><input type="checkbox" value="${k}"><span>${l}</span></label>`).join("")}<label class="opt"><input type="checkbox" id="sflag"><span>要確認の体調だけ</span></label></div>
+  <div class="seg sub" id="sp" style="overflow-x:auto">${[["all","全期間"],["7","1週間"],["30","1か月"],["90","3か月"],["365","1年"],["custom","期間指定"]].map(([k,l])=>`<button data-p="${k}" aria-pressed="${k==="all"}">${l}</button>`).join("")}</div>
+  <div class="two" id="scustom" hidden><input class="in" type="date" id="sfrom" aria-label="開始日"><input class="in" type="date" id="sto" aria-label="終了日"></div>
+  <div id="stags" class="sugg"></div><div id="sres"></div></div>`});
+ const el=S.el;const q=$("#sq",el);
+ $("#stags",el).innerHTML=allTags().slice(0,14).map(t=>`<button type="button" data-t="${esc(t)}">#${esc(t)}</button>`).join("");
+ $$("[data-t]",el).forEach(b=>b.onclick=()=>{q.value="#"+b.dataset.t;run()});$("#sqx",el).onclick=()=>{q.value="";run();q.focus()};
+ q.addEventListener("input",debounce(run,180));$$("#sk input",el).forEach(c=>c.onchange=run);
+ $$("#sp [data-p]",el).forEach(b=>b.onclick=()=>{$$("#sp [data-p]",el).forEach(x=>x.setAttribute("aria-pressed",x===b));st.period=b.dataset.p;$("#scustom",el).hidden=st.period!=="custom";run()});
+ $("#sfrom",el).onchange=run;$("#sto",el).onchange=run;
+ function range(){const t=today();if(st.period==="custom")return[$("#sfrom",el).value,$("#sto",el).value];if(st.period==="all")return["",""];return[shiftDays(t,-(+st.period)+1),t]}
+ function run(){st.q=q.value.trim();st.kinds=$$("#sk input[value]:checked",el).map(c=>c.value);st.flag=$("#sflag",el).checked;const[from,to]=range();
+  const terms=st.q.toLowerCase().split(/[\s　]+/).filter(Boolean);
+  const res=Store.list(st.kinds.length?st.kinds:["diary","snap","walk","visit","care","hospital"]).filter(r=>{if(r.kind!=="hospital"&&r.kind!=="care"){if(from&&r.date<from)return false;if(to&&r.date>to)return false}
+   if(st.flag&&!isFlag(r))return false;if(!terms.length)return true;const hay=haystack(r);return terms.every(tm=>tm.startsWith("#")?(r.tags||[]).some(x=>x.toLowerCase()===tm.slice(1)):hay.includes(tm))});
+  const any=terms.length||st.kinds.length||st.period!=="all"||st.flag;
+  $("#sres",el).innerHTML=any?summaryHTML(res,from,to)+(res.length?groupByMonth(res.filter(r=>r.date),r=>searchRow(r,terms))+res.filter(r=>!r.date).map(r=>searchRow(r,terms)).join(""):`<div class="empty"><h3>見つかりませんでした</h3><div class="hint">言葉を短くするか、期間を広げてみてください</div></div>`)
+   :`<div class="card"><div class="hint" style="font-weight:900;margin-bottom:6px">見返しのヒント</div><div class="hint" style="line-height:1.9;color:var(--ink-2)">・「嘔吐」「耳」「下痢」で症状の経過をまとめて確認<br>・#タグ を押すと同じタグの記録だけを表示<br>・期間を選ぶと、体重の変化・通院回数・医療費を自動で集計<br>・「要確認の体調だけ」で受診前の確認に</div></div>
+   <div class="card" style="margin-top:12px;display:flex;flex-direction:column;gap:8px"><button class="btn block sm" data-qs="pdf">${ic("pdf","sm")}獣医さんに見せるPDFをつくる</button><button class="btn ghost block sm" data-qs="vet">${ic("copy","sm")}直近2週間の体調をコピー</button><button class="btn ghost block sm" data-qs="flag30">${ic("heart","sm")}直近1か月の「要確認」を表示</button></div>`;
+  Media.hydrate($("#sres",el));$$("#sres [data-open]",el).forEach(b=>b.onclick=()=>openDetail(b.dataset.open));
+  const cp=$("#sres [data-copysum]",el);if(cp)cp.onclick=()=>copyText(summaryText(res,from,to),"まとめをコピーしました");
+  const pd=$("#sres [data-pdfsum]",el);if(pd)pd.onclick=()=>openReport({from:from||firstDate(),to:to||today()});
+  $$("#sres [data-qs]",el).forEach(b=>b.onclick=()=>{const k=b.dataset.qs;if(k==="vet")return copyText(vetSummary(14),"2週間分の体調まとめをコピーしました");if(k==="pdf")return openReport();
+   if(k==="flag30"){$("#sflag",el).checked=true;$('#sp [data-p="30"]',el).click()}})}
+ run();if(!init.q)setTimeout(()=>q.focus(),250)}
+const firstDate=()=>{const l=Store.list(["diary","walk","visit","snap"]);return l.length?l[l.length-1].date:today()};
+function haystack(r){return[recTitle(r),r.text,r.title,r.caption,r.symptoms,r.diagnosis,r.treatment,r.memo,r.note,r.medicine,r.course,r.purpose,r.appetite,r.energy,r.poop,r.pee,r.weather,r.name,r.address,r.doctor,r.type,
+ r.hospital&&hospName(r.hospital),...(r.tags||[]).map(t=>"#"+t),r.mood&&(MOODS.find(m=>m.v===r.mood)||{}).l,+r.vomit?"嘔吐":"",r.weight&&r.weight+"kg",hasHealth(r)?"体調":""].filter(Boolean).join(" ").toLowerCase()}
+function hl(s,terms){let h=esc(s);for(const t of terms){if(t.startsWith("#")||!t)continue;const re=new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g,"\\$&"),"gi");h=h.replace(re,m=>`<mark>${m}</mark>`)}return h}
+function searchRow(r,terms){const txt=recText(r);let snip=txt;const t0=terms.find(t=>!t.startsWith("#"));if(t0&&txt){const i=txt.toLowerCase().indexOf(t0);if(i>20)snip="…"+txt.slice(i-14)}
+ return`<button class="hcard" data-open="${esc(r.id)}" style="margin-bottom:8px">${kIcon(r)}<div class="body"><div class="t" style="font-size:14.5px">${hl(recTitle(r),terms)}</div><div class="s">${r.date?fmtDate(r.date)+" · ":""}${KIND[r.kind].l}${snip?" · "+hl(snip.slice(0,80),terms):""}</div></div>${isFlag(r)?'<span class="badge danger">要確認</span>':""}</button>`}
+function summarize(res){const ws=res.filter(r=>r.weight&&(r.kind==="diary"||r.kind==="visit")).map(r=>({date:r.date,v:+r.weight})).sort((a,b)=>a.date.localeCompare(b.date));
+ return{n:res.length,visits:res.filter(r=>r.kind==="visit").length,cost:res.filter(r=>r.kind==="visit").reduce((a,r)=>a+(+r.cost||0),0),flags:res.filter(isFlag).length,vomit:res.reduce((a,r)=>a+(r.kind==="diary"?+r.vomit||0:0),0),
+  media:res.reduce((a,r)=>a+(r.media?r.media.length:0),0),w0:ws[0],w1:ws[ws.length-1]}}
+function summaryHTML(res,from,to){const s=summarize(res);const wd=s.w0&&s.w1&&s.w0!==s.w1?(s.w1.v-s.w0.v):null;
+ return`<div class="card" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap"><div><div class="hint" style="font-weight:900">まとめ</div><div class="hint">${from||to?`${from?fmtDate(from,{year:true,wd:false}):"最初"} 〜 ${to?fmtDate(to,{year:true,wd:false}):"今日"}`:"全期間"}</div></div><div style="display:flex;gap:6px"><button class="btn ghost sm" data-copysum>${ic("copy","sm")}コピー</button><button class="btn sm" data-pdfsum>${ic("pdf","sm")}PDF</button></div></div>
+ <div class="sum"><div class="s"><span>該当する記録</span><b>${s.n}<small>件</small></b></div>${s.w1?`<div class="s"><span>体重${wd!=null?"の変化":""}</span><b>${s.w1.v}<small>kg</small></b>${wd!=null?`<div class="delta" style="color:${wd>0?"var(--warn)":"var(--ok)"}">${wd>0?"+":""}${wd.toFixed(2)}kg</div>`:""}</div>`:`<div class="s"><span>写真・動画</span><b>${s.media}<small>点</small></b></div>`}
+ <div class="s"><span>通院</span><b>${s.visits}<small>回</small></b>${s.cost?`<div class="hint num">${yen(s.cost)}</div>`:""}</div><div class="s"><span>要確認の体調</span><b style="color:${s.flags?"var(--danger)":"inherit"}">${s.flags}<small>件</small></b>${s.vomit?`<div class="hint">嘔吐 計${s.vomit}回</div>`:""}</div></div></div>`}
+function summaryText(res,from,to){const s=summarize(res);const L=[`【${dogName()}の記録まとめ】${from||to?`${from||"最初"}〜${to||today()}`:"全期間"}`,`記録 ${s.n}件／通院 ${s.visits}回${s.cost?`（${yen(s.cost)}）`:""}／要確認の体調 ${s.flags}件`];
+ if(s.w1)L.push(`体重 ${s.w0&&s.w0!==s.w1?`${s.w0.v}kg → `:""}${s.w1.v}kg`);L.push("");
+ res.filter(r=>r.date).slice().reverse().forEach(r=>{const parts=[recTitle(r),r.kind==="diary"?healthLine(r):"",r.symptoms,r.diagnosis,r.treatment,r.text&&r.text.replace(/\n/g," ").slice(0,80),r.note,r.memo].filter(Boolean);L.push(`${r.date} ${KIND[r.kind].l}: ${[...new Set(parts)].join(" / ")}`)});return L.join("\n")}
+function vetSummary(days){const p=profile();const t=today();const from=shiftDays(t,-(days-1));const rs=Store.list(["diary","visit"]).filter(r=>r.date>=from&&r.date<=t).reverse();
+ const L=[`【${dogName()} 体調まとめ（${from}〜${t}）】`];const info=[p.breed,p.sex,ageText(p.birthday),p.neutered?"避妊・去勢済み":"",p.allergy&&"アレルギー: "+p.allergy].filter(Boolean);if(info.length)L.push(info.join(" / "));
+ const ws=weightSeries(from,t);if(ws.length)L.push(`体重: ${ws.map(w=>`${w.date.slice(5)} ${w.v}kg`).join("、")}`);
+ const h=rs.filter(r=>r.kind==="diary"&&hasHealth(r));if(h.length){const c=f=>h.filter(f).length;L.push(`食欲低下 ${c(r=>r.appetite==="少なめ"||r.appetite==="食べない")}回 / 軟便・下痢 ${c(r=>r.poop==="やわらかめ"||r.poop==="下痢")}回 / 嘔吐 計${h.reduce((a,r)=>a+(+r.vomit||0),0)}回 / ぐったり ${c(r=>r.energy==="ぐったり")}回`)}
+ L.push("");rs.forEach(r=>{if(r.kind==="diary"&&!hasHealth(r))return;const a=r.kind==="diary"?[r.time,r.weight&&r.weight+"kg",r.temp&&r.temp+"℃",r.appetite&&"食欲"+r.appetite,r.energy,r.poop&&"便"+r.poop,r.pee&&r.pee!=="ふつう"&&"尿"+r.pee,+r.vomit&&"嘔吐"+r.vomit+"回",r.medicine&&"薬:"+r.medicine,r.symptoms]:[hospName(r.hospital),r.purpose,r.diagnosis,r.treatment];
+  L.push(`${r.date.slice(5)} ${r.kind==="visit"?"[通院] ":""}${a.filter(Boolean).join(" / ")}`)});if(!rs.length)L.push("この期間の記録はありません");return L.join("\n")}
+
+/* ================= PDF report for the vet ================= */
+const LIB_H2C="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",LIB_JSPDF="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+function openReport(init={}){const t=today();const o={from:init.from||shiftDays(t,-13),to:init.to||t,note:LS.get("rnote",""),health:true,visits:true,care:true,text:true,photos:true,walk:false,preset:init.from?"custom":"14"};
+ const S=openSheet({title:"獣医さんに見せるPDF",full:true,body:`<div class="stack" style="gap:14px">
+  <div class="card" style="background:var(--pink-soft);box-shadow:none"><div style="font-weight:900;color:var(--pink-ink)">診察の前に、体調の記録をまとめて見せられます</div><div class="hint" style="color:var(--ink-2)">体重グラフ・毎日の体調表・通院とお薬の履歴・写真を、A4のPDFにします。スマホの画面で見せても、印刷しても使えます。</div></div>
+  <div class="f"><div class="lb">期間</div><div class="seg sub" id="rp">${[["14","2週間"],["30","1か月"],["90","3か月"],["180","半年"],["365","1年"],["custom","期間指定"]].map(([k,l])=>`<button data-p="${k}" aria-pressed="${o.preset===k}">${l}</button>`).join("")}</div>
+   <div class="two" style="margin-top:8px"><input class="in" type="date" id="rfrom" value="${o.from}" aria-label="開始日"><input class="in" type="date" id="rto" value="${o.to}" aria-label="終了日"></div><div class="hint" id="rcount"></div></div>
+  ${F.area("rnote","先生に相談したいこと（1ページ目に載ります）",o.note,"例：3日前から右耳をかゆがる。夜に2回吐いた。食欲は普段どおり。",3)}
+  <div class="f"><div class="lb">のせる内容</div><div style="display:flex;flex-direction:column;gap:8px">
+   ${[["health","毎日の体調（体重・食欲・うんちなど）"],["visits","通院記録"],["care","お薬・予防ケア"],["text","日記の本文"],["photos","写真（最大12枚）"],["walk","お散歩のまとめ"]].map(([k,l])=>`<label class="switch">${l}<input type="checkbox" data-o="${k}" ${o[k]?"checked":""}></label>`).join("")}</div></div>
+  <button class="btn block" id="rgo">${ic("pdf","sm")}PDFをつくる</button><div id="rout"></div></div>`});
+ const el=S.el;const upd=()=>{o.from=$("#rfrom",el).value;o.to=$("#rto",el).value;const n=Store.list(["diary","visit","walk","snap"]).filter(r=>r.date>=o.from&&r.date<=o.to).length;$("#rcount",el).textContent=o.from&&o.to?`${fmtDate(o.from,{year:true,wd:false})}〜${fmtDate(o.to,{year:true,wd:false})} ・ この期間の記録 ${n}件`:""};
+ $$("#rp [data-p]",el).forEach(b=>b.onclick=()=>{$$("#rp [data-p]",el).forEach(x=>x.setAttribute("aria-pressed",x===b));if(b.dataset.p!=="custom"){$("#rto",el).value=today();$("#rfrom",el).value=shiftDays(today(),-(+b.dataset.p)+1)}upd()});
+ $("#rfrom",el).onchange=()=>{$$("#rp [data-p]",el).forEach(x=>x.setAttribute("aria-pressed",x.dataset.p==="custom"));upd()};$("#rto",el).onchange=$("#rfrom",el).onchange;
+ $$("[data-o]",el).forEach(c=>c.onchange=()=>{o[c.dataset.o]=c.checked});upd();
+ $("#rgo",el).onclick=async()=>{o.note=$("#f_rnote",el).value.trim();LS.set("rnote",o.note);if(!o.from||!o.to||o.from>o.to){toast("期間を正しく選んでください");return}
+  const btn=$("#rgo",el),out=$("#rout",el);btn.disabled=true;const prog=t=>{out.innerHTML=`<div class="card empty"><div class="ill" style="width:70px;height:70px;animation:wig 1s infinite">${DOG_ILL}</div><div class="hint">${esc(t)}</div></div>`};
+  try{prog("準備しています…");await loadScript(LIB_H2C);await loadScript(LIB_JSPDF);
+   prog("ページをつくっています…");const{root,pages}=await buildReport(o);
+   const{jsPDF}=window.jspdf;const pdf=new jsPDF({unit:"pt",format:"a4",compress:true});const thumbs=[];
+   for(let i=0;i<pages.length;i++){prog(`PDFに書き出しています… ${i+1}/${pages.length}ページ`);const c=await window.html2canvas(pages[i],{scale:2,backgroundColor:"#ffffff",useCORS:true,logging:false});
+    const img=c.toDataURL("image/jpeg",.9);if(i)pdf.addPage();pdf.addImage(img,"JPEG",0,0,595.28,841.89);thumbs.push(c.toDataURL("image/jpeg",.5))}
+   root.remove();const name=`${dogName()}_健康記録_${o.from}_${o.to}.pdf`;const blob=pdf.output("blob");const file=new File([blob],name,{type:"application/pdf"});
+   const url=URL.createObjectURL(blob);
+   out.innerHTML=`<div class="card" style="display:flex;flex-direction:column;gap:12px"><div style="font-weight:900">${ic("check","sm")} できました（${pages.length}ページ・${fmtBytes(blob.size)}）</div><div class="thumbs-pdf">${thumbs.map(t=>`<img src="${t}" alt="">`).join("")}</div>
+    <button class="btn block" id="rshare">${ic("share","sm")}共有・保存する</button><a class="btn ghost block" href="${url}" target="_blank" rel="noopener">${ic("pdf","sm")}PDFをひらく</a><a class="btn ghost block" href="${url}" download="${esc(name)}">${ic("dl","sm")}ダウンロード</a>
+    <div class="hint">「共有・保存する」から、ファイルに保存・LINEやメールで送る・印刷ができます</div></div>`;
+   $("#rshare",el).onclick=async()=>{try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}}catch(e){if(e&&e.name==="AbortError")return}
+    const a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove()};
+   buzz(30);out.scrollIntoView({behavior:"smooth",block:"start"})}
+  catch(e){console.error(e);out.innerHTML=`<div class="card"><b>PDFをつくれませんでした</b><div class="hint">はじめて使うときはインターネット接続が必要です。通信状態を確認して、もう一度お試しください。</div></div>`;$$(".rp-root").forEach(x=>x.remove())}
+  btn.disabled=false}}
+async function buildReport(o){const root=document.createElement("div");root.className="rp-root rp";document.body.append(root);
+ const p=profile(),s=settings();const pages=[];let body;const inR=r=>r.date&&r.date>=o.from&&r.date<=o.to;
+ const newPage=()=>{const pg=document.createElement("div");pg.className="rp-page";pg.innerHTML=`<div class="rp-head"><b>${esc(dogName())} 健康記録レポート</b><span>期間 ${fmtJ(o.from)} 〜 ${fmtJ(o.to)}</span></div><div class="rp-body"></div><div class="rp-foot"><span>わんこ手帖 ・ 作成日 ${fmtJ(today())}</span><span class="pn"></span></div>`;root.append(pg);pages.push(pg);body=$(".rp-body",pg)};
+ const over=()=>body.scrollHeight>body.clientHeight+1;
+ const add=html=>{const t=document.createElement("div");t.innerHTML=html.trim();const el=t.firstElementChild;body.append(el);if(over()&&body.children.length>1){el.remove();newPage();body.append(el)}return el};
+ const table=(title,head,rows)=>{if(!rows.length)return;const mk=(withTitle)=>add(`<div>${withTitle?`<div class="rp-h">${title}</div>`:`<div class="rp-h" style="font-size:12px">${title}（つづき）</div>`}<table class="t"><colgroup>${head.map(h=>`<col style="width:${h[1]}">`).join("")}</colgroup><thead><tr>${head.map(h=>`<th>${h[0]}</th>`).join("")}</tr></thead><tbody></tbody></table></div>`);
+  let wrap=mk(true),tb=$("tbody",wrap);for(const[html,cls]of rows){const tr=document.createElement("tr");if(cls)tr.className=cls;tr.innerHTML=html;tb.append(tr);if(over()){tr.remove();if(!tb.children.length){wrap.remove();newPage();wrap=mk(true)}else{newPage();wrap=mk(false)}tb=$("tbody",wrap);tb.append(tr)}}};
+ const diaries=Store.list("diary").filter(inR).reverse(),visits=Store.list("visit").filter(inR).reverse(),walks=Store.list("walk").filter(inR);
+ const hd=diaries.filter(hasHealth);const pri=Store.list("hospital").find(h=>h.primary);const lastW=weightSeries("",o.to).pop();
+ const refs=[s.hero];if(o.photos)diaries.concat(visits,Store.list("snap").filter(inR)).forEach(r=>(r.media||[]).forEach(m=>{if(m.type==="image")refs.push(m.ref)}));await Promise.all(refs.filter(Boolean).map(r=>Media.load(r)));
+ newPage();
+ const kv=[["最新の体重",lastW?`${lastW.v}kg（${fmtJ(lastW.date)}）`:""],["アレルギー",p.allergy],["常用薬",p.meds],["いつものごはん",p.food],["マイクロチップ",p.chip],["かかりつけ",pri&&[pri.name,pri.phone].filter(Boolean).join("　")],["ペット保険",p.insurance]].filter(x=>x[1]);
+ add(`<div class="rp-prof"><div class="rp-photo">${s.hero&&Media.url(s.hero)?`<img src="${esc(Media.url(s.hero))}">`:""}</div><div style="flex:1;min-width:0"><div class="rp-name">${esc(dogName())}${p.kana?`<span style="font-size:13px;color:#9B8A95;margin-left:8px">${esc(p.kana)}</span>`:""}</div>
+  <div class="rp-sub">${[p.breed,[p.sex,p.neutered?"避妊・去勢済み":""].filter(Boolean).join("・"),p.birthday&&`${ageText(p.birthday)}（${fmtJ(p.birthday)}生まれ）`,p.color].filter(Boolean).map(esc).join("　/　")}</div>
+  ${kv.length?`<table class="rp-kv">${kv.map(([k,v])=>`<tr><td>${k}</td><td>${esc(v)}</td></tr>`).join("")}</table>`:""}</div></div>`);
+ if(o.note)add(`<div class="rp-note"><b>先生に相談したいこと</b>${esc(o.note)}</div>`);
+ const ws=weightSeries(o.from,o.to);const c=f=>hd.filter(f).length;const wd=ws.length>1?ws[ws.length-1].v-ws[0].v:null;
+ add(`<div><div class="rp-h">この期間のまとめ</div><div class="rp-tiles">
+  <div class="rp-tile"><span>体調を記録した日</span><b>${new Set(hd.map(r=>r.date)).size}日</b></div>
+  <div class="rp-tile"><span>体重${wd!=null?"の変化":""}</span><b>${ws.length?ws[ws.length-1].v+"kg":"―"}</b>${wd!=null?`<span style="color:${wd>0?"#B86E00":"#1E9B74"}">${wd>0?"+":""}${wd.toFixed(2)}kg</span>`:""}</div>
+  <div class="rp-tile ${c(r=>r.appetite==="少なめ"||r.appetite==="食べない")?"flag":""}"><span>食欲低下</span><b>${c(r=>r.appetite==="少なめ"||r.appetite==="食べない")}回</b></div>
+  <div class="rp-tile ${c(r=>r.poop==="やわらかめ"||r.poop==="下痢")?"flag":""}"><span>軟便・下痢</span><b>${c(r=>r.poop==="やわらかめ"||r.poop==="下痢")}回</b></div>
+  <div class="rp-tile ${hd.some(r=>+r.vomit)?"flag":""}"><span>嘔吐（合計）</span><b>${hd.reduce((a,r)=>a+(+r.vomit||0),0)}回</b></div>
+  <div class="rp-tile ${c(r=>r.energy==="ぐったり")?"flag":""}"><span>ぐったり</span><b>${c(r=>r.energy==="ぐったり")}回</b></div>
+  <div class="rp-tile"><span>通院</span><b>${visits.length}回</b></div><div class="rp-tile"><span>お散歩</span><b>${walks.length}回</b></div></div></div>`);
+ if(ws.length>1)add(`<div><div class="rp-h">体重の推移</div>${chartSvg(ws,190,{W:700,colors:{line:"#FF6F9C",grid:"#F0DFE6",text:"#9B8A95"}})}</div>`);
+ const flags=diaries.filter(isFlag);if(flags.length)table("気になる体調があった日",[["日付","13%"],["内容","87%"]],flags.map(r=>[`<td>${fmtJ(r.date)}${r.time?"<br>"+esc(r.time):""}</td><td>${[r.appetite==="食べない"&&"食欲なし",r.energy==="ぐったり"&&"ぐったり",r.poop==="下痢"&&"下痢",+r.vomit&&`嘔吐${r.vomit}回`,r.pee==="色が気になる"&&"尿の色",r.symptoms].filter(Boolean).map(x=>`<span class="fl">${esc(x)}</span>`).join("　")}</td>`]));
+ if(o.health&&hd.length){const F2=(v,bad)=>v?(bad?`<span class="fl">${esc(v)}</span>`:esc(v)):"";
+  table("毎日の体調",[["日付","10%"],["体重","7%"],["体温","7%"],["食欲","8%"],["元気","8%"],["便","9%"],["尿","8%"],["飲水","7%"],["嘔吐","6%"],["お薬","13%"],["症状・メモ","17%"]],
+   hd.map(r=>[`<td>${fmtJ(r.date).slice(5)}${r.time?`<br><span style="color:#9B8A95">${esc(r.time)}</span>`:""}</td><td>${r.weight?esc(r.weight)+"kg":""}</td><td>${r.temp?esc(r.temp)+"℃":""}</td><td>${F2(r.appetite,r.appetite==="食べない"||r.appetite==="少なめ")}</td><td>${F2(r.energy,r.energy==="ぐったり")}</td><td>${F2(r.poop,r.poop==="下痢"||r.poop==="やわらかめ")}</td><td>${F2(r.pee,r.pee==="色が気になる")}</td><td>${F2(r.water,r.water==="多い"||r.water==="少ない")}</td><td>${+r.vomit?`<span class="fl">${esc(r.vomit)}回</span>`:""}</td><td>${esc(r.medicine||"")}</td><td>${esc(r.symptoms||"")}</td>`,isFlag(r)?"flag":""]))}
+ if(o.visits&&visits.length)table("通院記録",[["日付","11%"],["病院","17%"],["目的","9%"],["症状・診断","22%"],["処置・処方","29%"],["費用","12%"]],visits.map(v=>[`<td>${fmtJ(v.date)}</td><td>${esc(hospName(v.hospital))}</td><td>${esc(v.purpose||"")}</td><td>${esc([v.symptoms,v.diagnosis].filter(Boolean).join(" → "))}</td><td>${esc([v.treatment,v.memo].filter(Boolean).join(" / "))}</td><td>${esc(yen(v.cost))}</td>`]));
+ if(o.care){const cs=Store.list("care");if(cs.length)table("お薬・予防ケア",[["項目","26%"],["前回","14%"],["次回","14%"],["くり返し","12%"],["期間内に実施した日","34%"]],cs.map(cr=>[`<td>${esc(cr.title)}</td><td>${fmtJ(cr.lastDone)}</td><td>${fmtJ(cr.next)}</td><td>${esc((IVL.find(x=>x[0]===(cr.interval||""))||["",""])[1])}</td><td>${esc((cr.history||[]).filter(d=>d>=o.from&&d<=o.to).map(fmtJ).join("、"))}</td>`]))}
+ if(o.walk&&walks.length){const min=walks.reduce((a,r)=>a+(+r.minutes||0),0),km=walks.reduce((a,r)=>a+(+r.distance||0),0);const days=diffDays(o.from,o.to)+1;
+  add(`<div><div class="rp-h">お散歩</div><div class="rp-tiles"><div class="rp-tile"><span>回数</span><b>${walks.length}回</b></div><div class="rp-tile"><span>合計時間</span><b>${min}分</b></div><div class="rp-tile"><span>合計距離</span><b>${+km.toFixed(1)}km</b></div><div class="rp-tile"><span>1日あたり</span><b>${Math.round(min/days)}分</b></div></div></div>`)}
+ if(o.text){const td=diaries.filter(r=>r.text||r.title);if(td.length){td.forEach((r,i)=>add(`<div>${i?"":`<div class="rp-h">日記</div>`}<div class="rp-diary"><b>${fmtJ(r.date)}${r.mood?"　"+MOODS.find(m=>m.v===r.mood).l:""}${r.title?"　"+esc(r.title):""}</b>${r.text?`<p>${esc(r.text.length>400?r.text.slice(0,400)+"…":r.text)}</p>`:""}</div></div>`))}}
+ if(o.photos){const items=[];diaries.concat(visits,Store.list("snap").filter(inR).reverse()).sort((a,b)=>(isFlag(b)?1:0)-(isFlag(a)?1:0)||a.date.localeCompare(b.date)).forEach(r=>(r.media||[]).forEach(m=>{if(m.type==="image"&&Media.url(m.ref)&&items.length<12)items.push({r,m})}));
+  if(items.length){for(let i=0;i<items.length;i+=3)add(`<div>${i?"":`<div class="rp-h">写真</div>`}<div class="rp-photos">${items.slice(i,i+3).map(({r,m})=>`<figure><img src="${esc(Media.url(m.ref))}"><figcaption>${fmtJ(r.date)}　${esc((r.kind==="visit"?"通院 ":"")+(r.title||r.caption||r.symptoms||"").slice(0,24))}</figcaption></figure>`).join("")}</div></div>`)}}
+ if(!diaries.length&&!visits.length)add(`<div class="rp-note" style="border-color:#E8D9E0;background:#FBF6F8">この期間の記録はありません。</div>`);
+ await Promise.all($$("img",root).map(im=>im.decode?im.decode().catch(()=>{}):Promise.resolve()));try{await document.fonts.ready}catch{}
+ pages.forEach((pg,i)=>$(".pn",pg).textContent=`${i+1} / ${pages.length}`);return{root,pages}}
+
+/* ================= profile / settings / decor / backup ================= */
+function openProfile(){const p=JSON.parse(JSON.stringify(profile()));const s=settings();
+ const S=openSheet({title:"うちの子のプロフィール",full:true,right:`<span class="saved" id="savedState">自動保存</span>`,body:`<form class="form" id="pf" onsubmit="return false">
+  <label for="heroInput" class="pol" style="position:relative;display:block;width:70%;margin:10px auto 4px;transform:rotate(-2deg);cursor:pointer"><div class="ph">${s.hero?photoEl(s.hero):`<div style="width:60%">${DOG_ILL}</div>`}</div><div class="cap" style="font-weight:900;color:var(--accent-ink)">${ic("camera","sm")} メイン写真を変える</div></label>
+  ${pasteZone("heroPaste","写真をコピーして、ここを長押し →「ペースト」でも設定できます")}
+  ${s.hero?`<div class="f"><label for="f_heroPos">写真の位置（上下）</label><input type="range" id="f_heroPos" min="0" max="100" value="${esc(s.heroPos??40)}"></div>`:""}
+  ${F.text("name","名前",p.name,"例：むぎ")}${F.text("kana","よみがな・愛称",p.kana,"例：むーちゃん")}${F.text("breed","犬種",p.breed,"例：トイプードル")}
+  ${F.opts("size","体の大きさ（年齢換算に使います）",SIZE,p.size||"small")}${F.opts("sex","性別",["男の子","女の子"],p.sex)}${F.sw("neutered","避妊・去勢済み",p.neutered)}
+  <div class="two">${F.date("birthday","誕生日",p.birthday)}${F.date("adoptedOn","うちの子記念日",p.adoptedOn)}</div>
+  ${F.text("color","毛色",p.color)}${F.text("chip","マイクロチップ番号",p.chip,"15桁","text",'inputmode="numeric"')}${F.text("license","鑑札番号",p.license)}
+  ${F.text("insurance","ペット保険（会社・証券番号）",p.insurance)}${F.text("food","いつものごはん",p.food,"例：〇〇 小粒 1日60g")}${F.text("allergy","アレルギー・苦手なもの",p.allergy)}${F.text("meds","常用しているお薬",p.meds)}${F.area("memo","性格・メモ",p.memo,"例：雷が苦手、しっぽを触られるのが嫌い",3)}
+  <button type="button" class="btn ghost block" data-card>${ic("id","sm")}緊急カードを見る</button></form>`,onClose:()=>save.flush()});
+ const form=$("#pf",S.el),saved=$("#savedState",S.el);
+ const save=debounce(async()=>{const r=collect(form,{...p});r.id="profile";r.kind="profile";saved.textContent="保存中…";try{await Store.put(r);Object.assign(p,r);saved.textContent="保存しました"}catch{saved.textContent="未保存"}},500);
+ const savePos=debounce(async v=>{const x=settings();x.heroPos=+v;await Store.put(x)},600);
+ form.addEventListener("input",e=>{if(e.target.id==="f_heroPos"){document.documentElement.style.setProperty("--hero-pos",`50% ${e.target.value}%`);savePos(e.target.value);return}saved.textContent="編集中…";save()});
+ form.addEventListener("change",e=>{if(e.target.id!=="f_heroPos")save()});bindPaste($("#heroPaste",S.el),fs=>setHeroFile(fs[0]));
+ $("[data-card]",S.el).onclick=()=>{save.flush();openEmergencyCard()}}
+function openEmergencyCard(){const p=profile();const hs=Store.list("hospital");const pri=hs.find(h=>h.primary)||hs[0];const er=hs.find(h=>h.type==="夜間救急");const w=weightSeries().pop();
+ const rows=[["名前",p.name],["犬種",p.breed],["性別",[p.sex,p.neutered?"避妊・去勢済み":""].filter(Boolean).join(" / ")],["生年月日",p.birthday&&`${fmtDate(p.birthday,{year:true,wd:false})}（${ageText(p.birthday)}）`],["最新の体重",w?`${w.v}kg（${fmtDate(w.date,{wd:false})}）`:""],
+  ["毛色",p.color],["マイクロチップ",p.chip],["鑑札番号",p.license],["アレルギー",p.allergy],["常用薬",p.meds],["ごはん",p.food],["ペット保険",p.insurance],["かかりつけ",pri&&[pri.name,pri.phone].filter(Boolean).join(" ")],["夜間救急",er&&[er.name,er.phone].filter(Boolean).join(" ")],["メモ",p.memo]].filter(r=>r[1]);
+ const vac=Store.list("care").filter(c=>/ワクチン|狂犬病/.test(c.title||"")&&c.lastDone).map(c=>[c.title,"前回 "+fmtDate(c.lastDone,{year:true,wd:false})]);const all=[...rows,...vac];
+ const text=`【${dogName()} 緊急カード】\n`+all.map(([k,v])=>`${k}: ${v}`).join("\n");
+ openSheet({title:"緊急カード",full:true,body:`<div class="detail"><div class="card" style="display:flex;gap:14px;align-items:center;background:var(--pink-soft)"><div class="avatar" style="width:72px;height:72px">${settings().hero?photoEl(settings().hero):ic("paw","lg")}</div><div><h2 style="font-size:23px">${esc(p.name||"名前未登録")}</h2><div class="hint">ペットシッター・預け先・災害時に見せる情報</div></div></div>
+  <div class="card">${all.length?`<dl class="kv">${all.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`:'<div class="hint">プロフィールと病院を登録すると、ここにまとまります</div>'}</div>
+  <button class="btn block" data-cp>${ic("copy","sm")}テキストでコピー</button><div class="hint">スクリーンショットを撮っておくと、圏外でも見せられます</div></div>`,onMount:S=>$("[data-cp]",S.el).onclick=()=>copyText(text)})}
+function openDecor(){const s=settings();const d=s.decor||[];
+ const S=openSheet({title:"デコ写真",kind:"decor",body:`<div class="stack" style="gap:12px"><div class="hint" style="color:var(--ink-2)">ホームのポラロイド、見出しのシール、吹き出し、通知などに、ここの写真が飾られます。選ばないときは、お気に入りと最近の写真をおまかせで使います。</div>
+  <div class="deco-grid">${d.map((r,i)=>`<div class="m">${photoEl(r)}<button class="rm" data-rmd="${i}" aria-label="外す">${ic("x")}</button></div>`).join("")}<label for="decoInput" role="button" tabindex="0" aria-label="写真を追加">${ic("plus","lg")}</label></div>
+  <div class="hint">アルバムの写真を開いて「デコに使う」を押しても追加できます（最大24枚）</div>${d.length?`<button class="btn ghost block sm" data-clr>おまかせに戻す</button>`:""}</div>`,
+  onMount:S=>{$$("[data-rmd]",S.el).forEach(b=>b.onclick=async()=>{const x=settings();const arr=[...(x.decor||[])];const[r]=arr.splice(+b.dataset.rmd,1);x.decor=arr;await Store.put(x);S.close();openDecor();setTimeout(()=>Media.remove(r),500)});
+   const c=$("[data-clr]",S.el);if(c)c.onclick=async()=>{const x=settings();x.decor=[];await Store.put(x);S.close();openDecor()}}})}
+function openSettings(){const s=settings();const n=Store.list().filter(r=>r.kind!=="profile"&&r.kind!=="settings").length;const lb=LS.get("lastBackup",null);
+ const S=openSheet({title:"設定",body:`<div class="stack" style="gap:14px">
+  <button class="hcard" data-prof><span class="avatar">${s.hero?photoEl(s.hero):ic("paw")}</span><div class="body"><div class="t">${esc(profile().name||"プロフィールを登録")}</div><div class="s">名前・誕生日・写真・アレルギーなど</div></div>${ic("right","sm")}</button>
+  <button class="hcard" data-deco><span class="kicon c-yellow">${ic("star")}</span><div class="body"><div class="t">デコ写真</div><div class="s">${(s.decor||[]).length?(s.decor.length+"枚を飾っています"):"おまかせ（お気に入りと最近の写真）"}</div></div>${ic("right","sm")}</button>
+  <div class="card"><div class="hint" style="font-weight:900;margin-bottom:10px">テーマカラー</div><div class="swatches">${PALETTES.map(([l,c])=>`<button class="swatch" style="background:${c}" data-acc="${c}" aria-label="${l}" aria-pressed="${(s.accent||PALETTES[0][1])===c}"></button>`).join("")}</div></div>
+  <div class="card"><div class="hint" style="font-weight:900;margin-bottom:6px">保存先</div><div style="font-weight:900">${Local.ok?"このスマホの中（自動保存）":"一時保存（閉じると消えます）"}</div>
+   <div class="hint" style="margin-top:4px">${Local.ok?`記録 ${n}件。入力した内容と写真・動画は、その場でこのスマホに保存されます。外部に送られることはありません。`:"このブラウザでは保存できません。プライベートブラウズの場合は通常のタブで開いてください。"}</div><div class="hint" id="usage" style="margin-top:6px"></div></div>
+  <div class="card"><div class="hint" style="font-weight:900;margin-bottom:6px">バックアップ</div><div class="hint" style="margin-bottom:10px">機種変更やデータ削除に備えて、月に1回ほど保存してください。${lb?`前回：${fmtDate(lb.slice(0,10),{year:true,wd:false})}`:"まだバックアップしていません。"}</div>
+   <div style="display:flex;flex-direction:column;gap:8px"><button class="btn block sm" data-export="image">${ic("dl","sm")}記録と写真をバックアップ</button><button class="btn ghost block sm" data-export="all">${ic("dl","sm")}動画も含めてバックアップ（容量大）</button>
+   <button class="btn ghost block sm" data-import>${ic("up","sm")}バックアップから復元</button><input type="file" id="impFile" class="vh" accept="application/json,.json,text/plain" tabindex="-1" aria-hidden="true"></div><div class="hint" id="bkState" style="margin-top:8px"></div></div>
+  ${isStandalone()?"":`<button class="hcard" data-install><span class="kicon c-mint">${ic("home")}</span><div class="body"><div class="t">ホーム画面に追加</div><div class="s">アプリのように開けて、記録も消えにくくなります</div></div>${ic("right","sm")}</button>`}
+  <div class="card"><div style="display:flex;flex-direction:column;gap:8px"><button class="btn ghost block sm" data-card>${ic("id","sm")}緊急カード</button><button class="btn ghost block sm" data-rep>${ic("pdf","sm")}獣医さんに見せるPDF</button>
+   ${[...Store.recs.values()].some(r=>r.sample)?`<button class="btn ghost block sm" data-clear>サンプルデータを消す</button>`:`<button class="btn ghost block sm" data-sample>サンプルデータで試す</button>`}<button class="btn ghost block sm" data-welcome>${ic("spark","sm")}はじめかたを見る</button></div></div>
+  <div class="hint" style="text-align:center">わんこ手帖 バージョン ${APP_VERSION}</div></div>`,
+  onMount:S=>{$$("[data-acc]",S.el).forEach(b=>b.onclick=async()=>{const x=settings();x.accent=b.dataset.acc;$$("[data-acc]",S.el).forEach(y=>y.setAttribute("aria-pressed",y===b));buzz(8);await Store.put(x)});
+   $("[data-prof]",S.el).onclick=()=>{S.close();openProfile()};$("[data-welcome]",S.el).onclick=()=>{S.close();openWelcome()};const ins=$("[data-install]",S.el);if(ins)ins.onclick=()=>{S.close();installApp()};$("[data-deco]",S.el).onclick=()=>{S.close();openDecor()};$("[data-rep]",S.el).onclick=()=>{S.close();openReport()};
+   $$("[data-export]",S.el).forEach(b=>b.onclick=()=>exportBackup(b.dataset.export,$("#bkState",S.el)));
+   $("[data-import]",S.el).onclick=()=>$("#impFile",S.el).click();onFileInput($("#impFile",S.el),fs=>importBackup(fs[0],$("#bkState",S.el)));
+   $("[data-card]",S.el).onclick=()=>{S.close();openEmergencyCard()};const sa=$("[data-sample]",S.el);if(sa)sa.onclick=()=>{S.close();insertSample()};const cl=$("[data-clear]",S.el);if(cl)cl.onclick=()=>{S.close();clearSample()};
+   (async()=>{try{const e=await navigator.storage.estimate();const pp2=navigator.storage.persisted?await navigator.storage.persisted():false;const el=$("#usage",S.el);if(el)el.textContent=`使用中 ${fmtBytes(e.usage||0)}${e.quota?` / 空き目安 ${fmtBytes(e.quota)}`:""}${pp2?" · 消えにくい保存に設定済み":""}`}catch{}})()}})}
+async function exportBackup(mode,stateEl){const set=t=>{if(stateEl)stateEl.textContent=t};set("バックアップを作成中…");const recs=[...Store.recs.values()];const media={};let skipped=0;
+ const refs=new Map();for(const r of recs){(r.media||[]).forEach(m=>refs.set(m.ref,m.type));if(r.kind==="settings"){if(r.hero)refs.set(r.hero,"image");(r.decor||[]).forEach(x=>refs.set(x,"image"))}}
+ let i=0;for(const[ref,type]of refs){i++;if(!ref.startsWith("l:"))continue;if(type==="video"&&mode!=="all"){skipped++;continue}set(`写真・動画を書き出し中… ${i}/${refs.size}`);try{const b=await Local.getBlob(ref.slice(2));if(b)media[ref]=await blobToDataURL(b)}catch{}}
+ const json=JSON.stringify({app:"wanko-techo",version:3,exportedAt:new Date().toISOString(),records:recs,media});const name=`wanko-techo-${today()}${mode==="all"?"-full":""}.json`;const file=new File([json],name,{type:"application/json"});let done=false;
+ try{if(navigator.canShare&&navigator.canShare({files:[file]})&&/iPhone|iPad|Android/i.test(navigator.userAgent)){await navigator.share({files:[file],title:name});done=true}}catch(e){if(e&&e.name==="AbortError"){set("キャンセルしました");return}}
+ if(!done){const u=URL.createObjectURL(file);const a=document.createElement("a");a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000)}
+ LS.set("lastBackup",new Date().toISOString());set(`${name}（${fmtBytes(json.length)}）を書き出しました。${skipped?`動画${skipped}件は含めていません。`:""}「ファイル」アプリやGoogleドライブに保存しておくと安心です。`);toast("バックアップを書き出しました")}
+async function importBackup(file,stateEl){if(!file)return;const set=t=>{if(stateEl)stateEl.textContent=t};set("読み込み中…");
+ try{const d=JSON.parse(await file.text());const recs=Array.isArray(d)?d:d.records;if(!Array.isArray(recs))throw 0;let n=0,m=0;
+  for(const[ref,url]of Object.entries(d.media||{})){if(!ref.startsWith("l:")||typeof url!=="string")continue;try{const b=await(await fetch(url)).blob();await Local.putBlob(ref.slice(2),b);Media.urls.delete(ref);m++}catch{}}
+  for(let r of recs){if(!r||!r.id||!r.kind||!/^[A-Za-z0-9_\-.~:@+]+$/.test(r.id))continue;if(r.kind==="health")r={...r,kind:"diary"};const cur=Store.get(r.id);if(cur&&(cur.updatedAt||0)>=(r.updatedAt||0))continue;await Store.put(r);n++}
+  set(`記録 ${n}件、写真・動画 ${m}件を復元しました。`);toast("復元しました");scheduleRender()}catch{set("");toast("わんこ手帖のバックアップファイルを選んでください")}}
+
+/* ================= sample data ================= */
+async function insertSample(){const d=k=>shiftDays(today(),-k);const H=uid(),H2=uid();
+ const recs=[{id:H,kind:"hospital",name:"（例）さくら動物病院",type:"動物病院",primary:true,phone:"03-0000-0000",hours:"9:00–12:00 / 16:00–19:00",closed:["水"],address:"東京都世田谷区",booking:"https://example.com",memo:"駐車場2台。予約優先。"},
+  {id:H2,kind:"hospital",name:"（例）夜間救急動物医療センター",type:"夜間救急",phone:"03-0000-1111",hours:"20:00–翌5:00"},
+  {kind:"care",title:"フィラリア予防薬",next:d(-5),interval:"m1",lastDone:d(25),history:[d(25)]},{kind:"care",title:"混合ワクチン",next:d(-40),interval:"y1",lastDone:d(325)},{kind:"care",title:"爪切り",next:d(1),interval:"w2"},
+  {kind:"visit",date:d(12),hospital:H,purpose:"診察",symptoms:"右耳をよくかく",diagnosis:"外耳炎",treatment:"点耳薬 1日2回 7日分",cost:"4800",weight:"5.32",nextDate:d(-9),nextTime:"10:30",nextMemo:"再診",tags:["耳"]},
+  {kind:"walk",date:d(0),time:"07:10",minutes:"35",distance:"2.1",course:"川沿い〜公園"},{kind:"walk",date:d(1),time:"18:20",minutes:"25",distance:"1.4"},{kind:"walk",date:d(2),time:"07:00",minutes:"40",distance:"2.6",course:"公園一周"}];
+ const w=[5.40,5.38,5.35,5.32,5.30,5.28,5.31,5.27];const texts=["","雨でお散歩に行けず、おもちゃで遊んだ日。","耳の薬にも慣れてきた。ごほうびを覚えて、自分から耳を出すように。","","朝ごはんの後に1回吐いた。そのあとはけろっとしている。","","","はじめてのドッグラン。柴犬の子と追いかけっこして大はしゃぎ。"];
+ const titles=["","雨の日","お薬がんばってる","","","","","はじめてのドッグラン"];const moods=["calm","sleepy","happy","calm","sad","happy","great","great"];
+ [20,17,14,12,9,6,3,0].forEach((k,i)=>recs.push({kind:"diary",date:d(k),time:"08:00",title:titles[i],text:texts[i],mood:moods[i],weather:i===1?"雨":"晴れ",weight:String(w[i]),appetite:i===4?"少なめ":"しっかり",energy:"元気",poop:i===5?"やわらかめ":"良好",pee:"ふつう",vomit:i===4?"1":"",symptoms:i===4?"朝ごはんの後に1回吐いた":"",medicine:i>=2&&i<=4?"点耳薬":"",tags:i===7?["ドッグラン","はじめて"]:i===2?["耳"]:[]}));
+ for(const r of recs){r.id=r.id||uid();r.sample=true;if(!r.date&&r.kind!=="hospital"&&r.kind!=="care")r.date=today();await Store.put(r).catch(()=>{})}
+ if(!profile().name)await Store.put({...profile(),name:"むぎ",breed:"トイプードル",size:"small",sex:"男の子",birthday:shiftDays(today(),-(3*365+40)),adoptedOn:shiftDays(today(),-(3*365-60)),allergy:"鶏肉",food:"小粒ドライ 1日60g",sample:true});
+ toast("サンプルデータを入れました")}
+async function clearSample(){for(const r of[...Store.recs.values()])if(r.sample)await Store.del(r.id);toast("サンプルデータを消しました")}
+
+/* ================= first run ================= */
+function openWelcome(){LS.set("welcomed",true);
+ openSheet({title:"ようこそ、わんこ手帖へ",full:true,body:`<div class="stack" style="gap:14px">
+  <div style="display:flex;justify-content:center"><div class="pol" style="position:relative;width:52%;transform:rotate(-3deg)"><div class="ph"><div style="width:70%">${DOG_ILL}</div></div><div class="cap" style="font-weight:900">うちの子の毎日を</div></div></div>
+  <div class="hint" style="text-align:center;color:var(--ink-2);font-size:14px">日記・体調・写真・病院を、このスマホの中にまとめて残せます。</div>
+  <div class="steps">
+   <div class="step"><span class="no">1</span><div><b>うちの子を登録</b><span class="hint">名前・誕生日・写真を入れると、年齢や記念日を自動で数えます</span></div></div>
+   <div class="step"><span class="no">2</span><div><b>ホーム画面に追加</b><span class="hint">${ENV.ios?"Safariの共有ボタン →「ホーム画面に追加」":"Chromeの︙ →「アプリをインストール」"}。アイコンから開くと、アプリのように使えます</span></div></div>
+   <div class="step"><span class="no">3</span><div><b>毎日ちょっとずつ記録</b><span class="hint">真ん中の＋ボタンから、日記・体調・写真・お散歩をすぐ残せます</span></div></div>
+   <div class="step"><span class="no">4</span><div><b>病院では「獣医さんに見せるPDF」</b><span class="hint">好きな期間の体調・体重・通院記録をまとめて見せられます</span></div></div></div>
+  <div class="card" style="background:var(--mint-soft);box-shadow:none"><div class="hint" style="color:var(--ink-2)">記録はこのスマホの中だけに保存され、外部には送られません。機種変更に備えて、ときどき「設定 → バックアップ」をしてください。</div></div>
+  <button class="btn block" data-w1>${ic("paw","sm")}うちの子を登録する</button>${isStandalone()?"":`<button class="btn ghost block" data-w2>${ic("home","sm")}ホーム画面に追加する</button>`}<button class="btn ghost block" data-w3>まずはサンプルで試す</button></div>`,
+  onMount:S=>{$("[data-w1]",S.el).onclick=()=>{S.close();openProfile()};const w2=$("[data-w2]",S.el);if(w2)w2.onclick=()=>{S.close();installApp()};$("[data-w3]",S.el).onclick=()=>{S.close();insertSample()}}})}
+
+/* ================= confetti ================= */
+function confetti(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;const c=document.createElement("canvas");c.className="confetti";document.body.append(c);const ctx=c.getContext("2d");
+ const W=c.width=innerWidth*devicePixelRatio,H=c.height=innerHeight*devicePixelRatio;const cols=[getComputedStyle(document.documentElement).getPropertyValue("--accent").trim(),"#FFC23D","#3CCB9F","#5AB2FF","#A784FF","#FF9466"];
+ const ps=Array.from({length:120},()=>({x:Math.random()*W,y:-Math.random()*H*.4,vx:(Math.random()-.5)*3,vy:2+Math.random()*4,r:4+Math.random()*7,a:Math.random()*6,c:cols[Math.floor(Math.random()*cols.length)],paw:Math.random()<.25}));let t=0;
+ (function f(){ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy*devicePixelRatio;p.a+=.08;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.fillStyle=p.c;
+  if(p.paw){ctx.beginPath();ctx.ellipse(0,3,p.r*.7,p.r*.6,0,0,7);ctx.fill();[[-.8,-.5],[-.3,-1.1],[.3,-1.1],[.8,-.5]].forEach(([a,b])=>{ctx.beginPath();ctx.arc(a*p.r,b*p.r,p.r*.28,0,7);ctx.fill()})}else ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore()});if(++t<210)requestAnimationFrame(f);else c.remove()})()}
+
+/* ================= boot ================= */
+async function boot(){
+ try{await Local.open();const all=await Local.all();for(const r of all){if(r.kind==="health"){r.kind="diary";try{await Local.put(r)}catch{}}Store.recs.set(r.id,r)}}catch{}
+ try{if(navigator.storage&&navigator.storage.persist&&!(await navigator.storage.persisted()))navigator.storage.persist().catch(()=>{})}catch{}
+ UI._keepScroll=false;render();badgeCheck();registerSW();
+ if(!LS.get("welcomed",false)&&!profile().name&&Store.recs.size===0&&!ENV.inApp)setTimeout(openWelcome,400);
+}
+boot();
+</script>
+</body>
+</html>
