@@ -350,6 +350,20 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .conf i:nth-child(3n){background:#1F9D74}.conf i:nth-child(3n+1){background:var(--faint);border-radius:50%;width:10px;height:10px}
 @keyframes boom{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 80px)) rotate(var(--r))}}
 
+/* 追加カード */
+.step{display:flex;gap:12px;align-items:flex-start}
+.step .no{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:12px;font-weight:800;display:grid;place-items:center;margin-top:1px}
+.step .sb2{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.step .sb2>b{font-size:14.5px}
+.step .hscroll{margin:0 -16px 0 -52px;padding-left:52px}
+.confirm{border-radius:18px;padding:12px;background:var(--bg);animation:fade .25s ease}
+.confirm{display:grid;grid-template-columns:minmax(0,1fr)}.confirm input{background:var(--surface);min-width:0}
+.confirm .field{background:var(--surface)}
+.cth{width:48px;height:48px;border-radius:12px;flex:none}.cth>span{font-size:22px}
+details.more{border-top:1px solid var(--line);padding-top:10px}
+details.more summary{font-size:12.5px;color:var(--sub);font-weight:700;cursor:pointer;list-style:none}
+details.more summary::before{content:"＋ "}details.more[open] summary::before{content:"－ "}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -493,7 +507,7 @@ const gsearch=q=>'https://www.google.com/search?q='+encodeURIComponent(q);
 const ICONS=[[/神社|宮|稲荷|大社/,'⛩️'],[/寺|院|観音|大仏/,'🛕'],[/城/,'🏯'],[/タワー|ツリー/,'🗼'],[/空港/,'✈️'],[/駅/,'🚉'],[/港|フェリー/,'⛴️'],
  [/動物園|サファリ/,'🦁'],[/水族館/,'🐠'],[/美術館|ギャラリー/,'🖼️'],[/博物館|資料館|記念館/,'🏛️'],[/遊園地|花やしき|ランド|パーク/,'🎡'],[/植物園|庭園|ガーデン/,'🌸'],
  [/公園|緑地/,'🌳'],[/温泉|湯|スパ|サウナ|銭湯/,'♨️'],[/海|ビーチ|浜/,'🏖️'],[/山|岳|峠/,'⛰️'],[/滝/,'💧'],[/湖|池/,'🛶'],[/橋/,'🌉'],[/展望|スカイ/,'🔭'],
- [/ホテル|旅館|宿|イン$|ゲストハウス/,'🏨'],[/市場|朝市/,'🐟'],[/牧場|ファーム/,'🐄'],[/球場|スタジアム|アリーナ/,'🏟️'],[/映画|シネマ/,'🎬'],[/カラオケ/,'🎤'],
+ [/ホテル|旅館|民宿|宿泊|ゲストハウス|^宿/,'🏨'],[/市場|朝市/,'🐟'],[/牧場|ファーム/,'🐄'],[/球場|スタジアム|アリーナ/,'🏟️'],[/映画|シネマ/,'🎬'],[/カラオケ/,'🎤'],
  [/ラーメン|らーめん|拉麺|中華そば|つけ麺/,'🍜'],[/そば|蕎麦|うどん/,'🍲'],[/寿司|鮨|すし/,'🍣'],[/焼肉|焼き肉|ホルモン/,'🥩'],[/焼鳥|焼き鳥|やきとり|串/,'🍢'],
  [/カレー/,'🍛'],[/ピザ|ピッツァ/,'🍕'],[/バーガー/,'🍔'],[/餃子|中華|飯店/,'🥟'],[/天ぷら|天麩羅/,'🍤'],[/もんじゃ|お好み焼|たこ焼/,'🥘'],[/うなぎ|鰻/,'🐟'],[/ステーキ/,'🥩'],
  [/居酒屋|酒場|水産|大衆/,'🏮'],[/バー|BAR|Bar|パブ/,'🍸'],[/ビール|ブルワリー/,'🍺'],[/ワイン/,'🍷'],[/カフェ|珈琲|コーヒー|喫茶|COFFEE|Coffee|スターバックス/,'☕'],
@@ -608,14 +622,7 @@ function renderStock(){
   const p=P(),areas=[...new Set(p.spots.map(s=>s.area).filter(Boolean))],genres=[...new Set(p.spots.map(s=>s.genre).filter(Boolean))];
   if(ui.fArea2&&!areas.includes(ui.fArea2))ui.fArea2='';if(ui.fGenre2&&!genres.includes(ui.fGenre2))ui.fGenre2='';
   const list=p.spots.filter(s=>(!ui.fArea2||s.area===ui.fArea2)&&(!ui.fGenre2||s.genre===ui.fGenre2)).slice().reverse();
-  let h=`<div class="card search-card">
-    <div class="ttl">${I.search}エリア × ジャンルで探す</div>
-    <div class="field">${I.pin}<input id="fArea" data-f="fArea" placeholder="駅名・地名（例：新宿駅）" value="${esc(ui.fArea)}" list="areaList" enterkeyhint="search"><button class="ibtn" data-act="here" aria-label="現在地">${I.loc}</button></div>
-    <div class="hscroll">${GENRES.filter(g=>g.q).map(g=>`<button class="chip ${ui.fGenre===g.k?'on':''}" data-act="fGenre" data-g="${g.k}">${g.e} ${g.k}</button>`).join('')}</div>
-    <div class="seg">${RADII.map(([v,l])=>`<button class="${ui.fRad===v?'on':''}" data-act="fRad" data-v="${v}">半径 ${l}</button>`).join('')}</div>
-    <button class="btn pri block" data-act="find">${I.search}この条件で探す</button>
-    ${resultsHTML()}
-  </div>
+  let h=addCardHTML()+`
   <div class="sec-head"><h2>候補ストック<span>${p.spots.length}</span></h2><button class="btn sm" data-act="newSpot">${I.plus}手入力</button></div>`;
   if(areas.length>1)h+=`<div class="hscroll" style="margin-bottom:8px"><button class="chip ${ui.fArea2?'':'on'}" data-act="f2" data-k="fArea2" data-v="">すべてのエリア</button>${areas.map(a=>`<button class="chip ${ui.fArea2===a?'on':''}" data-act="f2" data-k="fArea2" data-v="${esc(a)}">${esc(a)}</button>`).join('')}</div>`;
   if(genres.length>1)h+=`<div class="hscroll" style="margin-bottom:14px"><button class="chip ${ui.fGenre2?'':'on'}" data-act="f2" data-k="fGenre2" data-v="">すべて</button>${genres.map(a=>`<button class="chip ${ui.fGenre2===a?'on':''}" data-act="f2" data-k="fGenre2" data-v="${esc(a)}">${gOf(a).e} ${esc(a)}</button>`).join('')}</div>`;
@@ -625,6 +632,101 @@ function renderStock(){
    :`<div class="card empty">${pinkun(88)}<b>候補はまだありません</b>上の検索から気になる場所をストックしましょう。</div>`;
   $('#pane-stock').innerHTML=h;
 }
+/* ---------- 追加カード（食べログ → URL貼り付け） ---------- */
+const FOODK=['グルメ','居酒屋','焼肉','寿司','ラーメン','カフェ','スイーツ','バー','カラオケ'];
+function addCardHTML(){
+  const pst=ui.pst;
+  return `<div class="card search-card">
+    <div class="ttl">🍽 お店・スポットを追加</div>
+    <div class="step"><span class="no">1</span><div class="sb2">
+      <b>食べログで探す</b>
+      <div class="field">${I.pin}<input id="fArea" data-f="fArea" placeholder="エリア・駅名（例：新宿）" value="${esc(ui.fArea==='現在地'?'':ui.fArea)}" list="areaList" enterkeyhint="go"></div>
+      <div class="hscroll">${GENRES.filter(g=>g.q).map(g=>`<button class="chip ${ui.fGenre===g.k?'on':''}" data-act="fGenre" data-g="${g.k}">${g.e} ${g.k}</button>`).join('')}</div>
+      <div class="row"><button class="btn acc" data-act="openTabelog">食べログで探す ↗</button><button class="btn sm" data-act="openGmaps">Googleマップで探す ↗</button></div>
+    </div></div>
+    <div class="step"><span class="no">2</span><div class="sb2"><b>気に入ったお店のURLをコピー</b>
+      <div class="meta">お店のページで「共有」→「コピー」（アプリなら「リンクをコピー」）</div></div></div>
+    <div class="step"><span class="no">3</span><div class="sb2"><b>ここに貼り付け</b>
+      <div class="field"><input id="pasteIn" data-f="paste" placeholder="URL・共有テキストを貼り付け" value="${esc(pst?.text||'')}"><button class="btn sm pri" data-act="pasteClip">📋 貼り付け</button></div>
+      <div class="meta">お店の名前だけでもOKです</div>
+    </div></div>
+    ${pst?pasteConfirmHTML():''}
+    <details class="more" ${ui.fRes||ui.fState?'open':''}><summary>周辺のスポットを地図データから探す（試験運用）</summary>
+      <div style="display:grid;gap:10px;margin-top:10px">
+      <div class="seg">${RADII.map(([v,l])=>`<button class="${ui.fRad===v?'on':''}" data-act="fRad" data-v="${v}">半径 ${l}</button>`).join('')}</div>
+      <div class="row"><button class="btn pri" style="flex:1" data-act="find">${I.search}上のエリア・ジャンルで探す</button><button class="ibtn" data-act="here" aria-label="現在地">${I.loc}</button></div>
+      ${resultsHTML()}</div>
+    </details>
+  </div>`;
+}
+function pasteConfirmHTML(){
+  const x=ui.pst;
+  return `<div class="confirm">
+    <div class="row" style="flex-wrap:nowrap;align-items:center">${ph({genre:x.genre,name:x.name},'cth')}<input data-f="pst.name" value="${esc(x.name)}" placeholder="お店・スポットの名前" style="font-weight:800"></div>
+    <div class="hscroll" style="margin-top:8px">${GENRES.map(g=>`<button class="chip ${x.genre===g.k?'on':''}" data-act="pstGenre" data-g="${g.k}">${g.e} ${g.k}</button>`).join('')}</div>
+    <div class="field" style="margin-top:8px">${I.pin}<input data-f="pst.area" value="${esc(x.area)}" placeholder="エリア（例：新宿）"></div>
+    <div class="meta" id="pstLoc" style="margin:8px 2px">${locLine(x)}</div>
+    ${x.url?`<div class="meta" style="margin:0 2px 8px;word-break:break-all">🔗 ${esc(x.url.length>60?x.url.slice(0,60)+'…':x.url)}</div>`:''}
+    <div class="row"><button class="btn" data-act="pstCancel">やめる</button><button class="btn" style="flex:1" data-act="pstAdd">候補に追加</button><button class="btn pri" style="flex:1" data-act="pstAdd" data-day="1">DAY ${ui.day+1} に追加</button></div>
+  </div>`;
+}
+function locLine(x){return x.loc==='busy'?'📍 場所を探しています…':hasLL(x)?`📍 ${esc(x.locLabel||'位置を設定しました')}`:'📍 位置が見つかりませんでした（あとで編集から設定できます）'}
+const PREF={hokkaido:'北海道',aomori:'青森',iwate:'岩手',miyagi:'宮城',akita:'秋田',yamagata:'山形',fukushima:'福島',ibaraki:'茨城',tochigi:'栃木',gunma:'群馬',saitama:'埼玉',chiba:'千葉',tokyo:'東京',kanagawa:'神奈川',niigata:'新潟',toyama:'富山',ishikawa:'石川',fukui:'福井',yamanashi:'山梨',nagano:'長野',gifu:'岐阜',shizuoka:'静岡',aichi:'愛知',mie:'三重',shiga:'滋賀',kyoto:'京都',osaka:'大阪',hyogo:'兵庫',nara:'奈良',wakayama:'和歌山',tottori:'鳥取',shimane:'島根',okayama:'岡山',hiroshima:'広島',yamaguchi:'山口',tokushima:'徳島',kagawa:'香川',ehime:'愛媛',kochi:'高知',fukuoka:'福岡',saga:'佐賀',nagasaki:'長崎',kumamoto:'熊本',oita:'大分',miyazaki:'宮崎',kagoshima:'鹿児島',okinawa:'沖縄'};
+const GWORD=[[/居酒屋|焼鳥|焼き鳥|やきとり|串焼|大衆酒場|酒場/,'居酒屋'],[/焼肉|ホルモン/,'焼肉'],[/寿司|鮨|すし/,'寿司'],[/ラーメン|らーめん|つけ麺|中華そば/,'ラーメン'],[/カフェ|喫茶|珈琲|コーヒー/,'カフェ'],[/スイーツ|ケーキ|パン|甘味|和菓子|パフェ/,'スイーツ'],[/バー|BAR|Bar|ワイン|ビール/,'バー'],[/カラオケ/,'カラオケ'],[/温泉|銭湯|スパ|サウナ/,'温泉'],[/ホテル|旅館|民宿|宿泊|ゲストハウス|^宿/,'宿'],[/神社|寺|大社/,'寺社'],[/公園/,'公園'],[/駅|空港/,'駅・空港'],[/美術館|博物館|水族館|動物園|城|タワー|展望/,'観光']];
+function parsePaste(text){
+  const t=String(text||'').trim();if(!t)return null;
+  const url=(t.match(/https?:\/\/[^\s「」<>"]+/)||[''])[0];
+  let rest=t.replace(url,' ').replace(/【[^】]*食べログ[^】]*】|食べログ|Tabelog|Googleマップ|Google マップ/g,' ').replace(/\s+-\s*$/,'');
+  const r={url,name:'',area:'',genre:'',lat:null,lng:null};
+  const sub=rest.match(/[（(\[［]\s*([^/／（）()\[\]［］]+?)\s*[/／]\s*([^（）()\[\]［］]+?)\s*[）)\]］]/);
+  if(sub){r.area=sub[1].trim().replace(/駅$/,'');rest=rest.replace(sub[0],' ');r.genreText=sub[2]}
+  r.name=(rest.split(/\n|\s[·・|｜]\s|\s-\s|〒/).map(x=>x.trim()).find(x=>x&&!/^https?:/.test(x))||'').replace(/^[「『]|[」』]$/g,'').slice(0,60);
+  if(/google\.[^/]+\/maps/.test(url)){
+    const m=url.match(/\/place\/([^/@]+)/);if(m&&!r.name)r.name=decodeURIComponent(m[1].replace(/\+/g,' '));
+    const c=url.match(/!3d(-?[\d.]+)!4d(-?[\d.]+)/)||url.match(/@(-?[\d.]+),(-?[\d.]+)/);if(c){r.lat=+c[1];r.lng=+c[2];r.locLabel='Googleマップの位置'}
+  }
+  const tb=url.match(/tabelog\.com\/([a-z]+)\//);if(tb&&!r.area&&PREF[tb[1]])r.area=PREF[tb[1]];
+  const hay=(r.genreText||'')+' '+r.name+' '+t;
+  r.genre=(GWORD.find(([re])=>re.test(hay))||[])[1]||(/tabelog/.test(url)?'グルメ':(FOODK.includes(ui.fGenre)||!url?ui.fGenre:'その他'));
+  if(!r.area&&ui.fArea&&ui.fArea!=='現在地')r.area=ui.fArea;
+  return r;
+}
+let pasteT;
+async function handlePaste(text){
+  const r=parsePaste(text);if(!r){ui.pst=null;renderStock();return}
+  r.text=text;
+  if(!r.name&&r.url){r.name='';}
+  ui.pst=r;if(!hasLL(r))r.loc='busy';
+  renderStock();
+  setTimeout(()=>$('.confirm')?.scrollIntoView({behavior:'smooth',block:'center'}),50);
+  if(!r.name){document.querySelector('[data-f="pst.name"]')?.focus();toast('お店の名前を入力してください')}
+  if(!hasLL(r))locate(r);
+}
+async function locate(r){
+  r.loc='busy';const el=$('#pstLoc');if(el)el.innerHTML=locLine(r);
+  let hit=null;
+  if(r.name){const res=await searchPlaces(r.name+(r.area?' '+r.area:''));hit=res[0];if(!hit&&r.area){const res2=await searchPlaces(r.name);hit=res2[0]}}
+  if(hit){r.lat=hit.lat;r.lng=hit.lng;r.locLabel=hit.name.split(',').slice(0,3).join(',')}
+  else if(r.area){try{const c=await geocode(r.area);r.lat=c.lat;r.lng=c.lng;r.locLabel=`おおよその位置（${r.area}周辺）`}catch(_){}}
+  r.loc='';if(ui.pst===r){const e2=$('#pstLoc');if(e2)e2.innerHTML=locLine(r)}
+}
+function addFromPaste(toDay){
+  const x=ui.pst;if(!x)return;
+  const name=(x.name||'').trim();if(!name){toast('お店の名前を入力してください');document.querySelector('[data-f="pst.name"]')?.focus();return}
+  const p=P(),s={id:uid(),name,area:(x.area||'').trim(),genre:x.genre||'その他',stay:gOf(x.genre).stay,url:x.url,memo:''};
+  if(hasLL(x)){s.lat=x.lat;s.lng=x.lng}
+  p.spots.push(s);if(toDay)addToDay(s.id,ui.day,1);
+  ui.pst=null;save();render();autoPhoto(s);
+  toast(toDay?`DAY ${ui.day+1} の ${D().items.length}件目に追加しました`:'候補に追加しました');
+}
+function openExt(kind){
+  const area=(($('#fArea')?.value)||ui.fArea||'').replace('現在地','').trim(),g=ui.fGenre,kw=g==='グルメ'?'':g;
+  const url=kind==='tabelog'?`https://tabelog.com/rstLst/?vs=1&sa=${encodeURIComponent(area)}&sk=${encodeURIComponent(kw)}`
+    :`https://www.google.com/maps/search/${encodeURIComponent((area+' '+g).trim())}`;
+  window.open(url,'_blank','noopener');
+}
+document.addEventListener('paste',e=>{if(e.target.id==='pasteIn'){const t=e.clipboardData?.getData('text');if(t){e.preventDefault();e.target.value=t;handlePaste(t)}}});
+
 function resultsHTML(){
   if(ui.fState==='loading')return `<div class="state">🔎 探しています…（最大1分ほど）</div>`;
   if(ui.fState&&ui.fState!=='ok')return `<div class="state err">${esc(ui.fState)}</div>${extLinks()}`;
@@ -888,6 +990,7 @@ function addRes(x){
 async function searchPlaces(q){
   const out=[];
   try{(await getJSON(`https://nominatim.openstreetmap.org/search?format=json&limit=6&countrycodes=jp&accept-language=ja&q=${encodeURIComponent(q)}`,10000)).forEach(x=>out.push({name:x.display_name,lat:+x.lat,lng:+x.lon}))}catch(_){}
+  if(!out.length)try{(await getJSON(`https://photon.komoot.io/api/?limit=6&bbox=122,24,154,46&q=${encodeURIComponent(q)}`,10000)).features.forEach(f=>{const p=f.properties;out.push({name:[p.name,p.city||p.county,p.state].filter(Boolean).join(', '),lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0]})})}catch(_){}
   if(!out.length)try{(await getJSON('https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(q),10000)).slice(0,6).forEach(x=>out.push({name:x.properties.title,lat:x.geometry.coordinates[1],lng:x.geometry.coordinates[0]}))}catch(_){}
   return out;
 }
@@ -1071,6 +1174,12 @@ function joinNow(){
 
 /* ================= 操作 ================= */
 const ACT={
+  openTabelog:()=>openExt('tabelog'),
+  openGmaps:()=>openExt('gmaps'),
+  pasteClip:async()=>{try{const t=await navigator.clipboard.readText();if(!t)throw 0;handlePaste(t)}catch(_){toast('入力欄を長押しして「ペースト」してください');$('#pasteIn')?.focus()}},
+  pstGenre:el=>{ui.pst.genre=el.dataset.g;document.querySelectorAll('[data-act=pstGenre]').forEach(c=>c.classList.toggle('on',c.dataset.g===ui.pst.genre))},
+  pstCancel:()=>{ui.pst=null;renderStock()},
+  pstAdd:el=>addFromPaste(!!el.dataset.day),
   liveStart:()=>live.start(),
   liveInvite:()=>live.invite(),
   liveLeave:()=>live.leave(),
@@ -1138,7 +1247,8 @@ const ACT={
 };
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const f=ACT[el.dataset.act];if(f){f(el,e)}});
 document.addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&e.target.id==='fArea'){e.preventDefault();ui.fArea=e.target.value;find()}
+  if(e.key==='Enter'&&e.target.id==='fArea'){e.preventDefault();ui.fArea=e.target.value;openExt('tabelog')}
+  if(e.key==='Enter'&&e.target.id==='pasteIn'){e.preventDefault();clearTimeout(pasteT);handlePaste(e.target.value)}
   if(e.key==='Enter'&&e.target.id==='locQ'){e.preventDefault();ACT.locSearch()}
   if(e.key==='Enter'&&e.target.id==='phQ'){e.preventDefault();photoSearch()}
   if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-act]')){e.preventDefault();e.target.click()}
@@ -1146,6 +1256,9 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f.startsWith('d.')){draft[f.slice(2)]=e.target.value;return}
   if(f==='fArea'){ui.fArea=e.target.value;return}
+  if(f==='paste'){clearTimeout(pasteT);const v=e.target.value;pasteT=setTimeout(()=>{if(v.trim().length>=2)handlePaste(v)},900);return}
+  if(f==='pst.name'&&ui.pst){ui.pst.name=e.target.value;return}
+  if(f==='pst.area'&&ui.pst){ui.pst.area=e.target.value;return}
   if(f==='memo'&&detail){S(detail.sid).memo=e.target.value;save();return}
   if(f==='title'){P().title=e.target.value||'無題のプラン';save();renderHeader()}
   if(f==='me'){db.me=e.target.value.trim().slice(0,20);save(false)}
@@ -1155,6 +1268,7 @@ document.addEventListener('change',e=>{const f=e.target.dataset.f,p=P(),d=D();
     p.days.forEach((x,i)=>{if(i>ui.day&&(!x.date||(prev&&x.date===addDays(prev,i-ui.day))))x.date=addDays(d.date,i-ui.day)});save();render()}
   else if(f==='start'){d.start=e.target.value||'09:00';save();render()}
   else if(f==='title')renderTabs();
+  else if((f==='pst.name'||f==='pst.area')&&ui.pst&&ui.pst.locLabel!=='Googleマップの位置'){ui.pst.lat=ui.pst.lng=null;locate(ui.pst)}
 });
 $('#fileImport').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
   try{const x=normalize(JSON.parse(await f.text()));if(!x)throw 0;let n=0;x.plans.forEach(p=>{if(!db.plans.some(q=>q.id===p.id)){db.plans.push(p);n++}});
@@ -1325,7 +1439,9 @@ async function ensureLibs(){
   }
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
-load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();live.boot();setTimeout(autoPhotoAll,1500);
+load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();live.boot();
+  {const q=new URLSearchParams(location.search);const t=[q.get('st'),q.get('sx'),q.get('su')].filter(Boolean).join('\n');
+   if(t){history.replaceState(null,'',location.pathname);ui.tab='stock';render();handlePaste(t)}}setTimeout(autoPhotoAll,1500);
   try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
 });
 </script>
