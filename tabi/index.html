@@ -16,8 +16,8 @@ button{cursor:pointer;border:1px solid var(--line);background:var(--card);border
 button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
 button.ghost{border:none;background:none;padding:4px 6px}
 header{position:sticky;top:0;z-index:1000;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-header h1{font-size:17px;margin:0;flex:1;min-width:140px}
-header select{max-width:46vw;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
+header h1{font-size:16px;margin:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header select{max-width:38vw;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
 main{max-width:1100px;margin:0 auto;padding:12px 16px;display:grid;gap:14px}
 .sec{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
 .sec h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
@@ -105,6 +105,16 @@ dialog::backdrop{background:#0006}
 </form></dialog>
 <datalist id="areaList"></datalist><datalist id="genreList"></datalist>
 
+<dialog id="findDlg"><div class="dlg">
+  <b>🔍 エリア×ジャンルで候補を探す</b>
+  <label>エリア（駅名・地名）<div style="display:flex;gap:6px"><input id="fArea" list="areaList" placeholder="例：新宿駅、浅草"><button type="button" id="fHere">📍現在地</button></div></label>
+  <div><div class="meta">ジャンル</div><div class="chips" id="fGenres"></div></div>
+  <label>範囲<select id="fRad"><option value="500">半径500m（徒歩圏）</option><option value="1000" selected>半径1km</option><option value="2000">半径2km</option><option value="5000">半径5km</option></select></label>
+  <button class="pri" id="fGo">この条件で探す</button>
+  <div id="fOut" class="sres" style="max-height:45vh"></div>
+  <div class="note">施設データ：OpenStreetMap（地域により未掲載の店もあります）</div>
+  <button onclick="this.closest('dialog').close()">閉じる</button>
+</div></dialog>
 <dialog id="menuDlg"><div class="dlg">
   <b>メニュー</b>
   <button id="renameBtn">プラン名を変更</button>
@@ -117,11 +127,11 @@ dialog::backdrop{background:#0006}
 
 <script>
 const SCENES={
-  day:{icon:'🚗',label:'日帰り旅行',days:1,single:1,unit:'件目',start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','体験']},
-  stay:{icon:'🏨',label:'宿泊旅行',days:2,unit:'件目',start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','宿','体験']},
-  biz:{icon:'💼',label:'出張',days:1,unit:'件目',start:'08:30',genres:['訪問先','会議','ランチ','ホテル','会食','移動拠点']},
-  drink:{icon:'🍻',label:'飲み会',days:1,single:1,unit:'軒目',start:'18:00',genres:['集合','一次会','二次会','三次会','カラオケ','締めラーメン']},
-  other:{icon:'✨',label:'その他',days:1,unit:'件目',start:'10:00',genres:['観光','グルメ','買い物','その他']}
+  day:{icon:'🚗',label:'日帰り旅行',days:1,single:1,unit:'件目',start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','体験'],find:['観光','寺社','グルメ','カフェ','スイーツ','買い物','温泉','公園']},
+  stay:{icon:'🏨',label:'宿泊旅行',days:2,unit:'件目',start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','宿','体験'],find:['観光','寺社','グルメ','カフェ','スイーツ','買い物','温泉','宿','公園']},
+  biz:{icon:'💼',label:'出張',days:1,unit:'件目',start:'08:30',genres:['訪問先','会議','ランチ','ホテル','会食','移動拠点'],find:['ランチ','カフェ','ホテル','居酒屋','焼肉','寿司','ラーメン']},
+  drink:{icon:'🍻',label:'飲み会',days:1,single:1,unit:'軒目',start:'18:00',genres:['集合','一次会','二次会','三次会','カラオケ','締めラーメン'],find:['居酒屋','焼肉','寿司','バー','カラオケ','ラーメン','カフェ']},
+  other:{icon:'✨',label:'その他',days:1,unit:'件目',start:'10:00',genres:['観光','グルメ','買い物','その他'],find:['観光','グルメ','カフェ','買い物','公園','宿']}
 };
 // 移動手段：速度(km/h)・道のり補正・待ち時間(分)・Googleマップの travelmode
 const MODES={
@@ -133,6 +143,26 @@ const MODES={
   train:{label:'🚃 電車',v:35,f:1.25,w:10,g:'transit'},
   shinkansen:{label:'🚄 新幹線',v:180,f:1.2,w:20,g:'transit'},
   plane:{label:'✈ 飛行機',v:500,f:1.1,w:90,g:'transit'}
+};
+// 探す機能：ジャンル→OpenStreetMapのタグ条件・標準滞在時間(分)
+const FIND={
+  '観光':{q:['nwr["tourism"~"^(attraction|museum|viewpoint|gallery|zoo|aquarium|theme_park)$"]','nwr["historic"~"^(castle|monument)$"]'],stay:60},
+  '寺社':{q:['nwr["amenity"="place_of_worship"]'],stay:30},
+  'グルメ':{q:['nwr["amenity"="restaurant"]'],stay:60},
+  'ランチ':{q:['nwr["amenity"~"^(restaurant|fast_food)$"]'],stay:45},
+  '居酒屋':{q:['nwr["amenity"~"^(pub|izakaya)$"]','nwr["cuisine"~"izakaya|yakitori"]'],stay:120},
+  '焼肉':{q:['nwr["cuisine"~"yakiniku|barbecue"]'],stay:90},
+  '寿司':{q:['nwr["cuisine"~"sushi"]'],stay:60},
+  'バー':{q:['nwr["amenity"="bar"]'],stay:60},
+  'ラーメン':{q:['nwr["cuisine"~"ramen"]'],stay:30},
+  'カラオケ':{q:['nwr["amenity"="karaoke_box"]','nwr["leisure"="karaoke"]'],stay:120},
+  'カフェ':{q:['nwr["amenity"="cafe"]'],stay:45},
+  'スイーツ':{q:['nwr["shop"~"^(confectionery|pastry)$"]','nwr["amenity"="ice_cream"]'],stay:30},
+  '買い物':{q:['nwr["shop"~"^(mall|department_store|gift)$"]'],stay:60},
+  '温泉':{q:['nwr["amenity"="public_bath"]','nwr["natural"="hot_spring"]','nwr["leisure"~"^(spa|sauna)$"]'],stay:90},
+  '公園':{q:['nwr["leisure"="park"]'],stay:45},
+  '宿':{q:['nwr["tourism"~"^(hotel|guest_house|hostel|motel)$"]'],stay:0},
+  'ホテル':{q:['nwr["tourism"~"^(hotel|guest_house|hostel|motel)$"]'],stay:0}
 };
 const KEY='odekake-planner-v1';
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -223,7 +253,7 @@ function render(){
       ${stops||'<div class="empty">右の候補から「＋追加」で訪問先を並べましょう</div>'}
       ${d.items.length?`<div class="sum">⏱ 終了予定 <b>${fmt(t)}</b>（移動 ${dur(moveT)}・${km.toFixed(1)}km／滞在 ${dur(stayT)}）<div class="note">移動時間は直線距離×補正で算出した目安です。正確な時間は「経路↗」で確認してください。</div></div>`:''}
     </section>
-    <section class="sec"><h2>③ 候補ストック<span class="meta">${p.spots.length}件</span><span class="sp"></span><button class="pri" data-new>＋候補</button></h2>
+    <section class="sec"><h2>③ 候補ストック<span class="meta">${p.spots.length}件</span><span class="sp"></span><button data-new>✏ 手入力</button><button class="pri" data-find>🔍 探す</button></h2>
       <div class="chips"><span class="meta">エリア</span><button class="chip ${ui.area?'':'on'}" data-area="">すべて</button>${areas.map(a=>`<button class="chip ${ui.area===a?'on':''}" data-area="${esc(a)}">${esc(a)}</button>`).join('')}</div>
       <div class="chips"><span class="meta">ジャンル</span><button class="chip ${ui.genre?'':'on'}" data-genre="">すべて</button>${genres.map(a=>`<button class="chip ${ui.genre===a?'on':''}" data-genre="${esc(a)}">${esc(a)}</button>`).join('')}</div>
       <div class="cands">${fl.map(s=>`<div class="cand ${used.has(s.id)?'used':''}">
@@ -273,6 +303,7 @@ document.getElementById('app').addEventListener('click',e=>{
   else if(ds.rm)d.items.splice(+ds.rm,1);
   else if(ds.edit)return openSpot(ds.edit);
   else if('new' in ds)return openSpot();
+  else if('find' in ds)return openFind();
   else if('area' in ds)ui.area=ds.area;
   else if('genre' in ds)ui.genre=ds.genre;
   else return;
@@ -339,6 +370,60 @@ dlg.addEventListener('close',()=>{
   if(!editId)p.spots.push(s);
   save();render();
 });
+/* ---------- 探す（OpenStreetMap） ---------- */
+const fdlg=document.getElementById('findDlg');
+let fGenre=null,fHere=null,fRes=[];
+function openFind(){
+  const sc=SCENES[P().scene];
+  if(!fGenre||!FIND[fGenre])fGenre=(ui.genre&&FIND[ui.genre])?ui.genre:sc.find[0];
+  if(ui.area)document.getElementById('fArea').value=ui.area;
+  drawGenres();fdlg.showModal();
+}
+function drawGenres(){
+  const sc=SCENES[P().scene],list=[...sc.find,...Object.keys(FIND).filter(k=>!sc.find.includes(k)&&k!=='ホテル')];
+  document.getElementById('fGenres').innerHTML=list.map((g,i)=>`<button class="chip ${g===fGenre?'on':''}" data-g="${g}" ${i>=sc.find.length?'style="opacity:.7"':''}>${g}</button>`).join('');
+}
+document.getElementById('fGenres').onclick=e=>{const b=e.target.closest('[data-g]');if(b){fGenre=b.dataset.g;drawGenres()}};
+document.getElementById('fHere').onclick=()=>{
+  if(!navigator.geolocation)return alert('現在地を取得できません');
+  navigator.geolocation.getCurrentPosition(pos=>{fHere={lat:pos.coords.latitude,lng:pos.coords.longitude};document.getElementById('fArea').value='現在地';},()=>alert('現在地を取得できませんでした'));
+};
+async function geocode(q){
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=jp&accept-language=ja&q=${encodeURIComponent(q)}`);
+  const j=await r.json();if(!j.length)throw new Error('エリアが見つかりません');return {lat:+j[0].lat,lng:+j[0].lon};
+}
+document.getElementById('fGo').onclick=async()=>{
+  const out=document.getElementById('fOut'),area=document.getElementById('fArea').value.trim(),rad=+document.getElementById('fRad').value;
+  if(!area)return alert('エリアを入力してください');
+  out.textContent='探しています…';
+  try{
+    const c=area==='現在地'&&fHere?fHere:await geocode(area);
+    const q=`[out:json][timeout:25];(${FIND[fGenre].q.map(x=>`${x}["name"](around:${rad},${c.lat},${c.lng});`).join('')});out center 80;`;
+    const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}});
+    if(!r.ok)throw new Error('検索サーバーが混雑しています。少し待って再度お試しください');
+    const seen=new Set();
+    fRes=(await r.json()).elements.map(e=>{const t=e.tags,lat=e.lat??e.center?.lat,lng=e.lon??e.center?.lon;
+      return {name:t['name:ja']||t.name,lat,lng,url:t.website||t['contact:website']||'',hours:t.opening_hours||'',d:dist(c,{lat,lng})}})
+      .filter(x=>x.lat!=null&&!seen.has(x.name)&&seen.add(x.name)).sort((a,b)=>a.d-b.d).slice(0,50);
+    fRes.areaName=area==='現在地'?'':area;
+    drawRes();
+  }catch(err){out.textContent=err.message||'検索に失敗しました'}
+};
+function drawRes(){
+  const out=document.getElementById('fOut'),names=new Set(P().spots.map(s=>s.name));
+  if(!fRes.length){out.innerHTML=`見つかりませんでした。範囲を広げるか、<a href="https://www.google.com/maps/search/${encodeURIComponent(fRes.areaName+' '+fGenre)}" target="_blank" rel="noopener">Googleマップで探す↗</a>`;return}
+  out.innerHTML=`<div class="meta" style="cursor:default">${fRes.length}件見つかりました（近い順）<button data-all style="float:right;font-size:12px;padding:1px 8px">すべて候補に入れる</button></div>`+fRes.map((x,i)=>`<div style="display:flex;gap:6px;align-items:center;cursor:default">
+    <div style="flex:1;min-width:0"><b>${esc(x.name)}</b><div class="meta">${Math.round(x.d*1000)}m${x.hours?'・'+esc(x.hours):''}</div></div>
+    <a class="btn" style="padding:2px 6px;font-size:12px" href="${x.url?esc(x.url):'https://www.google.com/search?q='+encodeURIComponent(x.name+' '+fRes.areaName)}" target="_blank" rel="noopener">🔗</a>
+    ${names.has(x.name)?'<span class="meta">✓追加済</span>':`<button class="pri" style="font-size:12px;padding:3px 8px" data-pick="${i}">＋候補</button>`}</div>`).join('');
+}
+function pickRes(x){
+  const p=P();if(p.spots.some(s=>s.name===x.name))return;
+  p.spots.push({id:uid(),name:x.name,area:fRes.areaName,genre:fGenre,stay:FIND[fGenre].stay,lat:x.lat,lng:x.lng,url:x.url,memo:x.hours?'営業:'+x.hours:''});
+}
+document.getElementById('fOut').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if('all' in b.dataset)fRes.forEach(pickRes);else pickRes(fRes[+b.dataset.pick]);
+  save();drawRes();render();};
 render();
 </script>
 </body>
