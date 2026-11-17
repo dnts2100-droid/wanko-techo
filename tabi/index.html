@@ -740,7 +740,8 @@ function foodModeHTML(){
       <div class="field"><input id="pasteIn" data-f="paste" placeholder="URL・共有テキストを貼り付け" value="${esc(pst?.text||'')}"><button class="btn sm pri" data-act="pasteClip">📋 貼り付け</button></div>
       <div class="meta">お店の名前だけでもOK。2件目からは画面下の「📋 貼り付けて追加」が便利です</div>
     </div></div>
-    ${pst?pasteConfirmHTML():''}`;
+    ${pst?pasteConfirmHTML():''}
+    ${installEvt&&!STANDALONE?`<div class="geo-bar" style="margin-top:0">📲<span><b>もっと楽に追加</b><br><span class="meta">Routerをインストールすると、食べログ・Googleマップの「共有」から直接追加できます</span></span><button class="btn sm" data-act="install">入れる</button></div>`:''}`;
 }
 function spotModeHTML(){
   const r=ui.sres;
@@ -820,12 +821,57 @@ async function resolveMaps(url){
   return null;
 }
 const areaFromAddr=a=>{const m=(a||'').replace(/〒?\s*[\d０-９-－−]+/g,' ').match(/(?:東京都|北海道|大阪府|京都府|\S{2,3}県)\s*(\S+?[市区町村])/)||(a||'').match(/([^\s\d０-９〒]{1,6}?[市区町村])/);return m?m[1].replace(/^.*?[都道府県]/,''):''};
+// 公開ページの情報（名前・住所・位置・写真）を読み取る。複数の中継サービスを同時に試し、最初に成功したものを使う
+async function fetchHTML(url){
+  const tm=(pr,ms)=>Promise.race([pr,new Promise((_,j)=>setTimeout(()=>j(0),ms))]);
+  const tries=[
+    ()=>fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)),
+    ()=>fetch('https://corsproxy.io/?url='+encodeURIComponent(url)),
+    ()=>fetch('https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(url)),
+    ()=>fetch('https://r.jina.ai/'+url,{headers:{'X-Return-Format':'html'}})
+  ];
+  return Promise.any(tries.map(async f=>{const r=await tm(f(),14000);if(!r.ok)throw 0;const t=await r.text();if(t.length<400)throw 0;return t}));
+}
+function parseMeta(html){
+  const meta=k=>{const m=html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${k}["'][^>]*content=["']([^"']+)`,'i'))||html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["']${k}["']`,'i'));return m?m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"'):''};
+  const r={title:meta('og:title')||meta('twitter:title')||((html.match(/<title>([^<]+)/i)||[])[1]||''),image:meta('og:image')};
+  // 構造化データ（JSON-LD）
+  for(const m of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)){
+    try{const walk=o=>{if(!o||typeof o!=='object')return;if(Array.isArray(o))return o.forEach(walk);
+      if(o.geo&&o.geo.latitude){r.lat=+o.geo.latitude;r.lng=+o.geo.longitude}
+      if(o.name&&!r.ldName&&(o.geo||o.address))r.ldName=o.name;
+      if(o.address&&!r.addr)r.addr=typeof o.address==='string'?o.address:[o.address.addressRegion,o.address.addressLocality,o.address.streetAddress].filter(Boolean).join('');
+      if(o.image&&!r.ldImage)r.ldImage=Array.isArray(o.image)?o.image[0]:(o.image.url||o.image);
+      Object.values(o).forEach(walk)};walk(JSON.parse(m[1]))}catch(_){}
+  }
+  if(r.lat==null){const c=html.match(/center=(-?\d{1,3}\.\d+)(?:%2C|,)(-?\d{1,3}\.\d+)/)||html.match(/"latitude"\s*:\s*"?(-?\d+\.\d+)[\s\S]{0,40}?"longitude"\s*:\s*"?(-?\d+\.\d+)/)||html.match(/data-lat="(-?\d+\.\d+)"[^>]*data-lng="(-?\d+\.\d+)"/);if(c){r.lat=+c[1];r.lng=+c[2]}}
+  return r;
+}
+const pageCache={};
+async function pageInfo(url){
+  if(pageCache[url])return pageCache[url];
+  let info=null;
+  try{const m=parseMeta(await fetchHTML(url));
+    let name='',area='',genre='';
+    if(/tabelog/.test(url)){const t=parsePaste((m.title||'').replace(/\s*[-|]\s*食べログ.*$/,'').replace(/\s*\[食べログ\]/,''));name=m.ldName||t?.name||'';area=t?.area||'';genre=t?.genre||''}
+    else{const t=(m.title||'').replace(/\s*[-–]\s*Google\s*マップ.*$|\s*[-–]\s*Google Maps.*$/i,'');const [n,...a]=t.split(/\s*·\s*/);name=(n&&!/^Google/.test(n))?n:'';if(!m.addr)m.addr=a.join(' ')}
+    const img=[m.ldImage,m.image].find(u=>u&&/^https:/.test(u)&&!/staticmap|maps\.google|googleusercontent\.com\/.*=w\d+-h\d+-k|logo|noimage/i.test(u));
+    info={name,area:area||areaFromAddr(m.addr),genre,lat:m.lat,lng:m.lng,addr:m.addr,photo:img||''};
+  }catch(_){}
+  if(!info&&isShortMaps(url)){const x=await resolveMaps(url);if(x)info={name:x.name,lat:x.lat,lng:x.lng,area:areaFromAddr(x.addr),addr:x.addr}}
+  if(info)pageCache[url]=info;
+  return info;
+}
 async function enrich(r){
-  if(r.url&&isShortMaps(r.url)&&(!r.name||!hasLL(r))){
-    toast('Googleマップから場所の情報を取得中…');
-    const x=await resolveMaps(r.url);
-    if(x){if(!r.name||r.fromText===false)r.name=x.name||r.name;if(x.lat!=null){r.lat=x.lat;r.lng=x.lng;r.locLabel='Googleマップの位置'}
-      if(!r.area)r.area=areaFromAddr(x.addr);r.genre=(GWORD.find(([re])=>re.test(r.name||''))||[])[1]||r.genre||'観光'}
+  const isPage=r.url&&(isShortMaps(r.url)||/google\.[^/]+\/maps|tabelog\.com/.test(r.url));
+  if(isPage&&(!r.name||!hasLL(r)||!r.photo)){
+    if(!r.name)toast('ページから名前と場所を読み取り中…');
+    const x=await pageInfo(r.url);
+    if(x){if(!r.name&&x.name)r.name=x.name;
+      if(x.lat!=null&&!isNaN(x.lat)){r.lat=x.lat;r.lng=x.lng;r.approx=false;r.locLabel=x.addr||'ページに載っている位置'}
+      if(x.area&&(!r.area||Object.values(PREF).includes(r.area)))r.area=x.area;if(x.genre&&(!r.genre||r.genre==='グルメ'||r.genre==='その他'))r.genre=x.genre;
+      if(x.photo)r.photo=x.photo;
+      if(!x.genre)r.genre=(GWORD.find(([re])=>re.test(r.name||''))||[])[1]||r.genre}
   }
   return r;
 }
@@ -864,7 +910,7 @@ async function locate(r){
 function addFromPaste(toDay){
   const x=ui.pst;if(!x)return;
   const name=(x.name||'').trim();if(!name){toast('お店の名前を入力してください');document.querySelector('[data-f="pst.name"]')?.focus();return}
-  const p=P(),s={id:uid(),name,area:(x.area||'').trim(),genre:x.genre||'その他',stay:gOf(x.genre).stay,url:x.url,memo:''};
+  const p=P(),s={id:uid(),name,area:(x.area||'').trim(),genre:x.genre||'その他',stay:gOf(x.genre).stay,url:x.url,memo:'',photo:x.photo||''};
   if(hasLL(x)){s.lat=x.lat;s.lng=x.lng;if(x.approx)s.approx=1}
   p.spots.push(s);if(toDay)addToDay(s.id,ui.day,1);
   ui.pst=null;save();render();autoPhoto(s);
@@ -891,6 +937,8 @@ const ANDROID=/Android/i.test(navigator.userAgent);
 function openURL(url){
   if(!url)return;
   ui.away=Date.now();
+  const isMapsURL=/google\.[^/]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(url);
+  if(ANDROID&&isMapsURL&&!STANDALONE){const u=new URL(url);location.href=`intent://${u.host}${u.pathname}${u.search}#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=${encodeURIComponent(url)};end`;return}
   if(STANDALONE&&ANDROID){
     const u=new URL(url),isMaps=/google\.[^/]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(url);
     // Googleマップはマップアプリで直接開く（「戻る」でRouterに帰れる）。それ以外はChromeで開く
@@ -900,7 +948,8 @@ function openURL(url){
 }
 // 外部アプリから戻ってきたとき：迷子にならないよう候補タブで「おかえり」バナーを出し、
 // クリップボードの読み取りが許可済みなら、コピーした場所を自動で追加する
-let lastClip='';
+let lastClip='',installEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(ui.tab==='stock')renderStock()});
 document.addEventListener('visibilitychange',async()=>{
   if(document.visibilityState!=='visible'||!ui.away)return;
   if(Date.now()-ui.away>30*60e3){ui.away=0;return}
@@ -927,14 +976,14 @@ function renderQuick(){
 async function quickAdd(text){
   let r=parsePaste(text);if(!r)return toast('コピーした内容が見つかりません');
   r=await enrich(r);
-  if(!r.name){ui.tab='stock';render();return handlePaste(text)}
+  let noname=false;if(!r.name){r.name=isShortMaps(r.url)||/google/.test(r.url)?'Googleマップの場所':'名称未設定の場所';noname=true}
   const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||x.name===r.name);
   if(dup)return toast(`「${dup.name}」は追加済みです`);
-  const sn=snap(),sp={id:uid(),name:r.name,area:r.area||'',genre:r.genre||'その他',stay:gOf(r.genre).stay,url:r.url,memo:''};
-  if(hasLL(r)){sp.lat=r.lat;sp.lng=r.lng}
+  const sn=snap(),sp={id:uid(),name:r.name,area:r.area||'',genre:r.genre||'その他',stay:gOf(r.genre).stay,url:r.url,memo:'',photo:r.photo||''};
+  if(hasLL(r)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1}
   p.spots.push(sp);save();render();
   navigator.vibrate&&navigator.vibrate(30);
-  toast(`「${sp.name}」を候補に追加しました`,restore(sn));
+  toast(noname?'追加しました（名前を読み取れなかったので、候補から編集してください）':`「${sp.name}」を候補に追加しました`,restore(sn));
   autoPhoto(sp);
   if(!hasLL(sp)){await locate(r);if(hasLL(r)&&P().spots.includes(sp)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1;save(false);render()}}
 }
@@ -1162,7 +1211,9 @@ async function wikiThumb(lang,titles){
 async function autoPhoto(s,force){
   if(s.photo||(s.pt&&!force))return;s.pt=1;
   let url='';
-  try{
+  if(s.url&&/tabelog\.com|google\.[^/]+\/maps|goo\.gl/.test(s.url)){const x=await pageInfo(s.url);if(x?.photo)url=x.photo;
+    if(x&&x.lat!=null&&(s.approx||!hasLL(s))){s.lat=x.lat;s.lng=x.lng;delete s.approx}}
+  try{if(url)throw 'done';
     if(s.wiki&&s.wiki.includes(':'))url=await wikiThumb(s.wiki.split(':')[0],s.wiki.split(':').slice(1).join(':'));
     if(!url&&!FOOD.has(s.genre))url=await wikiThumb('ja',s.name);
     if(!url&&!FOOD.has(s.genre)&&hasLL(s)){
@@ -1184,7 +1235,7 @@ async function recheckSpots(){
   }
   render();
 }
-async function autoPhotoAll(){for(const s of P().spots.filter(x=>!x.photo&&!x.pt)){await autoPhoto(s);await new Promise(r=>setTimeout(r,300))}}
+async function autoPhotoAll(){for(const s of P().spots.filter(x=>!x.photo&&(!x.pt||(x.url&&!x.pt2)))){if(s.url)s.pt2=1;await autoPhoto(s,true);await new Promise(r=>setTimeout(r,300))}}
 
 /* ================= 検索 ================= */
 async function geocode(q){
@@ -1427,6 +1478,7 @@ function openIntro(){ui.introStep=0;openSheet(introHTML)}
 
 /* ================= 操作 ================= */
 const ACT={
+  install:async()=>{if(!installEvt)return toast('ブラウザのメニューから「アプリをインストール」を選んでください');installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;renderStock();if(r.outcome==='accepted')toast('インストールしました！共有メニューに Router が出ます')},
   geoHide:()=>{ui.geoHide=1;saveUI();render();toast('右上の📍ボタンからいつでもONにできます')},
   help:()=>{closeSheet();setTimeout(()=>openIntro(),220)},
   introNext:()=>{ui.introStep=(ui.introStep||0)+1;if(ui.introStep>=INTRO.length){closeSheet();localStorage.setItem('router-intro','1')}else refreshSheet()},
