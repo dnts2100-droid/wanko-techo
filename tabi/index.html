@@ -51,7 +51,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .ibtn.flat{background:none;box-shadow:none}
 
 /* ---------- layout ---------- */
-.panes{padding:4px 16px calc(110px + var(--safe))}
+.panes{padding:4px 16px calc(160px + var(--safe))}
 .pane{display:none;animation:fade .25s ease}
 .pane.on{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -364,6 +364,15 @@ details.more{border-top:1px solid var(--line);padding-top:10px}
 details.more summary{font-size:12.5px;color:var(--sub);font-weight:700;cursor:pointer;list-style:none}
 details.more summary::before{content:"＋ "}details.more[open] summary::before{content:"－ "}
 
+/* クイックバー */
+.quick{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(82px + var(--safe));z-index:590;display:none;gap:6px;align-items:center;padding:5px;border-radius:999px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);box-shadow:var(--sh2);width:max-content;max-width:calc(100vw - 24px);animation:fade .25s ease}
+.quick.on{display:flex}
+.qbtn{padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;white-space:nowrap;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.qbtn.pri{background:var(--acc);color:#fff;box-shadow:none}
+.qx{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:var(--sub)}.qx svg{width:16px;height:16px}
+@media (min-width:1000px){.quick{left:240px}}
+.toast{bottom:calc(136px + var(--safe))!important}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -392,6 +401,7 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
   <section class="pane" id="pane-prog"></section>
 </main>
 <section class="pane" id="pane-map"><div id="map"></div><div class="map-days" id="mapDays"></div><div class="carousel" id="carousel"></div></section>
+<div class="quick" id="quick"></div>
 <nav class="tabbar" id="tabbar"></nav>
 <datalist id="areaList"></datalist>
 <input type="file" id="fileImport" accept=".json,application/json" hidden>
@@ -547,7 +557,10 @@ async function load(){
 }
 
 /* ================= 状態 ================= */
-const ui={tab:'plan',day:0,fArea:'',fGenre:'グルメ',fRad:1000,fRes:null,fState:'',here:null,showCands:true,fArea2:'',fGenre2:'',hl:null};
+const ui={tab:'plan',day:0,fArea:'',fGenre:'グルメ',fRad:1000,fRes:null,fState:'',here:null,showCands:true,fArea2:'',fGenre2:'',hl:null,lastExt:''};
+const UIKEY='router-ui';
+try{Object.assign(ui,JSON.parse(localStorage.getItem(UIKEY))||{})}catch(_){}
+function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind}))}catch(_){}}
 const wide=matchMedia('(min-width:1000px)');
 const P=()=>db.plans.find(p=>p.id===db.cur)||db.plans[0];
 const S=id=>P().spots.find(s=>s.id===id);
@@ -568,7 +581,7 @@ function addToDay(sid,di=ui.day,silent){
 
 /* ================= 描画 ================= */
 function render(){
-  renderHeader();renderTabs();renderPlan();renderStock();renderProg();
+  renderHeader();renderTabs();renderPlan();renderStock();renderProg();renderQuick();saveUI();
   ['plan','stock','prog'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
   $('#pane-map').classList.toggle('on',ui.tab==='map'||wide.matches);
   document.querySelector('.top').style.display=(ui.tab==='map'&&!wide.matches)?'none':'';
@@ -648,7 +661,7 @@ function addCardHTML(){
       <div class="meta">お店のページで「共有」→「コピー」（アプリなら「リンクをコピー」）</div></div></div>
     <div class="step"><span class="no">3</span><div class="sb2"><b>ここに貼り付け</b>
       <div class="field"><input id="pasteIn" data-f="paste" placeholder="URL・共有テキストを貼り付け" value="${esc(pst?.text||'')}"><button class="btn sm pri" data-act="pasteClip">📋 貼り付け</button></div>
-      <div class="meta">お店の名前だけでもOKです</div>
+      <div class="meta">お店の名前だけでもOK。2件目からは画面下の「📋 貼り付けて追加」が便利です</div>
     </div></div>
     ${pst?pasteConfirmHTML():''}
     <details class="more" ${ui.fRes||ui.fState?'open':''}><summary>周辺のスポットを地図データから探す（試験運用）</summary>
@@ -719,10 +732,31 @@ function addFromPaste(toDay){
   ui.pst=null;save();render();autoPhoto(s);
   toast(toDay?`DAY ${ui.day+1} の ${D().items.length}件目に追加しました`:'候補に追加しました');
 }
+// 連続追加用：画面下のクイックバー
+function renderQuick(){
+  const el=$('#quick');if(!el)return;
+  const show=(ui.tab==='stock'||ui.tab==='plan')&&ui.lastExt&&!SHEETS.length;
+  el.innerHTML=show?`<button class="qbtn" data-act="extAgain">↗ ${ui.lastKind==='gmaps'?'Googleマップ':'食べログ'}に戻る</button><button class="qbtn pri" data-act="quickPaste">📋 貼り付けて追加</button><button class="qx" data-act="quickClose" aria-label="閉じる">${I.x}</button>`:'';
+  el.classList.toggle('on',!!show);
+}
+async function quickAdd(text){
+  const r=parsePaste(text);if(!r)return toast('コピーした内容が見つかりません');
+  if(!r.name){ui.tab='stock';render();return handlePaste(text)}
+  const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||x.name===r.name);
+  if(dup)return toast(`「${dup.name}」は追加済みです`);
+  const sn=snap(),sp={id:uid(),name:r.name,area:r.area||'',genre:r.genre||'その他',stay:gOf(r.genre).stay,url:r.url,memo:''};
+  if(hasLL(r)){sp.lat=r.lat;sp.lng=r.lng}
+  p.spots.push(sp);save();render();
+  navigator.vibrate&&navigator.vibrate(30);
+  toast(`「${sp.name}」を候補に追加しました`,restore(sn));
+  autoPhoto(sp);
+  if(!hasLL(sp)){await locate(r);if(hasLL(r)&&P().spots.includes(sp)){sp.lat=r.lat;sp.lng=r.lng;save(false);render()}}
+}
 function openExt(kind){
   const area=(($('#fArea')?.value)||ui.fArea||'').replace('現在地','').trim(),g=ui.fGenre,kw=g==='グルメ'?'':g;
   const url=kind==='tabelog'?`https://tabelog.com/rstLst/?vs=1&sa=${encodeURIComponent(area)}&sk=${encodeURIComponent(kw)}`
     :`https://www.google.com/maps/search/${encodeURIComponent((area+' '+g).trim())}`;
+  ui.lastExt=url;ui.lastKind=kind;saveUI();renderQuick();
   window.open(url,'_blank','noopener');
 }
 document.addEventListener('paste',e=>{if(e.target.id==='pasteIn'){const t=e.clipboardData?.getData('text');if(t){e.preventDefault();e.target.value=t;handlePaste(t)}}});
@@ -794,10 +828,10 @@ function openSheet(fn,onClose){
   const bg=document.createElement('div');bg.className='sheet-bg';
   const el=document.createElement('div');el.className='sheet';el.setAttribute('role','dialog');
   el.innerHTML=`<div class="grabber"></div><div class="sb">${fn()}</div>`;
-  bg.onclick=closeSheet;document.body.append(bg,el);SHEETS.push({bg,el,fn,onClose});return el;
+  bg.onclick=closeSheet;document.body.append(bg,el);SHEETS.push({bg,el,fn,onClose});renderQuick();return el;
 }
 function refreshSheet(){const s=SHEETS.at(-1);if(s){const y=s.el.scrollTop;s.el.querySelector('.sb').innerHTML=s.fn();s.el.scrollTop=y}}
-function closeSheet(){const s=SHEETS.pop();if(!s)return;s.onClose&&s.onClose();s.bg.classList.add('out');s.el.classList.add('out');setTimeout(()=>{s.bg.remove();s.el.remove()},200)}
+function closeSheet(){const s=SHEETS.pop();if(!s)return;s.onClose&&s.onClose();s.bg.classList.add('out');s.el.classList.add('out');setTimeout(()=>{s.bg.remove();s.el.remove();renderQuick()},200)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 let toastT;
 function toast(msg,undo){
@@ -1174,6 +1208,9 @@ function joinNow(){
 
 /* ================= 操作 ================= */
 const ACT={
+  extAgain:()=>window.open(ui.lastExt,'_blank','noopener'),
+  quickPaste:async()=>{try{const t=await navigator.clipboard.readText();if(!t)throw 0;quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
+  quickClose:()=>{ui.lastExt='';saveUI();renderQuick()},
   openTabelog:()=>openExt('tabelog'),
   openGmaps:()=>openExt('gmaps'),
   pasteClip:async()=>{try{const t=await navigator.clipboard.readText();if(!t)throw 0;handlePaste(t)}catch(_){toast('入力欄を長押しして「ペースト」してください');$('#pasteIn')?.focus()}},
