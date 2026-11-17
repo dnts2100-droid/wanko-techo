@@ -7,6 +7,9 @@
 <meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Tabi Note</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
@@ -283,7 +286,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .track{position:relative;height:96px;margin:14px 10px 4px}
 .rail{position:absolute;left:0;right:0;top:62px;height:6px;border-radius:3px;background:var(--line)}
 .fill{position:absolute;left:0;top:62px;height:6px;border-radius:3px;background:linear-gradient(90deg,#FFB199,var(--acc));transition:width 1s cubic-bezier(.3,.9,.3,1)}
-.cp{position:absolute;top:59px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--surface);border:2.5px solid var(--faint)}
+.cp{z-index:3;position:absolute;top:59px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--surface);border:2.5px solid var(--faint)}
 .cp.done{background:#1F9D74;border-color:#1F9D74}
 .flag{position:absolute;right:-10px;top:46px;font-size:20px}
 .tok{position:absolute;top:16px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;transition:left 1s cubic-bezier(.3,.9,.3,1)}
@@ -311,7 +314,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .g-tick span{position:absolute;top:2px;left:4px;font-size:10.5px;color:var(--sub);font-weight:700}
 .g-day{position:absolute;top:0;bottom:0;border-left:2px solid var(--faint)}
 .g-row{position:relative;height:50px}
-.g-bar{position:absolute;top:8px;height:24px;border-radius:8px;background:var(--acc-soft);color:var(--ink);font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:5px;padding:0 8px;white-space:nowrap;overflow:hidden;min-width:26px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 30%,transparent)}
+.g-bar{cursor:pointer;position:absolute;top:8px;height:24px;border-radius:8px;background:var(--acc-soft);color:var(--ink);font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:5px;padding:0 8px;white-space:nowrap;overflow:hidden;min-width:26px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 30%,transparent)}
 .g-bar b{flex:none;width:17px;height:17px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;display:grid;place-items:center}
 .g-bar.done{background:color-mix(in srgb,#1F9D74 14%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,#1F9D74 40%,transparent)}
 .g-bar.done b{background:#1F9D74}
@@ -336,7 +339,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 <body>
 <header class="top">
   <button class="plan-btn" data-act="planMenu" aria-label="プランを切り替え">
-    <div class="eyebrow">TABI NOTE</div>
+    <div class="eyebrow" style="display:flex;align-items:center;gap:6px"><img src="icon-192.png" alt="" style="width:18px;height:18px;border-radius:5px">TABI NOTE</div>
     <h1><span id="hTitle"></span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></h1>
     <div class="plan-sub" id="hSub"></div>
   </button>
@@ -433,7 +436,19 @@ function suggestMode(a,b){if(!hasLL(a)||!hasLL(b))return 'walk';const k=dist(a,b
 const gmaps=s=>hasLL(s)?`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+' '+(s.area||''))}`;
 const gdir=(a,b,m)=>`https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=${MODES[m].g}`;
 const gsearch=q=>'https://www.google.com/search?q='+encodeURIComponent(q);
-function ph(s,cls,extra=''){const g=gOf(s.genre);return `<div class="ph ${cls}" style="--h:${hue(s.genre||s.name)}"><span>${g.e}</span>${s.photo?`<img src="${esc(s.photo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}${extra}</div>`}
+const ICONS=[[/神社|宮|稲荷|大社/,'⛩️'],[/寺|院|観音|大仏/,'🛕'],[/城/,'🏯'],[/タワー|ツリー/,'🗼'],[/空港/,'✈️'],[/駅/,'🚉'],[/港|フェリー/,'⛴️'],
+ [/動物園|サファリ/,'🦁'],[/水族館/,'🐠'],[/美術館|ギャラリー/,'🖼️'],[/博物館|資料館|記念館/,'🏛️'],[/遊園地|花やしき|ランド|パーク/,'🎡'],[/植物園|庭園|ガーデン/,'🌸'],
+ [/公園|緑地/,'🌳'],[/温泉|湯|スパ|サウナ|銭湯/,'♨️'],[/海|ビーチ|浜/,'🏖️'],[/山|岳|峠/,'⛰️'],[/滝/,'💧'],[/湖|池/,'🛶'],[/橋/,'🌉'],[/展望|スカイ/,'🔭'],
+ [/ホテル|旅館|宿|イン$|ゲストハウス/,'🏨'],[/市場|朝市/,'🐟'],[/牧場|ファーム/,'🐄'],[/球場|スタジアム|アリーナ/,'🏟️'],[/映画|シネマ/,'🎬'],[/カラオケ/,'🎤'],
+ [/ラーメン|らーめん|拉麺|中華そば|つけ麺/,'🍜'],[/そば|蕎麦|うどん/,'🍲'],[/寿司|鮨|すし/,'🍣'],[/焼肉|焼き肉|ホルモン/,'🥩'],[/焼鳥|焼き鳥|やきとり|串/,'🍢'],
+ [/カレー/,'🍛'],[/ピザ|ピッツァ/,'🍕'],[/バーガー/,'🍔'],[/餃子|中華|飯店/,'🥟'],[/天ぷら|天麩羅/,'🍤'],[/もんじゃ|お好み焼|たこ焼/,'🥘'],[/うなぎ|鰻/,'🐟'],[/ステーキ/,'🥩'],
+ [/居酒屋|酒場|水産|大衆/,'🏮'],[/バー|BAR|Bar|パブ/,'🍸'],[/ビール|ブルワリー/,'🍺'],[/ワイン/,'🍷'],[/カフェ|珈琲|コーヒー|喫茶|COFFEE|Coffee|スターバックス/,'☕'],
+ [/パン|ベーカリー/,'🥐'],[/ケーキ|パティスリー|洋菓子|スイーツ/,'🍰'],[/和菓子|甘味|団子|だんご/,'🍡'],[/アイス|ジェラート/,'🍨'],
+ [/モール|百貨店|デパート|ショッピング|アウトレット|商店街/,'🛍️'],[/本屋|書店/,'📚']];
+const CUIS={ramen:'🍜',sushi:'🍣',yakiniku:'🥩',barbecue:'🥩',yakitori:'🍢',curry:'🍛',pizza:'🍕',burger:'🍔',chinese:'🥟',tempura:'🍤',soba:'🍲',udon:'🍲',coffee_shop:'☕',cake:'🍰',ice_cream:'🍨',izakaya:'🏮'};
+function iconOf(s){const n=s.name||'';for(const [re,e] of ICONS)if(re.test(n))return e;
+  const c=(s.cuisine||'').split(/[;,]/).map(x=>CUIS[x.trim()]).find(Boolean);return c||gOf(s.genre).e}
+function ph(s,cls,extra=''){return `<div class="ph ${cls}" style="--h:${hue(s.genre||s.name)}"><span>${iconOf(s)}</span>${s.photo?`<img src="${esc(s.photo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:''}${extra}</div>`}
 async function getJSON(url,ms=20000){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),ms);
   try{const r=await fetch(url,{signal:ac.signal});if(!r.ok)throw new Error('HTTP '+r.status);return await r.json()}finally{clearTimeout(tm)}}
 
@@ -444,7 +459,7 @@ const IDB={d:null,
   async set(k,v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
 };
 let db,saveT;
-function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{
+function save(){if(db&&P())P().u=Date.now();clearTimeout(saveT);saveT=setTimeout(async()=>{
   try{await IDB.set('db',JSON.parse(JSON.stringify(db)))}catch(e){try{localStorage.setItem('tabinote',JSON.stringify(db))}catch(_){toast('保存できませんでした（容量不足の可能性）')}}},250)}
 function mkPlan(title){return {id:uid(),title:title||'新しいプラン',days:[{date:'',start:'09:00',items:[]}],spots:[]}}
 function normalize(x){
@@ -564,7 +579,7 @@ function resultsHTML(){
   const p=P();
   return `<div class="res-head"><span>${r.length}件 · 近い順</span><button class="btn sm" data-act="resAll">すべてストック</button></div><div class="res-list">${r.map((x,i)=>{
     const sp=p.spots.find(s=>s.name===x.name);
-    return `<div class="res">${ph({genre:ui.fGenre,name:x.name,photo:x.photo})}<div class="info"><div class="name">${esc(x.name)}</div><div class="meta num">${x.d<1?Math.round(x.d*1000)+'m':x.d.toFixed(1)+'km'}${x.hours?' · '+esc(x.hours):''}</div></div>
+    return `<div class="res">${ph({genre:ui.fGenre,name:x.name,photo:x.photo,cuisine:x.cuisine})}<div class="info"><div class="name">${esc(x.name)}</div><div class="meta num">${x.d<1?Math.round(x.d*1000)+'m':x.d.toFixed(1)+'km'}${x.hours?' · '+esc(x.hours):''}</div></div>
     <a class="ibtn flat" href="${x.url?esc(x.url):gsearch(x.name+' '+ui.fArea)}" target="_blank" rel="noopener" aria-label="情報">${I.link}</a>
     ${sp?`<button class="btn sm" data-act="toDay" data-sid="${sp.id}">DAY${ui.day+1}へ</button>`:`<button class="btn sm pri" data-act="resAdd" data-i="${i}">${I.plus}候補</button>`}</div>`}).join('')}</div>`;
 }
@@ -657,13 +672,15 @@ function detailHTML(){
   ${row?`<div class="lbl">訪問記録</div><div class="row" style="justify-content:space-between">${row.it.v?`<span class="visit" style="margin:0">✓ ${visitText(row.it.v)}</span><button class="btn sm" data-act="visit" data-i="${pos}">記録を消す</button>`:`<span class="meta">${GEO.watch!=null?'10分以上滞在すると自動で記録されます':'おでかけモードで自動記録できます'}</span><button class="btn sm" data-act="visit" data-i="${pos}">✓ 訪問済みにする</button>`}</div>`:''}
   <div class="lbl">メモ</div>
   <textarea rows="2" data-f="memo" placeholder="予約情報・予算・持ち物など">${esc(s.memo||'')}</textarea>
-  <div class="sticky-foot">
+  <div class="lbl">操作</div><div class="row">
     ${row?`<button class="ibtn" data-act="move" data-v="-1" ${pos===0?'disabled style="opacity:.3"':''} aria-label="前へ">${I.up}</button><button class="ibtn" data-act="move" data-v="1" ${pos===d.items.length-1?'disabled style="opacity:.3"':''} aria-label="後へ">${I.down}</button>
       <button class="btn danger" data-act="unplan" data-i="${pos}">予定から外す</button>`
      :`<button class="btn acc" data-act="toDay" data-sid="${s.id}">${I.plus}DAY ${ui.day+1} に追加</button>`}
-    <button class="btn" data-act="editSpot" data-sid="${s.id}" style="flex:none">${I.edit}編集</button>
-  </div>`;
+    <button class="btn" data-act="editSpot" data-sid="${s.id}">${I.edit}編集</button>
+  </div>
+  <div class="sticky-foot"><button class="btn" data-act="dCancel">キャンセル</button><button class="btn pri" data-act="close">OK</button></div>`;
 }
+function openDetail(sid,i){detail={sid,i,snap:snap()};openSheet(detailHTML,()=>detail=null)}
 /* --- 移動手段 --- */
 let modeIdx=0;
 function modeHTML(){
@@ -682,7 +699,7 @@ function planHTML(){
   ${db.plans.map(x=>`<button class="plan-item ${x.id===p.id?'on':''}" data-act="switchPlan" data-id="${x.id}"><span class="ic">${esc([...x.title][0]||'旅')}</span><span style="flex:1;min-width:0"><b>${esc(x.title)}</b><div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${x.days.reduce((a,d)=>a+d.items.length,0)}スポット</div></span>${x.id===p.id?'<span class="meta">表示中</span>':''}</button>`).join('')}
   <button class="btn block" style="margin-top:8px" data-act="newPlan">${I.plus}新しいプランを作成</button>
   <div class="lbl">このプラン</div>
-  <div class="row"><button class="btn sm" data-act="share">${I.link}テキストで共有</button><button class="btn sm" data-act="dupPlan">複製</button><button class="btn sm" data-act="export">書き出し</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm danger" data-act="delPlan">削除</button></div>
+  <div class="row"><button class="btn sm" data-act="share">${I.link}共有</button><button class="btn sm" data-act="dupPlan">複製</button><button class="btn sm" data-act="export">書き出し</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm danger" data-act="delPlan">削除</button></div>
   <div class="note">データはこの端末のブラウザ内に保存されます。機種変更や別端末で使う場合は「書き出し」したファイルを「読み込み」してください。</div>`;
 }
 /* --- スポット編集 --- */
@@ -703,7 +720,7 @@ function formHTML(){
   <div class="note" id="llNote">${hasLL(s)?'📍 位置設定済み。地図をタップで修正できます。':'検索するか、地図をタップして位置を指定してください。'}</div>
   <div class="lbl">情報URL（公式サイト・食べログなど）</div><input data-f="d.url" type="url" value="${esc(s.url||'')}" placeholder="https://">
   <div class="lbl">メモ</div><textarea data-f="d.memo" rows="2">${esc(s.memo||'')}</textarea>
-  <div class="sticky-foot">${s._new?'':`<button class="btn danger" data-act="delSpot" style="flex:none">${I.trash}</button>`}<button class="btn pri" data-act="saveSpot">保存する</button></div>`;
+  <div class="sticky-foot">${s._new?'':`<button class="ibtn" data-act="delSpot" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button>`}<button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="saveSpot">OK</button></div>`;
 }
 function openForm(s){
   draft=s?{...s}:{_new:1,id:uid(),name:'',genre:ui.fGenre2||'その他',area:ui.fArea2||'',stay:gOf(ui.fGenre2).stay||60};
@@ -753,14 +770,29 @@ $('#filePhoto').onchange=async e=>{
     c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);applyPhoto(c.toDataURL('image/jpeg',.82));toast('写真を設定しました')}
   catch(_){toast('この写真は読み込めませんでした')}
 };
-async function autoPhoto(s){
-  if(s.photo)return;let lang='ja',title=null;
-  if(s.wiki&&s.wiki.includes(':'))[lang,title]=[s.wiki.split(':')[0],s.wiki.split(':').slice(1).join(':')];
-  else if(gOf(s.genre).lm)title=s.name;
-  if(!title)return;
-  try{const j=await getJSON(`https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=thumbnail&pithumbsize=640&redirects=1&titles=${encodeURIComponent(title)}`,10000);
-    const pg=Object.values(j.query?.pages||{}).find(p=>p.thumbnail);if(pg&&!s.photo){s.photo=pg.thumbnail.source;save();render();if(detail?.sid===s.id)refreshSheet()}}catch(_){}
+// 写真の自動取得：Wikipediaの記事名 → 近くの記事（位置＋名前一致）の順に探す。見つからなければ連想アイコン。
+const FOOD=new Set(['グルメ','居酒屋','焼肉','寿司','ラーメン','カフェ','スイーツ','バー','カラオケ']);
+const norm=t=>String(t||'').replace(/[\s　・()（）「」]/g,'').toLowerCase();
+async function wikiThumb(lang,titles){
+  const j=await getJSON(`https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=thumbnail&pithumbsize=640&redirects=1&titles=${encodeURIComponent(titles)}`,10000);
+  const pg=Object.values(j.query?.pages||{}).find(p=>p.thumbnail&&!/logo|ロゴ|\.svg/i.test(p.thumbnail.source));return pg?pg.thumbnail.source:'';
 }
+async function autoPhoto(s,force){
+  if(s.photo||(s.pt&&!force))return;s.pt=1;
+  let url='';
+  try{
+    if(s.wiki&&s.wiki.includes(':'))url=await wikiThumb(s.wiki.split(':')[0],s.wiki.split(':').slice(1).join(':'));
+    if(!url&&!FOOD.has(s.genre))url=await wikiThumb('ja',s.name);
+    if(!url&&!FOOD.has(s.genre)&&hasLL(s)){
+      const j=await getJSON(`https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=geosearch&gscoord=${s.lat}|${s.lng}&gsradius=400&gslimit=15`,10000);
+      const n=norm(s.name),hit=(j.query?.geosearch||[]).find(g=>{const t=norm(g.title);return t.length>1&&(t.includes(n)||n.includes(t))});
+      if(hit)url=await wikiThumb('ja',hit.title);
+    }
+  }catch(_){}
+  save();
+  if(url&&!s.photo){s.photo=url;save();render();if(detail?.sid===s.id)refreshSheet()}
+}
+async function autoPhotoAll(){for(const s of P().spots.filter(x=>!x.photo&&!x.pt)){await autoPhoto(s);await new Promise(r=>setTimeout(r,300))}}
 
 /* ================= 検索 ================= */
 async function geocode(q){
@@ -788,7 +820,7 @@ async function find(){
     const q=`[out:json][timeout:25];(${g.q.map(x=>`${x}["name"](around:${ui.fRad},${c.lat},${c.lng});`).join('')});out center tags 120;`;
     const res=await overpass(q),seen=new Set();
     ui.fRes=res.elements.map(e=>{const t=e.tags||{},lat=e.lat??e.center?.lat,lng=e.lon??e.center?.lon;
-      return {name:t['name:ja']||t.name,lat,lng,url:t.website||t['contact:website']||'',hours:t.opening_hours||'',photo:tagPhoto(t),wiki:t.wikipedia||'',d:dist(c,{lat,lng})}})
+      return {name:t['name:ja']||t.name,lat,lng,url:t.website||t['contact:website']||'',hours:t.opening_hours||'',cuisine:t.cuisine||'',photo:tagPhoto(t),wiki:t.wikipedia||'',d:dist(c,{lat,lng})}})
       .filter(x=>x.name&&x.lat!=null&&!seen.has(x.name)&&seen.add(x.name)).sort((a,b)=>a.d-b.d).slice(0,60);
     ui.fState='ok';
   }catch(err){ui.fState=(err.message||'検索に失敗しました')+(location.protocol==='file:'?'（ファイルを直接開いていると通信が制限される場合があります）':'')}
@@ -796,7 +828,7 @@ async function find(){
 }
 function addRes(x){
   const p=P();let s=p.spots.find(y=>y.name===x.name);if(s)return s;
-  s={id:uid(),name:x.name,area:ui.fArea==='現在地'?'':ui.fArea,genre:ui.fGenre,stay:G[ui.fGenre].stay,lat:x.lat,lng:x.lng,url:x.url,memo:x.hours?'営業 '+x.hours:'',photo:x.photo,wiki:x.wiki};
+  s={id:uid(),name:x.name,area:ui.fArea==='現在地'?'':ui.fArea,genre:ui.fGenre,stay:G[ui.fGenre].stay,lat:x.lat,lng:x.lng,url:x.url,memo:x.hours?'営業 '+x.hours:'',photo:x.photo,wiki:x.wiki,cuisine:x.cuisine};
   p.spots.push(s);autoPhoto(s);return s;
 }
 async function searchPlaces(q){
@@ -822,6 +854,59 @@ async function doShare(){
   try{await navigator.clipboard.writeText(text);toast('スケジュールをコピーしました。LINEなどに貼り付けできます')}catch(_){toast('共有できませんでした')}
 }
 
+/* --- 共有（グループ） --- */
+const b64u={enc:u=>{let s='';u.forEach(c=>s+=String.fromCharCode(c));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')},
+  dec:t=>{t=t.replace(/-/g,'+').replace(/_/g,'/');const s=atob(t);return Uint8Array.from(s,c=>c.charCodeAt(0))}};
+async function pack(p){
+  const x=JSON.parse(JSON.stringify(p));x.spots.forEach(s=>{if(String(s.photo||'').startsWith('data:'))delete s.photo;delete s.pt});
+  const raw=new TextEncoder().encode(JSON.stringify(x));
+  if(window.CompressionStream){const buf=await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();return 'z'+b64u.enc(new Uint8Array(buf))}
+  return 'j'+b64u.enc(raw);
+}
+async function unpack(t){
+  const bytes=b64u.dec(t.slice(1));
+  if(t[0]==='z'){const buf=await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();return JSON.parse(new TextDecoder().decode(buf))}
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function shareHTML(){
+  const p=P(),n=p.members||1;
+  return `<h3><span>共有</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
+  <div class="card" style="box-shadow:none;background:var(--bg)">
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px">👥 グループで共有</div>
+    <div class="meta" style="line-height:1.7">共有リンクをLINEなどで送ると、受け取った人のアプリにこのプランが入ります。<br>だれかが変更したら、その人が同じボタンで送り返すと、全員のプランに反映（上書き更新）されます。</div>
+    <button class="btn acc block" style="margin-top:12px" data-act="shareLink">${I.link}共有リンクを送る</button>
+  </div>
+  <button class="btn block" style="margin-top:10px" data-act="shareText">📝 予定をテキストで送る</button>
+  <div class="note">自分で撮った写真はリンクに含まれません（容量のため）。ネットの写真は共有されます。</div>`;
+}
+async function shareLink(){
+  try{const url=location.href.split('#')[0]+'#p='+await pack(P());
+    const text=`「${P().title}」のプランを共有します。開くとTabi Noteに取り込まれます。`;
+    try{if(navigator.share){await navigator.share({title:P().title,text,url});return}}catch(e){if(e.name==='AbortError')return}
+    await navigator.clipboard.writeText(text+'\n'+url);toast('共有リンクをコピーしました。LINEなどに貼り付けてください')}
+  catch(_){toast('共有リンクを作成できませんでした')}
+}
+let incoming=null;
+function takeInHTML(){
+  const x=incoming,cur=db.plans.find(p=>p.id===x.id),cnt=x.days.reduce((a,d)=>a+d.items.length,0);
+  return `<h3><span>プランを受け取りました</span></h3>
+  <div class="card" style="box-shadow:none;background:var(--bg)"><div class="dname" style="font-size:19px">${esc(x.title)}</div>
+  <div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${cnt}スポット${x.u?' · '+new Date(x.u).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' 更新':''}</div></div>
+  <div class="note" style="font-size:13px">${cur?(cur.u&&x.u&&cur.u>x.u?'⚠️ お手元のプランの方が新しい変更を含んでいます。取り込むと受け取った内容で上書きされます。':'お手元の同じプランを、受け取った最新の内容に更新します。'):'新しいプランとして追加します。'}</div>
+  <div class="sticky-foot"><button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="takeIn">${cur?'更新する':'取り込む'}</button></div>`;
+}
+function takeIn(){
+  const x=normalize({plans:[incoming]}).plans[0],i=db.plans.findIndex(p=>p.id===x.id);
+  if(i>=0){const old=db.plans[i];x.spots.forEach(s=>{const o=old.spots.find(y=>y.id===s.id);if(o&&!s.photo&&o.photo)s.photo=o.photo});db.plans[i]=x}else db.plans.push(x);
+  db.cur=x.id;ui.day=0;fitKey='';incoming=null;save();closeSheet();render();toast(i>=0?'プランを最新の内容に更新しました':'プランを取り込みました');autoPhotoAll();
+}
+async function checkIncoming(){
+  const m=location.hash.match(/^#p=(.+)$/);if(!m)return;
+  history.replaceState(null,'',location.pathname+location.search);
+  try{incoming=await unpack(m[1]);if(!incoming?.days)throw 0;openSheet(takeInHTML)}catch(_){toast('共有リンクを読み込めませんでした')}
+}
+window.addEventListener('hashchange',checkIncoming);
+
 /* ================= 操作 ================= */
 const ACT={
   geo:()=>GEO.watch!=null?stopGeo():startGeo(),
@@ -836,23 +921,27 @@ const ACT={
   goStock:()=>{ui.tab='stock';render();scrollTo({top:0})},
   mode:el=>{modeIdx=+el.dataset.i;openSheet(modeHTML)},
   setMode:el=>{D().items[modeIdx].mode=el.dataset.m;save();render();closeSheet()},
-  detail:(el,e)=>{if(e.target.closest('[data-handle]'))return;detail={sid:el.dataset.sid,i:el.dataset.i!=null?+el.dataset.i:null};openSheet(detailHTML,()=>detail=null)},
+  detail:(el,e)=>{if(e.target.closest('[data-handle]'))return;openDetail(el.dataset.sid,el.dataset.i!=null?+el.dataset.i:null)},
+  dCancel:()=>{if(detail?.snap){restore(detail.snap)();save();render()}closeSheet()},
   stay:el=>{const s=S(detail.sid);s.stay=Math.max(0,(+s.stay||0)+ +el.dataset.v);save();refreshSheet();render()},
   move:el=>{const d=D(),i=d.items.findIndex(x=>x.spot===detail.sid&&(detail.i==null||d.items.indexOf(x)===detail.i)),j=i+ +el.dataset.v;
     if(i<0||j<0||j>=d.items.length)return;[d.items[i],d.items[j]]=[d.items[j],d.items[i]];detail.i=j;save();render();refreshSheet()},
   unplan:el=>{const s=snap(),d=D(),[x]=d.items.splice(+el.dataset.i,1);save();closeSheet();render();toast(`「${S(x.spot).name}」を予定から外しました`,restore(s))},
   toDay:el=>{addToDay(el.dataset.sid);if(SHEETS.length&&detail)refreshSheet();render()},
-  editSpot:el=>{closeSheet();setTimeout(()=>openForm(S(el.dataset.sid)),210)},
+  editSpot:el=>{detail&&(detail.snap=null);closeSheet();setTimeout(()=>openForm(S(el.dataset.sid)),210)},
   newSpot:()=>openForm(),
   close:()=>closeSheet(),
   planMenu:()=>openSheet(planHTML),
-  switchPlan:el=>{db.cur=el.dataset.id;ui.day=0;ui.fRes=null;ui.fState='';fitKey='';save();closeSheet();render()},
+  switchPlan:el=>{db.cur=el.dataset.id;setTimeout(autoPhotoAll,500);ui.day=0;ui.fRes=null;ui.fState='';fitKey='';save();closeSheet();render()},
   newPlan:()=>{const p=mkPlan();db.plans.push(p);db.cur=p.id;ui.day=0;fitKey='';save();closeSheet();render();setTimeout(()=>{openSheet(planHTML);const i=document.querySelector('.sheet [data-f="title"]');i&&(i.select(),i.focus())},250)},
   dupPlan:()=>{const x=JSON.parse(snap());x.id=uid();x.title+='（コピー）';db.plans.push(x);db.cur=x.id;save();closeSheet();render();toast('プランを複製しました')},
   delPlan:()=>{const s=snap(),p=P();db.plans=db.plans.filter(x=>x.id!==p.id);if(!db.plans.length)db.plans.push(mkPlan());db.cur=db.plans[0].id;ui.day=0;fitKey='';save();closeSheet();render();toast(`「${p.title}」を削除しました`,()=>{restore(s)();db.cur=p.id})},
   export:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));a.download=`tabinote-${new Date().toLocaleDateString('sv-SE')}.json`;a.click();toast('書き出しました')},
   import:()=>$('#fileImport').click(),
-  share:()=>doShare(),
+  share:()=>openSheet(shareHTML),
+  shareText:()=>doShare(),
+  shareLink:()=>shareLink(),
+  takeIn:()=>takeIn(),
   here:()=>{if(!navigator.geolocation)return toast('現在地を取得できません');toast('現在地を取得中…');
     navigator.geolocation.getCurrentPosition(p=>{ui.here={lat:p.coords.latitude,lng:p.coords.longitude};ui.fArea='現在地';renderStock();find()},()=>toast('現在地を取得できませんでした'),{timeout:10000})},
   fGenre:el=>{ui.fGenre=el.dataset.g;if(ui.fRes||ui.fState)find();else renderStock()},
@@ -863,7 +952,7 @@ const ACT={
   f2:el=>{ui[el.dataset.k]=el.dataset.v;renderStock()},
   cands:()=>{ui.showCands=!ui.showCands;fitKey='';drawMap()},
   fly:el=>{const i=+el.dataset.i,r=calc(D()).rows[i];ui.hl=i;renderMapUI();if(MAP&&hasLL(r.s))MAP.flyTo([r.s.lat,r.s.lng],Math.max(MAP.getZoom(),15),{duration:.6});
-    if(el.classList.contains('hl')&&ui.hl===i&&el.dataset.tap){detail={sid:r.s.id,i};openSheet(detailHTML,()=>detail=null)}el.dataset.tap=1},
+    if(el.classList.contains('hl')&&ui.hl===i&&el.dataset.tap){openDetail(r.s.id,i)}el.dataset.tap=1},
   photo:el=>{photoTarget=el.dataset.draft?{draft:1}:{sid:el.dataset.sid};photoRes=null;openSheet(photoHTML)},
   upload:()=>$('#filePhoto').click(),
   photoSearch:()=>photoSearch(),
@@ -948,13 +1037,13 @@ function raceHTML(g,d){
     <div class="eyebrow">GHOST RACE · DAY ${ui.day+1}</div>
     <div class="race-status ${cls}"><span class="emo">${emo}</span><div><b class="num">${big}</b><small>${sub}</small></div></div>
     <div class="track"><div class="rail"></div><div class="fill" style="width:${youP}%"></div>
-      ${g.rows.map(r=>`<div class="cp ${r.it.v?'done':''}" style="left:${pos(r.A)}%" title="${esc(r.s.name)}"></div>`).join('')}
+      ${g.rows.map(r=>`<div class="cp ${r.it.v?'done':''}" role="button" data-act="detail" data-sid="${r.s.id}" data-i="${r.i}" style="left:${pos(r.A)}%;cursor:pointer" title="${esc(r.s.name)}"></div>`).join('')}
       <div class="flag">🏁</div>
       ${g.state!=='goal'&&g.state!=='pre'?`<div class="tok ghost" style="left:${ghostP}%"><span class="ic">👻</span><i>予定</i></div>`:''}
       <div class="tok runner ${g.state==='at'||g.state==='pre'||g.state==='goal'?'stop':''}" style="left:${youP}%"><span class="ic">🏃</span><i>あなた</i></div>
       ${g.state!=='goal'&&g.state!=='pre'&&am>=5?`<div class="gap-tag" style="left:${(ghostP+youP)/2}%">${m>0?'◀':'▶'} ${am}分</div>`:''}
     </div>
-    <div class="race-foot">${next?`<span>次は <b>${esc(next.s.name)}</b></span><span class="num">予定 ${fmtT(next.arr)} 着${g.state!=='pre'?` · ${next.A-g.now>0?'あと'+dur((next.A-g.now)/60e3):dur((g.now-next.A)/60e3)+'超過'}`:''}</span>`:`<span>おつかれさまでした！</span><span>${g.rows.filter(r=>r.it.v).length}/${g.rows.length} スポット訪問</span>`}</div>
+    <div class="race-foot">${next?`<span>次は <b role="button" data-act="detail" data-sid="${next.s.id}" data-i="${next.i}" style="text-decoration:underline;text-underline-offset:3px;cursor:pointer">${esc(next.s.name)}</b></span><span class="num">予定 ${fmtT(next.arr)} 着${g.state!=='pre'?` · ${next.A-g.now>0?'あと'+dur((next.A-g.now)/60e3):dur((g.now-next.A)/60e3)+'超過'}`:''}</span>`:`<span>おつかれさまでした！</span><span>${g.rows.filter(r=>r.it.v).length}/${g.rows.length} スポット訪問</span>`}</div>
     ${rec}
   </div>`;
 }
@@ -970,13 +1059,14 @@ function ganttHTML(g){
     const prev=g.rows[i-1];
     return `<div class="g-row">
       ${prev?`<div class="g-leg" style="left:${x(prev.Dp)}px;width:${Math.max(0,x(r.A)-x(prev.Dp))}px"><span>${MODES[r.it.mode].e}</span></div>`:''}
-      <div class="g-bar ${v?'done':''} ${lv?'cur':''} ${miss?'miss':''}" style="left:${x(r.A)}px;width:${Math.max(26,x(r.Dp)-x(r.A))}px" title="${esc(r.s.name)}"><b>${v?'✓':i+1}</b>${esc(r.s.name)}</div>
+      <div role="button" data-act="detail" data-sid="${r.s.id}" data-i="${i}" class="g-bar ${v?'done':''} ${lv?'cur':''} ${miss?'miss':''}" style="left:${x(r.A)}px;width:${Math.max(26,x(r.Dp)-x(r.A))}px" title="${esc(r.s.name)}"><b>${v?'✓':i+1}</b>${esc(r.s.name)}</div>
       ${v?`<div class="g-act" style="left:${x(v.a)}px;width:${Math.max(4,x(v.d)-x(v.a))}px"></div>`:''}
       ${lv?`<div class="g-act live" style="left:${x(presence.since)}px;width:${Math.max(4,x(g.now)-x(presence.since))}px"></div>`:''}
     </div>`}).join('');
   return `<div class="card gantt-card"><div class="ttl"><span>タイムライン</span><span class="lg"><i style="background:var(--acc-soft);box-shadow:inset 0 0 0 1px var(--acc)"></i>予定</span><span class="lg"><i style="background:#1F9D74"></i>実績</span></div>
     <div class="gantt" id="gantt"><div class="g-in" style="width:${W}px"><div class="g-axis">${ticks}</div>${rows}
-    ${showNow?`<div class="g-now" style="left:${x(g.now)}px"><span>NOW ${hmS(g.now)}</span></div>`:''}</div></div></div>`;
+    ${showNow?`<div class="g-now" style="left:${x(g.now)}px"><span>NOW ${hmS(g.now)}</span></div>`:''}</div></div>
+    <div class="note" style="padding:0 16px">帯をタップすると詳細を確認・変更できます。</div></div>`;
 }
 const hmS=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
 function renderProg(){
@@ -1068,7 +1158,7 @@ async function ensureLibs(){
   }
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
-load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();
+load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();setTimeout(autoPhotoAll,1500);
   try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
 });
 </script>
