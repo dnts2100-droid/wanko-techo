@@ -350,6 +350,11 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .conf i:nth-child(3n){background:#1F9D74}.conf i:nth-child(3n+1){background:var(--faint);border-radius:50%;width:10px;height:10px}
 @keyframes boom{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),calc(var(--y) + 80px)) rotate(var(--r))}}
 
+/* LIVE */
+.live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
+.live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
+.live-badge.off{background:var(--faint)}.live-badge.off::before{animation:none}
+
 /* toast */
 .toast{position:fixed;left:50%;bottom:calc(84px + var(--safe));transform:translateX(-50%);z-index:2000;background:var(--ink);color:var(--bg);padding:11px 8px 11px 18px;border-radius:999px;display:flex;align-items:center;gap:12px;font-size:13.5px;font-weight:600;box-shadow:var(--sh2);animation:tin .25s cubic-bezier(.2,.9,.3,1);width:max-content;max-width:calc(100vw - 32px)}
 .toast button{color:var(--acc);font-weight:800;padding:2px 12px}
@@ -508,7 +513,7 @@ const IDB={d:null,
   async set(k,v){const d=await this.open();return new Promise((res,rej)=>{const t=d.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
 };
 let db,saveT;
-function save(){if(db&&P())P().u=Date.now();clearTimeout(saveT);saveT=setTimeout(async()=>{
+function save(touch=true){if(db&&P()&&touch){P().u=Date.now();live.push(P())}clearTimeout(saveT);saveT=setTimeout(async()=>{
   try{await IDB.set('db',JSON.parse(JSON.stringify(db)))}catch(e){try{localStorage.setItem('tabinote',JSON.stringify(db))}catch(_){toast('保存できませんでした（容量不足の可能性）')}}},250)}
 function mkPlan(title){return {id:uid(),title:title||'新しいプラン',days:[{date:'',start:'09:00',items:[]}],spots:[]}}
 function normalize(x){
@@ -560,7 +565,7 @@ function renderHeader(){
   const p=P(),f=p.days[0].date,l=p.days.at(-1).date,n=p.days.length;
   $('#hTitle').textContent=p.title;
   $('#geoBtn').classList.toggle('live',GEO.watch!=null);
-  $('#hSub').textContent=[f?fmtDate(f)+(n>1&&l?' – '+fmtDate(l):''):'日付未設定',n>1?`${n}日間`:'日帰り',`${p.days.reduce((a,d)=>a+d.items.length,0)}スポット`].join(' · ');
+  $('#hSub').innerHTML=(p.gid?`<span class="live-badge ${liveState==='err'?'off':''}">${liveState==='err'?'OFFLINE':'LIVE'}</span> `:'')+esc([f?fmtDate(f)+(n>1&&l?' – '+fmtDate(l):''):'日付未設定',n>1?`${n}日間`:'日帰り',`${p.days.reduce((a,d)=>a+d.items.length,0)}スポット`].join(' · '));
 }
 function renderTabs(){
   const n=P().spots.length;
@@ -745,7 +750,7 @@ function planHTML(){
   return `<h3><span>プラン</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
   <div class="lbl" style="margin-top:0">プラン名</div><input data-f="title" value="${esc(p.title)}">
   <div class="lbl">マイプラン</div>
-  ${db.plans.map(x=>`<button class="plan-item ${x.id===p.id?'on':''}" data-act="switchPlan" data-id="${x.id}"><span class="ic">${esc([...x.title][0]||'旅')}</span><span style="flex:1;min-width:0"><b>${esc(x.title)}</b><div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${x.days.reduce((a,d)=>a+d.items.length,0)}スポット</div></span>${x.id===p.id?'<span class="meta">表示中</span>':''}</button>`).join('')}
+  ${db.plans.map(x=>`<button class="plan-item ${x.id===p.id?'on':''}" data-act="switchPlan" data-id="${x.id}"><span class="ic">${esc([...x.title][0]||'旅')}</span><span style="flex:1;min-width:0"><b>${esc(x.title)}</b>${x.gid?' <span class="live-badge">LIVE</span>':''}<div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${x.days.reduce((a,d)=>a+d.items.length,0)}スポット</div></span>${x.id===p.id?'<span class="meta">表示中</span>':''}</button>`).join('')}
   <button class="btn block" style="margin-top:8px" data-act="newPlan">${I.plus}新しいプランを作成</button>
   <div class="lbl">このプラン</div>
   <div class="row"><button class="btn sm" data-act="share">${I.link}共有</button><button class="btn sm" data-act="dupPlan">複製</button><button class="btn sm" data-act="export">書き出し</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm danger" data-act="delPlan">削除</button></div>
@@ -918,10 +923,21 @@ async function unpack(t){
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 function shareHTML(){
-  const p=P(),n=p.members||1;
+  const p=P();
   return `<h3><span>共有</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
+  <div class="card" style="box-shadow:none;background:var(--bg);margin-bottom:10px">
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px">⚡ リアルタイム共有 ${p.gid?'<span class="live-badge">LIVE</span>':''}</div>
+    ${!(FIREBASE_CONFIG||window.__FB_MOCK)?`<div class="meta" style="line-height:1.7">リアルタイム共有はまだ準備中です（サーバー未設定）。下の「共有リンク」をお使いください。</div>`
+    :p.gid?`<div class="meta" style="line-height:1.7">このプランはグループで共有中です。だれかが変更すると、全員の画面に自動で反映されます。</div>
+      <div class="lbl">あなたの表示名</div><input data-f="me" value="${esc(db.me||'')}" placeholder="例：たろう">
+      <button class="btn acc block" style="margin-top:12px" data-act="liveInvite">${I.link}メンバーを招待する</button>
+      <button class="btn sm danger" style="margin-top:8px" data-act="liveLeave">このプランの共有をやめる</button>`
+    :`<div class="meta" style="line-height:1.7">招待リンクを送ると、メンバー全員で同じプランを編集できます。だれかが変更すると、全員の画面に自動で反映されます。</div>
+      <div class="lbl">あなたの表示名</div><input data-f="me" value="${esc(db.me||'')}" placeholder="例：たろう">
+      <button class="btn acc block" style="margin-top:12px" data-act="liveStart">⚡ グループを作って招待する</button>`}
+  </div>
   <div class="card" style="box-shadow:none;background:var(--bg)">
-    <div style="font-weight:800;font-size:15px;margin-bottom:4px">👥 グループで共有</div>
+    <div style="font-weight:800;font-size:15px;margin-bottom:4px">🔗 共有リンク（1回だけ送る）</div>
     <div class="meta" style="line-height:1.7">共有リンクをLINEなどで送ると、受け取った人のアプリにこのプランが入ります。<br>だれかが変更したら、その人が同じボタンで送り返すと、全員のプランに反映（上書き更新）されます。</div>
     <button class="btn acc block" style="margin-top:12px" data-act="shareLink">${I.link}共有リンクを送る</button>
   </div>
@@ -950,14 +966,107 @@ function takeIn(){
   db.cur=x.id;ui.day=0;fitKey='';incoming=null;save();closeSheet();render();toast(i>=0?'プランを最新の内容に更新しました':'プランを取り込みました');autoPhotoAll();
 }
 async function checkIncoming(){
+  const g=location.hash.match(/^#g=([A-Za-z0-9]{20,})$/);
+  if(g){history.replaceState(null,'',location.pathname+location.search);return live.join(g[1])}
   const m=location.hash.match(/^#p=(.+)$/);if(!m)return;
   history.replaceState(null,'',location.pathname+location.search);
   try{incoming=await unpack(m[1]);if(!incoming?.days)throw 0;openSheet(takeInHTML)}catch(_){toast('共有リンクを読み込めませんでした')}
 }
 window.addEventListener('hashchange',checkIncoming);
 
+/* ================= リアルタイム共有（Firebase） ================= */
+// ▼ Firebaseコンソールの「ウェブアプリの設定」の値をここに貼り付けると有効になります（公開しても問題ない値です）
+const FIREBASE_CONFIG=null;
+/* 例：
+const FIREBASE_CONFIG={apiKey:"AIza...",authDomain:"xxxx.firebaseapp.com",projectId:"xxxx",storageBucket:"xxxx.appspot.com",messagingSenderId:"000",appId:"1:000:web:xxx"};
+*/
+const FBV='10.12.2';
+const live={
+  fb:null,subs:{},timers:{},last:{},
+  async init(){
+    if(this.fb)return this.fb;
+    if(window.__FB_MOCK)return this.fb=window.__FB_MOCK;
+    if(!FIREBASE_CONFIG)return null;
+    const [A,F,U]=await Promise.all([import(`https://www.gstatic.com/firebasejs/${FBV}/firebase-app.js`),import(`https://www.gstatic.com/firebasejs/${FBV}/firebase-firestore.js`),import(`https://www.gstatic.com/firebasejs/${FBV}/firebase-auth.js`)]);
+    const app=A.initializeApp(FIREBASE_CONFIG),auth=U.getAuth(app);await U.signInAnonymously(auth);
+    const store=F.getFirestore(app);
+    return this.fb={uid:auth.currentUser.uid,
+      get:async id=>{const d=await F.getDoc(F.doc(store,'groups',id));return d.exists()?d.data():null},
+      set:(id,v)=>F.setDoc(F.doc(store,'groups',id),v),
+      watch:(id,cb)=>F.onSnapshot(F.doc(store,'groups',id),d=>cb(d.exists()?d.data():null))};
+  },
+  strip(p){const x=JSON.parse(JSON.stringify(p));delete x.su;x.spots.forEach(s=>{if(String(s.photo||'').startsWith('data:'))delete s.photo;delete s.pt});return x},
+  body(p){const x=this.strip(p);delete x.u;return JSON.stringify(x)},
+  push(p){
+    if(!p?.gid||!this.fb)return;
+    clearTimeout(this.timers[p.gid]);
+    this.timers[p.gid]=setTimeout(async()=>{
+      const body=this.body(p);if(this.last[p.gid]===body)return;
+      try{await this.fb.set(p.gid,{data:JSON.stringify(this.strip(p)),u:p.u,by:this.fb.uid,name:db.me||''});this.last[p.gid]=body;p.su=p.u;setLive('ok')}
+      catch(e){setLive('err')}
+    },700);
+  },
+  apply(gid,r){
+    if(!r)return;
+    const p=db.plans.find(x=>x.gid===gid);if(!p)return;
+    if(r.by===this.fb.uid&&r.u<=(p.u||0))return;          // 自分の書き込み
+    if(r.u<=(p.su||0)&&r.u<=(p.u||0))return;               // 既に反映済み
+    let x;try{x=JSON.parse(r.data)}catch(_){return}
+    x=normalize({plans:[x]}).plans[0];
+    x.spots.forEach(s=>{const o=p.spots.find(y=>y.id===s.id);if(o&&!s.photo&&o.photo)s.photo=o.photo});
+    x.id=p.id;x.gid=gid;x.u=r.u;x.su=r.u;
+    db.plans[db.plans.indexOf(p)]=x;this.last[gid]=this.body(x);
+    save(false);render();if(SHEETS.length&&detail)refreshSheet();
+    if(r.by!==this.fb.uid&&x.id===db.cur)toast(`${r.name||'メンバー'}さんがプランを更新しました`);
+  },
+  watch(p){
+    if(!p.gid||this.subs[p.gid])return;
+    this.subs[p.gid]=this.fb.watch(p.gid,r=>this.apply(p.gid,r));
+  },
+  async start(){
+    const fb=await this.init().catch(()=>null);if(!fb)return toast('サーバーに接続できませんでした');
+    const p=P();if(!p.gid){const a=new Uint8Array(18);crypto.getRandomValues(a);p.gid=b64u.enc(a).replace(/[-_]/g,'x')}
+    p.u=Date.now();await fb.set(p.gid,{data:JSON.stringify(this.strip(p)),u:p.u,by:fb.uid,name:db.me||''});this.last[p.gid]=this.body(p);p.su=p.u;
+    save(false);this.watch(p);render();refreshSheet();this.invite();
+  },
+  async invite(){
+    const p=P(),url=location.href.split('#')[0]+'#g='+p.gid,text=`「${p.title}」をRouterで一緒に計画しよう！開くとグループに参加できます。`;
+    try{if(navigator.share){await navigator.share({title:p.title,text,url});return}}catch(e){if(e.name==='AbortError')return}
+    try{await navigator.clipboard.writeText(text+'\n'+url);toast('招待リンクをコピーしました')}catch(_){toast('招待リンク：'+url)}
+  },
+  async join(gid){
+    const fb=await this.init().catch(()=>null);if(!fb)return toast('リアルタイム共有に接続できませんでした');
+    let r=null;try{r=await fb.get(gid)}catch(_){}
+    if(!r)return toast('グループが見つかりませんでした');
+    let x;try{x=JSON.parse(r.data)}catch(_){return toast('グループのデータを読み込めませんでした')}
+    incoming={...x,gid,_live:r};openSheet(joinHTML);
+  },
+  leave(){const p=P();if(this.subs[p.gid]){this.subs[p.gid]();delete this.subs[p.gid]}delete p.gid;delete p.su;save(false);render();closeSheet();toast('このプランの共有をやめました（手元には残ります）')},
+  async boot(){if(!db.plans.some(p=>p.gid))return;const fb=await this.init().catch(()=>null);if(!fb)return setLive('err');db.plans.forEach(p=>this.watch(p))}
+};
+let liveState='';
+function setLive(s){liveState=s;renderHeader()}
+function joinHTML(){
+  const x=incoming,cnt=x.days.reduce((a,d)=>a+d.items.length,0),mine=db.plans.find(p=>p.gid===x.gid);
+  return `<h3><span>⚡ グループに参加</span></h3>
+  <div class="card" style="box-shadow:none;background:var(--bg)"><div class="dname" style="font-size:19px">${esc(x.title)}</div>
+  <div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${cnt}スポット${x._live.name?' · '+esc(x._live.name)+'さんが最後に更新':''}</div></div>
+  <div class="note" style="font-size:13px">${mine?'このグループには参加済みです。最新の内容を表示します。':'参加すると、メンバーの変更があなたの画面にも自動で反映されます。'}</div>
+  ${mine?'':`<div class="lbl">あなたの表示名</div><input data-f="me" value="${esc(db.me||'')}" placeholder="例：たろう">`}
+  <div class="sticky-foot"><button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="liveJoin">${mine?'開く':'参加する'}</button></div>`;
+}
+function joinNow(){
+  const x=incoming,r=x._live;let p=db.plans.find(q=>q.gid===x.gid);
+  if(!p){delete x._live;p=normalize({plans:[x]}).plans[0];p.id=uid();p.gid=x.gid;p.u=r.u;p.su=r.u;db.plans.push(p);live.last[p.gid]=live.body(p)}
+  db.cur=p.id;ui.day=0;fitKey='';incoming=null;save(false);live.watch(p);closeSheet();render();toast('グループに参加しました');autoPhotoAll();
+}
+
 /* ================= 操作 ================= */
 const ACT={
+  liveStart:()=>live.start(),
+  liveInvite:()=>live.invite(),
+  liveLeave:()=>live.leave(),
+  liveJoin:()=>joinNow(),
   geo:()=>GEO.watch!=null?stopGeo():startGeo(),
   locate:()=>{if(GEO.watch==null){GEO.fly=1;startGeo()}else if(GEO.pos&&MAP)MAP.flyTo([GEO.pos.lat,GEO.pos.lng],16,{duration:.6});else{GEO.fly=1;toast('現在地を取得中…')}},
   visit:el=>{const it=D().items[+el.dataset.i];if(it.v)delete it.v;else{it.v={a:Date.now(),d:Date.now(),m:1};GEO.justDone=it.id;setTimeout(()=>GEO.justDone=null,1500);celebrate(S(it.spot).name)}save();render();refreshSheet()},
@@ -1031,6 +1140,7 @@ document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f==='fArea'){ui.fArea=e.target.value;return}
   if(f==='memo'&&detail){S(detail.sid).memo=e.target.value;save();return}
   if(f==='title'){P().title=e.target.value||'無題のプラン';save();renderHeader()}
+  if(f==='me'){db.me=e.target.value.trim().slice(0,20);save(false)}
 });
 document.addEventListener('change',e=>{const f=e.target.dataset.f,p=P(),d=D();
   if(f==='date'){const prev=d.date;d.date=e.target.value;
@@ -1207,7 +1317,7 @@ async function ensureLibs(){
   }
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
-load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();setTimeout(autoPhotoAll,1500);
+load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();live.boot();setTimeout(autoPhotoAll,1500);
   try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
 });
 </script>
