@@ -373,6 +373,30 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 @media (min-width:1000px){.quick{left:240px}}
 .toast{bottom:calc(136px + var(--safe))!important}
 
+/* 候補リスト */
+.add-bar{display:flex;align-items:center;gap:8px;width:100%;text-align:left;margin-top:6px;padding:14px 16px}
+.add-bar b{font-size:14.5px}.add-bar .meta{flex:1}.add-bar .chev{font-size:20px;font-weight:700;color:var(--acc)}
+.add-close{display:flex;justify-content:flex-end;margin:6px 0 -2px}
+.filters{display:grid;gap:8px;margin-bottom:6px}
+.filters .field{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.filters .seg{background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.filters .seg button.on{background:var(--ink);color:var(--bg);box-shadow:none}
+.sort{width:auto;flex:none;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:7px 10px;font-size:12.5px;font-weight:700}
+.chip small{font-size:10.5px;opacity:.6;margin-left:2px}
+.linkbtn{color:var(--acc);font-weight:700;font-size:12px;text-decoration:underline}
+.slist{padding:4px 0;overflow:hidden}
+.sgroup{font-size:11.5px;font-weight:800;color:var(--sub);padding:12px 14px 4px;letter-spacing:.04em}
+.srow{display:flex;align-items:center;gap:12px;padding:8px 10px 8px 12px;border-top:1px solid var(--line);cursor:pointer}
+.slist .srow:first-child,.sgroup+.srow{border-top:none}
+.srow:active{background:var(--bg)}
+.sth{width:48px;height:48px;border-radius:12px}.sth>span{font-size:22px}
+.srow .info{flex:1;min-width:0}
+.srow .name{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ubadge{flex:none;font-size:10.5px;font-weight:800;color:#1F9D74;background:color-mix(in srgb,#1F9D74 12%,var(--surface));padding:3px 7px;border-radius:999px}
+.addbtn{flex:none;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center}
+.addbtn svg{width:16px;height:16px;stroke-width:2.6}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -632,18 +656,48 @@ function renderPlan(){
     if(e.oldIndex===e.newIndex)return;const it=D().items;const [m]=it.splice(e.oldIndex,1);it.splice(e.newIndex,0,m);save();render()}});
 }
 function renderStock(){
-  const p=P(),areas=[...new Set(p.spots.map(s=>s.area).filter(Boolean))],genres=[...new Set(p.spots.map(s=>s.genre).filter(Boolean))];
+  const p=P(),n=p.spots.length;
+  const open=ui.addOpen??!n;
+  let h=open?addCardHTML():`<button class="card add-bar" data-act="addToggle">🍽 <b>お店・スポットを追加</b><span class="meta">食べログから</span><span class="chev">＋</span></button>`;
+  if(open&&n)h=`<div class="add-close"><button class="btn sm" data-act="addToggle">追加パネルを閉じる</button></div>`+h;
+  h+=`<div class="sec-head"><h2>候補<span>${n}</span></h2><button class="btn sm" data-act="newSpot">${I.plus}手入力</button></div>`;
+  if(!n){$('#pane-stock').innerHTML=h+`<div class="card empty">${pinkun(88)}<b>候補はまだありません</b>上の手順で気になるお店をストックしましょう。</div>`;return}
+  const areas=[...new Set(p.spots.map(s=>s.area||'エリア未設定'))],genres=[...new Set(p.spots.map(s=>s.genre||'その他'))];
   if(ui.fArea2&&!areas.includes(ui.fArea2))ui.fArea2='';if(ui.fGenre2&&!genres.includes(ui.fGenre2))ui.fGenre2='';
-  const list=p.spots.filter(s=>(!ui.fArea2||s.area===ui.fArea2)&&(!ui.fGenre2||s.genre===ui.fGenre2)).slice().reverse();
-  let h=addCardHTML()+`
-  <div class="sec-head"><h2>候補ストック<span>${p.spots.length}</span></h2><button class="btn sm" data-act="newSpot">${I.plus}手入力</button></div>`;
-  if(areas.length>1)h+=`<div class="hscroll" style="margin-bottom:8px"><button class="chip ${ui.fArea2?'':'on'}" data-act="f2" data-k="fArea2" data-v="">すべてのエリア</button>${areas.map(a=>`<button class="chip ${ui.fArea2===a?'on':''}" data-act="f2" data-k="fArea2" data-v="${esc(a)}">${esc(a)}</button>`).join('')}</div>`;
-  if(genres.length>1)h+=`<div class="hscroll" style="margin-bottom:14px"><button class="chip ${ui.fGenre2?'':'on'}" data-act="f2" data-k="fGenre2" data-v="">すべて</button>${genres.map(a=>`<button class="chip ${ui.fGenre2===a?'on':''}" data-act="f2" data-k="fGenre2" data-v="${esc(a)}">${gOf(a).e} ${esc(a)}</button>`).join('')}</div>`;
-  h+=list.length?`<div class="grid">${list.map(s=>{const u=usedIn(s.id);return `<div class="scard" role="button" tabindex="0" data-act="detail" data-sid="${s.id}">
-      ${ph(s,'',`${u.length?`<span class="badge">DAY ${u[0].di+1} · ${u[0].i+1}件目</span>`:''}<button class="add-fab" data-act="toDay" data-sid="${s.id}" aria-label="スケジュールに追加">${I.plus}</button>`)}
-      <div class="sbody"><div class="kicker">${gOf(s.genre).e} ${esc(s.genre||'その他')}${s.area?' · '+esc(s.area):''}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}${hasLL(s)?'':' · 📍未設定'}</div></div></div>`}).join('')}</div>`
-   :`<div class="card empty">${pinkun(88)}<b>候補はまだありません</b>上の検索から気になる場所をストックしましょう。</div>`;
+  const cnt=(k,v)=>p.spots.filter(s=>(k==='a'?(s.area||'エリア未設定'):(s.genre||'その他'))===v).length;
+  h+=`<div class="filters">
+    <div class="field">${I.search}<input id="q2" data-f="q2" placeholder="名前・メモで絞り込み" value="${esc(ui.q2||'')}"></div>
+    <div class="row" style="flex-wrap:nowrap">
+      <div class="seg" style="flex:1">${[['','すべて'],['todo','未計画'],['done','予定に入れた']].map(([v,l])=>`<button class="${(ui.st2||'')===v?'on':''}" data-act="f2" data-k="st2" data-v="${v}">${l}</button>`).join('')}</div>
+      <select data-f="sort2" aria-label="並び順" class="sort">${[['new','新しい順'],['area','エリア順'],['genre','ジャンル順'],['name','名前順']].map(([v,l])=>`<option value="${v}" ${(ui.sort2||'new')===v?'selected':''}>${l}</option>`).join('')}</select>
+    </div>
+    ${areas.length>1?`<div class="hscroll"><button class="chip ${ui.fArea2?'':'on'}" data-act="f2" data-k="fArea2" data-v="">📍 全エリア</button>${areas.map(a=>`<button class="chip ${ui.fArea2===a?'on':''}" data-act="f2" data-k="fArea2" data-v="${esc(a)}">${esc(a)}<small>${cnt('a',a)}</small></button>`).join('')}</div>`:''}
+    ${genres.length>1?`<div class="hscroll"><button class="chip ${ui.fGenre2?'':'on'}" data-act="f2" data-k="fGenre2" data-v="">全ジャンル</button>${genres.map(g=>`<button class="chip ${ui.fGenre2===g?'on':''}" data-act="f2" data-k="fGenre2" data-v="${esc(g)}">${gOf(g).e} ${esc(g)}<small>${cnt('g',g)}</small></button>`).join('')}</div>`:''}
+  </div><div id="stockList"></div>`;
   $('#pane-stock').innerHTML=h;
+  renderStockList();
+}
+function renderStockList(){
+  const el=$('#stockList');if(!el)return;
+  const p=P(),q=(ui.q2||'').trim().toLowerCase();
+  let list=p.spots.map((s,idx)=>({s,idx,u:usedIn(s.id)})).filter(({s,u})=>
+    (!ui.fArea2||(s.area||'エリア未設定')===ui.fArea2)&&(!ui.fGenre2||(s.genre||'その他')===ui.fGenre2)&&
+    (!ui.st2||(ui.st2==='todo'?!u.length:!!u.length))&&(!q||(s.name+' '+(s.memo||'')+' '+(s.area||'')).toLowerCase().includes(q)));
+  const sort=ui.sort2||'new',key=x=>sort==='area'?(x.s.area||'￿'):sort==='genre'?(x.s.genre||'￿'):x.s.name;
+  if(sort==='new')list.reverse();else list.sort((a,b)=>key(a).localeCompare(key(b),'ja')||a.s.name.localeCompare(b.s.name,'ja'));
+  let h=`<div class="meta" style="margin:4px 2px 8px">${list.length}件を表示${list.length<p.spots.length?`（全${p.spots.length}件） <button class="linkbtn" data-act="f2clear">条件をクリア</button>`:''}</div>`;
+  if(!list.length){el.innerHTML=h+`<div class="card empty" style="padding:24px">条件に合う候補がありません</div>`;return}
+  let last=null;h+='<div class="slist card">';
+  list.forEach(({s,u})=>{
+    if(sort==='area'||sort==='genre'){const g=sort==='area'?(s.area||'エリア未設定'):(s.genre||'その他');if(g!==last){h+=`<div class="sgroup">${sort==='genre'?gOf(g).e+' ':'📍 '}${esc(g)}</div>`;last=g}}
+    h+=`<div class="srow" role="button" tabindex="0" data-act="detail" data-sid="${s.id}">
+      ${ph(s,'sth')}
+      <div class="info"><div class="name">${esc(s.name)}</div><div class="meta">${gOf(s.genre).e} ${esc(s.genre||'その他')}${s.area?' · '+esc(s.area):''} · ${dur(+s.stay||0)}${hasLL(s)?'':' · 📍未設定'}</div></div>
+      ${u.length?`<span class="ubadge">DAY${u[0].di+1}·${u[0].i+1}</span>`:''}
+      <button class="addbtn" data-act="toDay" data-sid="${s.id}" aria-label="DAY ${ui.day+1}に追加">${I.plus}</button>
+    </div>`;
+  });
+  el.innerHTML=h+'</div>';
 }
 /* ---------- 追加カード（食べログ → URL貼り付け） ---------- */
 const FOODK=['グルメ','居酒屋','焼肉','寿司','ラーメン','カフェ','スイーツ','バー','カラオケ'];
@@ -1209,6 +1263,8 @@ function joinNow(){
 
 /* ================= 操作 ================= */
 const ACT={
+  addToggle:()=>{ui.addOpen=!(ui.addOpen??!P().spots.length);renderStock()},
+  f2clear:()=>{ui.fArea2=ui.fGenre2=ui.st2=ui.q2='';renderStock()},
   extAgain:()=>window.open(ui.lastExt,'_blank','noopener'),
   quickPaste:async()=>{try{const t=await navigator.clipboard.readText();if(!t)throw 0;quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
   quickClose:()=>{ui.lastExt='';saveUI();renderQuick()},
@@ -1294,6 +1350,7 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f.startsWith('d.')){draft[f.slice(2)]=e.target.value;return}
   if(f==='fArea'){ui.fArea=e.target.value;return}
+  if(f==='q2'){ui.q2=e.target.value;renderStockList();return}
   if(f==='paste'){clearTimeout(pasteT);const v=e.target.value;pasteT=setTimeout(()=>{if(v.trim().length>=2)handlePaste(v)},900);return}
   if(f==='pst.name'&&ui.pst){ui.pst.name=e.target.value;return}
   if(f==='pst.area'&&ui.pst){ui.pst.area=e.target.value;return}
@@ -1306,6 +1363,7 @@ document.addEventListener('change',e=>{const f=e.target.dataset.f,p=P(),d=D();
     p.days.forEach((x,i)=>{if(i>ui.day&&(!x.date||(prev&&x.date===addDays(prev,i-ui.day))))x.date=addDays(d.date,i-ui.day)});save();render()}
   else if(f==='start'){d.start=e.target.value||'09:00';save();render()}
   else if(f==='title')renderTabs();
+  else if(f==='sort2'){ui.sort2=e.target.value;renderStockList()}
   else if((f==='pst.name'||f==='pst.area')&&ui.pst&&ui.pst.locLabel!=='Googleマップの位置'){ui.pst.lat=ui.pst.lng=null;locate(ui.pst)}
 });
 $('#fileImport').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
