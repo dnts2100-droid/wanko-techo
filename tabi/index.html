@@ -117,11 +117,11 @@ dialog::backdrop{background:#0006}
 
 <script>
 const SCENES={
-  day:{icon:'🚗',label:'日帰り旅行',days:1,start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','体験']},
-  stay:{icon:'🏨',label:'宿泊旅行',days:2,start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','宿','体験']},
-  biz:{icon:'💼',label:'出張',days:1,start:'08:30',genres:['訪問先','会議','ランチ','ホテル','会食','移動拠点']},
-  drink:{icon:'🍻',label:'飲み会',days:1,start:'18:00',genres:['集合','一次会','二次会','三次会','カラオケ','締めラーメン']},
-  other:{icon:'✨',label:'その他',days:1,start:'10:00',genres:['観光','グルメ','買い物','その他']}
+  day:{icon:'🚗',label:'日帰り旅行',days:1,single:1,unit:'件目',start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','体験']},
+  stay:{icon:'🏨',label:'宿泊旅行',days:2,unit:'件目',start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','宿','体験']},
+  biz:{icon:'💼',label:'出張',days:1,unit:'件目',start:'08:30',genres:['訪問先','会議','ランチ','ホテル','会食','移動拠点']},
+  drink:{icon:'🍻',label:'飲み会',days:1,single:1,unit:'軒目',start:'18:00',genres:['集合','一次会','二次会','三次会','カラオケ','締めラーメン']},
+  other:{icon:'✨',label:'その他',days:1,unit:'件目',start:'10:00',genres:['観光','グルメ','買い物','その他']}
 };
 // 移動手段：速度(km/h)・道のり補正・待ち時間(分)・Googleマップの travelmode
 const MODES={
@@ -182,8 +182,9 @@ function render(){
     if(map){map.remove();map=null}
     return;
   }
+  const sc=SCENES[p.scene];if(sc.single)ui.day=0;
   if(ui.day>=p.days.length)ui.day=p.days.length-1;
-  const sc=SCENES[p.scene],d=p.days[ui.day];
+  const d=p.days[ui.day],dl=sc.single?'':`${ui.day+1}日目の`;
   const areas=[...new Set(p.spots.map(s=>s.area).filter(Boolean))];
   const genres=[...new Set([...sc.genres,...p.spots.map(s=>s.genre).filter(Boolean)])];
   document.getElementById('areaList').innerHTML=areas.map(a=>`<option value="${esc(a)}">`).join('');
@@ -202,7 +203,7 @@ function render(){
     }
     const arr=t,stay=+s.stay||0;t+=stay;stayT+=stay;
     stops+=`<div class="stop"><div class="num">${i+1}</div><div class="body">
-      <div class="tm">${fmt(arr)} 〜 ${fmt(t)}<span class="meta">（滞在${dur(stay)}）</span></div>
+      <div class="meta" style="font-weight:700">${i+1}${sc.unit}</div><div class="tm">${fmt(arr)} 〜 ${fmt(t)}<span class="meta">（滞在${dur(stay)}）</span></div>
       <div class="nm">${esc(s.name)}</div>
       <div class="meta">${s.area?`<span class="tag">${esc(s.area)}</span>`:''}${s.genre?`<span class="tag">${esc(s.genre)}</span>`:''}${esc(s.memo||'')}</div>
       <div class="row" style="margin-top:4px">${s.url?`<a class="btn" href="${esc(s.url)}" target="_blank" rel="noopener">🔗 情報</a>`:''}<a class="btn" href="${gmaps(s)}" target="_blank" rel="noopener">📍 地図</a><button data-edit="${s.id}">✏</button></div>
@@ -212,13 +213,13 @@ function render(){
   const fl=p.spots.filter(s=>(!ui.area||s.area===ui.area)&&(!ui.genre||s.genre===ui.genre));
   app.innerHTML=`
   <section class="sec">
-    <h2>${sc.icon} ${esc(p.title)}<span class="meta">${sc.label}</span><span class="sp"></span><button data-addday>＋日を追加</button></h2>
-    <div class="days">${p.days.map((x,i)=>`<button data-day="${i}" class="${i===ui.day?'on':''}">${i+1}日目${x.date?' '+x.date.slice(5).replace('-','/'):''}</button>`).join('')}</div>
+    <h2>${sc.icon} ${esc(p.title)}<span class="meta">${sc.label}</span><span class="sp"></span>${sc.single?'':'<button data-addday>＋日を追加</button>'}</h2>
+    ${sc.single?'':`<div class="days">${p.days.map((x,i)=>`<button data-day="${i}" class="${i===ui.day?'on':''}">${i+1}日目${x.date?' '+x.date.slice(5).replace('-','/'):''}</button>`).join('')}</div>`}
     <div class="dayhead">日付 <input type="date" id="dDate" value="${d.date||''}"> 出発 <input type="time" id="dStart" value="${d.start}">
-      ${p.days.length>1?'<button class="ghost" data-delday style="color:#c33">この日を削除</button>':''}</div>
+      ${!sc.single&&p.days.length>1?'<button class="ghost" data-delday style="color:#c33">この日を削除</button>':''}</div>
   </section>
   <div class="layout">
-    <section class="sec"><h2>② ${ui.day+1}日目の訪問順</h2>
+    <section class="sec"><h2>② ${dl}訪問順<span class="meta">${d.items.length?`全${d.items.length}${sc.unit.slice(0,-1)}`:''}</span></h2>
       ${stops||'<div class="empty">右の候補から「＋追加」で訪問先を並べましょう</div>'}
       ${d.items.length?`<div class="sum">⏱ 終了予定 <b>${fmt(t)}</b>（移動 ${dur(moveT)}・${km.toFixed(1)}km／滞在 ${dur(stayT)}）<div class="note">移動時間は直線距離×補正で算出した目安です。正確な時間は「経路↗」で確認してください。</div></div>`:''}
     </section>
@@ -233,7 +234,7 @@ function render(){
       </div>`).join('')||'<div class="empty">候補がありません。「＋候補」から登録しましょう</div>'}</div>
     </section>
   </div>
-  <section class="sec"><h2>④ 地図<span class="meta">番号＝${ui.day+1}日目の訪問順／灰色＝候補</span></h2><div id="map"></div></section>`;
+  <section class="sec"><h2>④ 地図<span class="meta">番号＝${dl}訪問順／灰色＝候補</span></h2><div id="map"></div></section>`;
   drawMap(p,d);
 }
 function drawMap(p,d){
@@ -243,7 +244,7 @@ function drawMap(p,d){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
   const pts=[],inDay=new Set(d.items.map(i=>i.spot));
   p.spots.filter(s=>s.lat!=null&&!inDay.has(s.id)).forEach(s=>{
-    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="mk c"></div>',iconSize:[14,14]})}).addTo(map).bindPopup(`${esc(s.name)}<br><button onclick="addTo('${s.id}')">＋${ui.day+1}日目に追加</button>`);
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="mk c"></div>',iconSize:[14,14]})}).addTo(map).bindPopup(`${esc(s.name)}<br><button onclick="addTo('${s.id}')">＋${SCENES[p.scene].single?'プラン':ui.day+1+'日目'}に追加</button>`);
     pts.push([s.lat,s.lng]);
   });
   const route=[];
