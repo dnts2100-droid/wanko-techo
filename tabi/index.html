@@ -57,7 +57,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 
 /* tab bar */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + var(--safe));z-index:600;display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);box-shadow:var(--sh2);border:1px solid color-mix(in srgb,var(--line) 60%,transparent);width:max-content;max-width:calc(100vw - 24px)}
-.tab{display:flex;align-items:center;gap:6px;padding:10px 15px;white-space:nowrap;border-radius:999px;font-size:13px;font-weight:700;color:var(--sub);transition:all .2s}
+.tab{display:flex;align-items:center;gap:5px;padding:10px 13px;white-space:nowrap;border-radius:999px;font-size:13px;font-weight:700;color:var(--sub);transition:all .2s}
 .tab.on{background:var(--ink);color:var(--bg)}
 .tab .cnt{font-size:10px;background:var(--acc);color:#fff;border-radius:999px;padding:0 6px;line-height:16px}
 
@@ -273,6 +273,59 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .leaflet-bar a.loc-btn.on{color:#2F80ED}
 .leaflet-bar a.loc-btn svg{width:18px;height:18px}
 
+/* 進捗：ゴーストレース＆ガント */
+.race{margin-top:14px;padding:18px 16px 16px;overflow:hidden}
+.race-status{display:flex;align-items:center;gap:12px;margin:6px 0 4px}
+.race-status .emo{font-size:38px;line-height:1;animation:bob 1.6s ease-in-out infinite}
+.race-status b{display:block;font-size:26px;font-weight:900;letter-spacing:-.03em;line-height:1.15}
+.race-status small{font-size:12.5px;color:var(--sub);font-weight:600}
+.race-status.late b{color:#E5484D}.race-status.warn b{color:#D97706}.race-status.early b{color:#1F9D74}.race-status.ok b{color:var(--ink)}
+.track{position:relative;height:96px;margin:14px 10px 4px}
+.rail{position:absolute;left:0;right:0;top:62px;height:6px;border-radius:3px;background:var(--line)}
+.fill{position:absolute;left:0;top:62px;height:6px;border-radius:3px;background:linear-gradient(90deg,#FFB199,var(--acc));transition:width 1s cubic-bezier(.3,.9,.3,1)}
+.cp{position:absolute;top:59px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:var(--surface);border:2.5px solid var(--faint)}
+.cp.done{background:#1F9D74;border-color:#1F9D74}
+.flag{position:absolute;right:-10px;top:46px;font-size:20px}
+.tok{position:absolute;top:16px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;transition:left 1s cubic-bezier(.3,.9,.3,1)}
+.tok .ic{font-size:26px;line-height:1}
+.tok i{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.08em;padding:1px 6px;border-radius:999px;margin-top:2px;white-space:nowrap}
+.ghost{opacity:.6;z-index:1;top:0;flex-direction:column-reverse}.ghost i{margin:0 0 2px}.ghost .ic{animation:float 2.2s ease-in-out infinite}.ghost i{background:var(--line);color:var(--sub)}
+.runner{z-index:2}.runner .ic{transform:scaleX(-1);animation:run .5s ease-in-out infinite alternate}.runner i{background:var(--acc);color:#fff}
+.runner.stop .ic{animation:none}
+@keyframes float{50%{transform:translateY(-5px)}}
+@keyframes run{to{transform:scaleX(-1) translateY(-4px) rotate(4deg)}}
+@keyframes bob{50%{transform:translateY(-3px) rotate(-4deg)}}
+.gap-tag{position:absolute;top:74px;transform:translateX(-50%);font-size:10.5px;font-weight:800;color:var(--sub);white-space:nowrap}
+.race-foot{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--sub);border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.race-foot b{color:var(--ink)}
+.recover{margin-top:12px;width:100%;justify-content:flex-start;text-align:left;white-space:normal;background:color-mix(in srgb,#E5484D 8%,var(--surface));box-shadow:none;color:var(--ink);font-size:13px;border-radius:16px;padding:12px 14px}
+.gantt-card{margin-top:14px;padding:14px 0 10px}
+.gantt-card .ttl{display:flex;align-items:center;gap:8px;padding:0 16px 8px;font-weight:800}
+.gantt-card .ttl span{flex:1}
+.lg{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--sub);font-weight:600}
+.lg i{display:inline-block;width:14px;height:6px;border-radius:3px}
+.gantt{overflow-x:auto;position:relative;scrollbar-width:thin}
+.g-in{position:relative;padding:22px 0 6px}
+.g-axis{position:absolute;top:0;left:0;right:0;height:100%;pointer-events:none}
+.g-tick{position:absolute;top:0;bottom:0;border-left:1px dashed var(--line)}
+.g-tick span{position:absolute;top:2px;left:4px;font-size:10.5px;color:var(--sub);font-weight:700}
+.g-day{position:absolute;top:0;bottom:0;border-left:2px solid var(--faint)}
+.g-row{position:relative;height:50px}
+.g-bar{position:absolute;top:8px;height:24px;border-radius:8px;background:var(--acc-soft);color:var(--ink);font-size:11.5px;font-weight:700;display:flex;align-items:center;gap:5px;padding:0 8px;white-space:nowrap;overflow:hidden;min-width:26px;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--acc) 30%,transparent)}
+.g-bar b{flex:none;width:17px;height:17px;border-radius:50%;background:var(--acc);color:#fff;font-size:10px;display:grid;place-items:center}
+.g-bar.done{background:color-mix(in srgb,#1F9D74 14%,var(--surface));box-shadow:inset 0 0 0 1px color-mix(in srgb,#1F9D74 40%,transparent)}
+.g-bar.done b{background:#1F9D74}
+.g-bar.cur{box-shadow:inset 0 0 0 2px #2F80ED}
+.g-bar.miss{opacity:.55;text-decoration:line-through}
+.g-act{position:absolute;top:36px;height:6px;border-radius:3px;background:#1F9D74;min-width:4px}
+.g-act.live{background:#2F80ED;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.45}}
+.g-leg{position:absolute;top:19px;height:2px;background:repeating-linear-gradient(90deg,var(--faint) 0 4px,transparent 4px 7px)}
+.g-leg span{position:absolute;left:50%;top:-10px;transform:translateX(-50%);font-size:12px}
+.g-now{position:absolute;top:0;bottom:0;width:2px;background:#E5484D;z-index:3}
+.g-now span{position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);background:#E5484D;color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;white-space:nowrap}
+.g-now::after{content:"";position:absolute;top:0;left:-4px;width:10px;height:10px;border-radius:50%;background:#E5484D;animation:pulse 2s infinite}
+
 /* toast */
 .toast{position:fixed;left:50%;bottom:calc(84px + var(--safe));transform:translateX(-50%);z-index:2000;background:var(--ink);color:var(--bg);padding:11px 8px 11px 18px;border-radius:999px;display:flex;align-items:center;gap:12px;font-size:13.5px;font-weight:600;box-shadow:var(--sh2);animation:tin .25s cubic-bezier(.2,.9,.3,1);width:max-content;max-width:calc(100vw - 32px)}
 .toast button{color:var(--acc);font-weight:800;padding:2px 12px}
@@ -293,6 +346,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 <main class="panes">
   <section class="pane" id="pane-plan"></section>
   <section class="pane" id="pane-stock"></section>
+  <section class="pane" id="pane-prog"></section>
 </main>
 <section class="pane" id="pane-map"><div id="map"></div><div class="map-days" id="mapDays"></div><div class="carousel" id="carousel"></div></section>
 <nav class="tabbar" id="tabbar"></nav>
@@ -353,6 +407,7 @@ const I={
  edit:'<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
  trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
  up:'<svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+ gantt:'<svg viewBox="0 0 24 24"><path d="M4 6h8M8 12h10M12 18h8" stroke-width="2.6"/></svg>',
  check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
  down:'<svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>'
 };
@@ -430,8 +485,8 @@ function addToDay(sid,di=ui.day,silent){
 
 /* ================= 描画 ================= */
 function render(){
-  renderHeader();renderTabs();renderPlan();renderStock();
-  ['plan','stock'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
+  renderHeader();renderTabs();renderPlan();renderStock();renderProg();
+  ['plan','stock','prog'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
   $('#pane-map').classList.toggle('on',ui.tab==='map'||wide.matches);
   document.querySelector('.top').style.display=(ui.tab==='map'&&!wide.matches)?'none':'';
   if(ui.tab==='map'||wide.matches)drawMap();
@@ -445,7 +500,7 @@ function renderHeader(){
 }
 function renderTabs(){
   const n=P().spots.length;
-  $('#tabbar').innerHTML=[['plan',I.list,'スケジュール'],['stock',I.book,'候補',n],['map',I.map,'地図']]
+  $('#tabbar').innerHTML=[['plan',I.list,'予定'],['stock',I.book,'候補',n],['prog',I.gantt,'進捗'],['map',I.map,'地図']]
     .map(([k,ic,l,c])=>`<button class="tab ${ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')?'on':''}" data-act="tab" data-tab="${k}">${ic}${l}${c?`<span class="cnt">${c}</span>`:''}</button>`).join('');
 }
 function renderPlan(){
@@ -772,7 +827,9 @@ const ACT={
   geo:()=>GEO.watch!=null?stopGeo():startGeo(),
   locate:()=>{if(GEO.watch==null){GEO.fly=1;startGeo()}else if(GEO.pos&&MAP)MAP.flyTo([GEO.pos.lat,GEO.pos.lng],16,{duration:.6});else{GEO.fly=1;toast('現在地を取得中…')}},
   visit:el=>{const it=D().items[+el.dataset.i];if(it.v)delete it.v;else{it.v={a:Date.now(),d:Date.now(),m:1};GEO.justDone=it.id;setTimeout(()=>GEO.justDone=null,1500)}save();render();refreshSheet()},
-  tab:el=>{ui.tab=el.dataset.tab;render();scrollTo({top:0})},
+  tab:el=>{ui.tab=el.dataset.tab;if(ui.tab==='prog'){const t=new Date().toLocaleDateString('sv-SE'),i=P().days.findIndex(d=>d.date===t);if(i>=0)ui.day=i;ui.gScroll=1}render();scrollTo({top:0})},
+  recover:el=>{const sn=snap(),it=D().items[+el.dataset.i],s=S(it.spot),m=+el.dataset.m;s.stay=Math.max(0,(+s.stay||0)-m);save();render();toast(`「${s.name}」の滞在を${m}分短縮しました`,restore(sn))},
+  progDate:()=>{const d=D();d.date=new Date().toLocaleDateString('sv-SE');save();render()},
   day:el=>{ui.day=+el.dataset.i;ui.hl=null;render()},
   addDay:()=>{const p=P(),l=p.days.at(-1);p.days.push({date:addDays(l.date,1),start:l.start||'09:00',items:[]});ui.day=p.days.length-1;save();render();toast(`DAY ${p.days.length} を追加しました`)},
   delDay:()=>{const p=P(),s=snap(),n=ui.day+1;p.days.splice(ui.day,1);ui.day=Math.max(0,ui.day-1);save();render();toast(`DAY ${n} を削除しました`,restore(s))},
@@ -848,6 +905,96 @@ $('#fileImport').onchange=async e=>{const f=e.target.files[0];e.target.value='';
     save();closeSheet();render();toast(`${n}件のプランを読み込みました`)}catch(_){toast('読み込めないファイルです')}};
 wide.addEventListener('change',()=>{if(MAP)setTimeout(()=>MAP.invalidateSize(),50);render()});
 
+/* ================= 進捗（ゴーストレース・ガント） ================= */
+const TODAY=()=>new Date().toLocaleDateString('sv-SE');
+function progress(d){
+  const c=calc(d);if(!c.rows.length)return null;
+  const base=new Date((d.date||TODAY())+'T00:00').getTime(),now=Date.now();
+  const rows=c.rows.map(r=>({...r,A:base+r.arr*60e3,Dp:base+r.dep*60e3}));
+  const live=it=>GEO.watch!=null&&presence&&presence.iid===it.id&&now-presence.last<3*60e3;
+  let k=-1;rows.forEach((r,i)=>{if(r.it.v||live(r.it))k=i});
+  const start=rows[0].A,end=rows.at(-1).Dp;let delay=0,state;
+  if(k<0){state=now<start?'pre':'run';delay=state==='run'?now-start:0}
+  else{const r=rows[k],v=r.it.v;
+    if(live(r.it)||!v){delay=Math.max((v?v.a:presence.since)-r.A,now-r.Dp);state='at'}
+    else if(rows[k+1]){delay=Math.max(v.d-r.Dp,now-rows[k+1].A);state='move'}
+    else{delay=v.d-r.Dp;state='goal'}}
+  return {rows,k,start,end,delay,state,now,live};
+}
+function raceHTML(g,d){
+  const m=Math.round(g.delay/60e3),am=Math.abs(m),span=Math.max(1,g.end-g.start);
+  const pos=t=>Math.max(0,Math.min(100,(t-g.start)/span*100));
+  let cls='ok',emo='👌',big='ほぼ予定どおり',sub='';
+  const fin=new Date(g.end+g.delay);
+  if(g.state==='pre'){const w=g.start-g.now;cls='ok';emo='⏳';big=w>864e5?`スタートまで あと${Math.ceil(w/864e5)}日`:`スタートまで あと${dur(w/60e3)}`;sub=`${fmtDate(d.date||TODAY())} ${fmtT(toMin(d.start))} スタート`}
+  else if(g.state==='goal'){emo='🏁';big='ゴール！';cls=m>5?'late':m<-5?'early':'ok';sub=am<=5?'ほぼ予定どおりにフィニッシュ':`予定より${am}分${m>0?'おそく':'はやく'}フィニッシュ`}
+  else{
+    if(m<=-5){cls='early';emo='⚡';big=`${am}分はやい`}
+    else if(m<5){cls='ok';emo='👌';big='予定どおり'}
+    else if(m<20){cls='warn';emo='🐢';big=`${m}分おくれ`}
+    else{cls='late';emo='🔥';big=`${m}分おくれ`}
+    sub=`ゴール予想 ${String(fin.getHours()).padStart(2,'0')}:${String(fin.getMinutes()).padStart(2,'0')}（予定 ${fmtT(calc(d).end)}）`;
+    if(g.state==='run')sub+=' · 訪問記録なし';
+  }
+  const ghostP=g.state==='pre'?0:pos(g.now),youP=g.state==='pre'?0:g.state==='goal'?100:pos(g.now-g.delay);
+  const next=g.state==='pre'||g.state==='run'?g.rows[0]:g.state==='goal'?null:g.state==='at'?g.rows[g.k+1]:g.rows[g.k+1];
+  let rec='';
+  if(m>=10&&g.state!=='goal'&&g.state!=='pre'){
+    const from=g.state==='at'?g.k+1:Math.max(0,g.k+1);
+    const cand=g.rows.slice(from).filter(r=>!r.it.v&&(+r.s.stay||0)>=30).sort((a,b)=>b.s.stay-a.s.stay)[0];
+    if(cand){const cut=Math.min(Math.ceil(m/5)*5,cand.s.stay-15);if(cut>=5)rec=`<button class="btn recover" data-act="recover" data-i="${cand.i}" data-m="${cut}">💡 <span><b>リカバリー案</b><br>「${esc(cand.s.name)}」の滞在を${cut}分短くして遅れを取り戻す</span></button>`}
+  }
+  return `<div class="card race">
+    <div class="eyebrow">GHOST RACE · DAY ${ui.day+1}</div>
+    <div class="race-status ${cls}"><span class="emo">${emo}</span><div><b class="num">${big}</b><small>${sub}</small></div></div>
+    <div class="track"><div class="rail"></div><div class="fill" style="width:${youP}%"></div>
+      ${g.rows.map(r=>`<div class="cp ${r.it.v?'done':''}" style="left:${pos(r.A)}%" title="${esc(r.s.name)}"></div>`).join('')}
+      <div class="flag">🏁</div>
+      ${g.state!=='goal'&&g.state!=='pre'?`<div class="tok ghost" style="left:${ghostP}%"><span class="ic">👻</span><i>予定</i></div>`:''}
+      <div class="tok runner ${g.state==='at'||g.state==='pre'||g.state==='goal'?'stop':''}" style="left:${youP}%"><span class="ic">🏃</span><i>あなた</i></div>
+      ${g.state!=='goal'&&g.state!=='pre'&&am>=5?`<div class="gap-tag" style="left:${(ghostP+youP)/2}%">${m>0?'◀':'▶'} ${am}分</div>`:''}
+    </div>
+    <div class="race-foot">${next?`<span>次は <b>${esc(next.s.name)}</b></span><span class="num">予定 ${fmtT(next.arr)} 着${g.state!=='pre'?` · ${next.A-g.now>0?'あと'+dur((next.A-g.now)/60e3):dur((g.now-next.A)/60e3)+'超過'}`:''}</span>`:`<span>おつかれさまでした！</span><span>${g.rows.filter(r=>r.it.v).length}/${g.rows.length} スポット訪問</span>`}</div>
+    ${rec}
+  </div>`;
+}
+function ganttHTML(g){
+  const PX=1.15,acts=g.rows.flatMap(r=>r.it.v?[r.it.v.a,r.it.v.d]:[]);
+  let T0=Math.min(g.start,...acts),T1=Math.max(g.end,...acts);
+  const showNow=g.now>T0-3*36e5&&g.now<T1+3*36e5;if(showNow){T0=Math.min(T0,g.now);T1=Math.max(T1,g.now)}
+  T0=Math.floor((T0-30*60e3)/36e5)*36e5;T1=Math.ceil((T1+30*60e3)/36e5)*36e5;
+  const x=t=>(t-T0)/60e3*PX,W=x(T1);
+  let ticks='';for(let t=T0;t<=T1;t+=36e5){const h=new Date(t);ticks+=`<div class="${h.getHours()===0?'g-day':'g-tick'}" style="left:${x(t)}px"><span>${h.getHours()===0?(h.getMonth()+1)+'/'+h.getDate()+' ':''}${h.getHours()}:00</span></div>`}
+  const rows=g.rows.map((r,i)=>{
+    const v=r.it.v,lv=g.live(r.it)&&!v,miss=!v&&!lv&&g.now>r.Dp&&g.k>i;
+    const prev=g.rows[i-1];
+    return `<div class="g-row">
+      ${prev?`<div class="g-leg" style="left:${x(prev.Dp)}px;width:${Math.max(0,x(r.A)-x(prev.Dp))}px"><span>${MODES[r.it.mode].e}</span></div>`:''}
+      <div class="g-bar ${v?'done':''} ${lv?'cur':''} ${miss?'miss':''}" style="left:${x(r.A)}px;width:${Math.max(26,x(r.Dp)-x(r.A))}px" title="${esc(r.s.name)}"><b>${v?'✓':i+1}</b>${esc(r.s.name)}</div>
+      ${v?`<div class="g-act" style="left:${x(v.a)}px;width:${Math.max(4,x(v.d)-x(v.a))}px"></div>`:''}
+      ${lv?`<div class="g-act live" style="left:${x(presence.since)}px;width:${Math.max(4,x(g.now)-x(presence.since))}px"></div>`:''}
+    </div>`}).join('');
+  return `<div class="card gantt-card"><div class="ttl"><span>タイムライン</span><span class="lg"><i style="background:var(--acc-soft);box-shadow:inset 0 0 0 1px var(--acc)"></i>予定</span><span class="lg"><i style="background:#1F9D74"></i>実績</span></div>
+    <div class="gantt" id="gantt"><div class="g-in" style="width:${W}px"><div class="g-axis">${ticks}</div>${rows}
+    ${showNow?`<div class="g-now" style="left:${x(g.now)}px"><span>NOW ${hmS(g.now)}</span></div>`:''}</div></div></div>`;
+}
+const hmS=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+function renderProg(){
+  const el=$('#pane-prog');if(!el)return;
+  const p=P(),d=D(),g=progress(d);
+  let h=p.days.length>1?`<div class="hscroll days-row">${p.days.map((x,i)=>`<button class="day-chip ${i===ui.day?'on':''}" data-act="day" data-i="${i}"><small>DAY ${i+1}</small><b>${x.date?fmtDate(x.date):x.items.length+'件'}</b></button>`).join('')}</div>`:'';
+  if(!g){el.innerHTML=h+`<div class="card empty" style="margin-top:16px"><div class="big">🏁</div><b>予定を作るとレースが始まります</b>スケジュールにスポットを追加すると、予定と実際の進み具合を比べられます。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;return}
+  if(!d.date)h+=`<div class="geo-bar" style="margin-top:12px">📅<span>日付が未設定のため<b>今日</b>として表示しています。</span><button class="btn sm" data-act="progDate">今日に設定</button></div>`;
+  h+=raceHTML(g,d)+ganttHTML(g);
+  if(GEO.watch==null)h+=`<div class="geo-bar">📍<span>おでかけモードをONにすると、到着・出発が自動で記録され、進捗に反映されます。</span><button class="btn sm" data-act="geo">ON</button></div>`;
+  h+=`<div class="note">進捗は訪問記録（自動・手動の✓）をもとに計算しています。</div>`;
+  const sc=$('#gantt')?.scrollLeft;
+  el.innerHTML=h;
+  const gt=$('#gantt'),nw=gt?.querySelector('.g-now');
+  if(gt){if(ui.gScroll||sc==null){ui.gScroll=0;gt.scrollLeft=nw?nw.offsetLeft-gt.clientWidth/3:0}else gt.scrollLeft=sc}
+}
+setInterval(()=>{if(document.visibilityState==='visible'&&(ui.tab==='prog'))renderProg()},30000);
+
 /* ================= 現在地・滞在記録 ================= */
 const GEO={watch:null,pos:null,wake:null,me:null,acc:null,fly:0,justDone:null,lastMin:-1};
 let presence=null;try{presence=JSON.parse(localStorage.getItem('tabinote-presence'))}catch(_){}
@@ -910,7 +1057,7 @@ function detect(){
   }else if(presence&&now-presence.last>2*60e3){presence=null;changed=true}
   try{localStorage.setItem('tabinote-presence',JSON.stringify(presence))}catch(_){}
   const mi=Math.floor(now/60e3);
-  if(changed||mi!==GEO.lastMin){GEO.lastMin=mi;renderPlan();renderHeader();if(MAP&&(ui.tab==='map'||wide.matches))drawMap()}
+  if(changed||mi!==GEO.lastMin){GEO.lastMin=mi;renderPlan();renderHeader();renderProg();if(MAP&&(ui.tab==='map'||wide.matches))drawMap()}
 }
 
 function loadScript(src){return new Promise(r=>{const e=document.createElement('script');e.src=src;e.onload=e.onerror=r;document.head.append(e)})}
