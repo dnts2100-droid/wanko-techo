@@ -1,10 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-<rect width="512" height="512" fill="#111214"/><g transform="translate(-14 14)">
-<!-- route -->
-<path d="M184 374 C 226 366, 226 304, 272 302 S 322 318, 326 304" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-dasharray="1 29"/>
-<!-- start point -->
-<circle cx="150" cy="378" r="22" fill="none" stroke="#fff" stroke-width="12"/>
-<!-- pin -->
-<path d="M330 314 C 330 314, 254 236, 254 184 A 76 76 0 0 1 406 184 C 406 236, 330 314, 330 314 Z" fill="#fff"/>
-<circle cx="330" cy="184" r="30" fill="#111214"/>
-</g></svg>
+<rect width="512" height="512" fill="#FFFFFF"/>
+<g transform="translate(-6 -18)">
+<!-- 風船（ピン形） -->
+<path d="M306 300 C292 272, 226 236, 226 178 A80 80 0 0 1 386 178 C386 236, 320 272, 306 300 Z" fill="#0E0E10"/>
+<path d="M258 136 C268 122, 284 114, 300 112" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" opacity=".9"/>
+<path d="M299 300 L313 300 L310 311 L302 311 Z" fill="#0E0E10"/>
+<!-- ひも -->
+<path d="M306 311 C302 330, 276 332, 280 350 C284 368, 334 364, 330 386 C326 406, 270 416, 236 420" fill="none" stroke="#0E0E10" stroke-width="6" stroke-linecap="round"/>
+<!-- クロス -->
+<g fill="#0E0E10" stroke="#0E0E10" stroke-linecap="round" stroke-linejoin="round">
+ <!-- しっぽ（ふさふさ） -->
+ <path d="M134 424 C116 418 104 402 108 384 C116 386 120 394 124 398 C122 388 126 380 132 376 C134 388 140 402 148 410 Z" stroke-width="2"/>
+ <!-- 体（もこもこ） -->
+ <path d="M130 432 C126 414 144 404 158 408 C164 398 180 396 188 404 C200 404 208 414 204 428 C206 444 192 454 176 452 C166 460 148 458 140 450 C128 450 124 440 130 432 Z" stroke-width="2"/>
+ <!-- 足 -->
+ <path d="M150 450 L146 474 M168 452 L172 476 M194 442 L204 466" fill="none" stroke-width="13"/>
+ <!-- 頭 -->
+ <circle cx="214" cy="404" r="24" stroke-width="0"/>
+ <ellipse cx="236" cy="414" rx="14" ry="10" stroke-width="0"/>
+ <!-- 立ち耳 -->
+ <path d="M200 390 L194 356 L218 384 Z" stroke-width="4"/>
+ <!-- 垂れ耳 -->
+ <path d="M216 384 C230 380 240 388 234 404 C226 402 220 394 216 384 Z" stroke-width="2"/>
+</g>
+<circle cx="220" cy="398" r="3.2" fill="#fff"/>
+</g>
+</svg>
