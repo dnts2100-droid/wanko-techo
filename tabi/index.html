@@ -249,6 +249,30 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .sticky-foot .btn{flex:1}
 .note{font-size:11.5px;color:var(--sub);margin-top:8px;line-height:1.6}
 
+/* 現在地・訪問記録 */
+.me{width:18px;height:18px;border-radius:50%;background:#2F80ED;border:3px solid #fff;animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,128,237,.5)}70%{box-shadow:0 0 0 16px rgba(47,128,237,0)}100%{box-shadow:0 0 0 0 rgba(47,128,237,0)}}
+.ibtn.live{background:#2F80ED;color:#fff;animation:pulse 2.4s infinite}
+.pin.done{background:#1F9D74}
+.idx.done{background:#1F9D74}
+.done-ov{position:absolute;inset:0;border-radius:14px;background:rgba(31,157,116,.5);display:grid;place-items:center;color:#fff}
+.done-ov svg{width:34px;height:34px;stroke-width:3}
+.stop-card.done{background:color-mix(in srgb,#1F9D74 7%,var(--surface))}
+.visit{font-size:11.5px;font-weight:800;color:#1F9D74;margin-top:3px}
+.here{font-size:11.5px;font-weight:800;color:#2F80ED;margin-top:3px}
+.prog{height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:4px}
+.prog i{display:block;height:100%;background:#2F80ED;border-radius:2px;transition:width .6s}
+.stamp{position:absolute;right:38px;top:10px;transform:rotate(-10deg);font-size:10px!important;border:2.5px solid #1F9D74;color:#1F9D74;font-weight:900;font-size:12px;letter-spacing:.12em;padding:2px 8px;border-radius:8px;opacity:.85;pointer-events:none}
+.pop .stamp{animation:stamp .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes stamp{0%{opacity:0;transform:rotate(-10deg) scale(2.4)}100%{opacity:.85;transform:rotate(-10deg) scale(1)}}
+.stop-card{position:relative}
+.geo-bar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border-radius:16px;background:color-mix(in srgb,#2F80ED 9%,var(--surface));font-size:12.5px;color:var(--ink)}
+.geo-bar b{color:#2F80ED}
+.geo-bar .btn{margin-left:auto}
+.leaflet-bar a.loc-btn{display:grid;place-items:center;color:#16181D}
+.leaflet-bar a.loc-btn.on{color:#2F80ED}
+.leaflet-bar a.loc-btn svg{width:18px;height:18px}
+
 /* toast */
 .toast{position:fixed;left:50%;bottom:calc(84px + var(--safe));transform:translateX(-50%);z-index:2000;background:var(--ink);color:var(--bg);padding:11px 8px 11px 18px;border-radius:999px;display:flex;align-items:center;gap:12px;font-size:13.5px;font-weight:600;box-shadow:var(--sh2);animation:tin .25s cubic-bezier(.2,.9,.3,1);width:max-content;max-width:calc(100vw - 32px)}
 .toast button{color:var(--acc);font-weight:800;padding:2px 12px}
@@ -263,6 +287,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
     <h1><span id="hTitle"></span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></h1>
     <div class="plan-sub" id="hSub"></div>
   </button>
+  <button class="ibtn" id="geoBtn" data-act="geo" aria-label="おでかけモード（現在地・滞在記録）"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
   <button class="ibtn" data-act="share" aria-label="共有"><svg viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button>
 </header>
 <main class="panes">
@@ -328,6 +353,7 @@ const I={
  edit:'<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
  trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
  up:'<svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+ check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
  down:'<svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>'
 };
 
@@ -370,7 +396,7 @@ function normalize(x){
   if(!x||!Array.isArray(x.plans))return null;
   x.plans.forEach(p=>{delete p.scene;p.spots=(p.spots||[]).filter(Boolean);
     if(!p.days||!p.days.length)p.days=[{date:'',start:'09:00',items:[]}];
-    p.days.forEach(d=>{d.start=d.start||'09:00';d.items=(d.items||[]).filter(i=>p.spots.some(s=>s.id===i.spot)).map(i=>({id:i.id||uid(),spot:i.spot,mode:MODES[i.mode]?i.mode:'walk'}))})});
+    p.days.forEach(d=>{d.start=d.start||'09:00';d.items=(d.items||[]).filter(i=>p.spots.some(s=>s.id===i.spot)).map(i=>({id:i.id||uid(),spot:i.spot,mode:MODES[i.mode]?i.mode:'walk',...(i.v?{v:i.v}:{})}))})});
   return x;
 }
 async function load(){
@@ -414,6 +440,7 @@ function render(){
 function renderHeader(){
   const p=P(),f=p.days[0].date,l=p.days.at(-1).date,n=p.days.length;
   $('#hTitle').textContent=p.title;
+  $('#geoBtn').classList.toggle('live',GEO.watch!=null);
   $('#hSub').textContent=[f?fmtDate(f)+(n>1&&l?' – '+fmtDate(l):''):'日付未設定',n>1?`${n}日間`:'日帰り',`${p.days.reduce((a,d)=>a+d.items.length,0)}スポット`].join(' · ');
 }
 function renderTabs(){
@@ -429,18 +456,18 @@ function renderPlan(){
     <label class="pill">${I.cal}<input type="date" data-f="date" value="${d.date||''}" aria-label="日付"></label>
     <label class="pill">${I.clock}出発<input type="time" data-f="start" value="${d.start}" aria-label="出発時刻"></label>
     ${p.days.length>1?`<button class="ibtn flat" data-act="delDay" aria-label="この日を削除" style="color:var(--sub)">${I.trash}</button>`:''}
-  </div>`;
+  </div>${geoBar()}`;
   if(!c.rows.length){
     h+=`<div class="card empty" style="margin-top:16px"><div class="big">🗺️</div><b>まだ予定がありません</b>行きたい場所を候補から追加しましょう。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;
   }else{
-    h+=`<div class="card summary num"><div><small>START</small><b>${fmtT(toMin(d.start))}</b></div><div><small>END</small><b>${fmtT(c.end)}</b></div><div><small>MOVE</small><b>${durS(c.move)}</b></div><div><small>SPOTS</small><b>${c.rows.length}</b></div></div><div class="tl" id="tl">`;
+    h+=`<div class="card summary num"><div><small>START</small><b>${fmtT(toMin(d.start))}</b></div><div><small>END</small><b>${fmtT(c.end)}</b></div><div><small>MOVE</small><b>${durS(c.move)}</b></div><div><small>${c.rows.some(r=>r.it.v)?'VISITED':'SPOTS'}</small><b>${c.rows.some(r=>r.it.v)?c.rows.filter(r=>r.it.v).length+'<em>/'+c.rows.length+'</em>':c.rows.length}</b></div></div><div class="tl" id="tl">`;
     c.rows.forEach(({it,s,i,leg,arr,dep})=>{
       const m=MODES[it.mode];
       h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置未設定</span>'} ›</button></div>`:''}
       <div class="stop"><div class="time num"><b>${fmtT(arr)}</b><span>${fmtT(dep)}</span></div>
-        <div class="stop-card" role="button" tabindex="0" data-act="detail" data-sid="${s.id}" data-i="${i}">
-          <div class="thumb-wrap">${ph(s,'th')}<span class="idx">${i+1}</span></div>
-          <div class="info"><div class="kicker">${i+1}件目 · ${gOf(s.genre).e} ${esc(s.genre||'その他')}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}${s.area?' · '+esc(s.area):''}</div></div>
+        <div class="stop-card ${it.v?'done':''} ${GEO.justDone===it.id?'pop':''}" role="button" tabindex="0" data-act="detail" data-sid="${s.id}" data-i="${i}">
+          <div class="thumb-wrap">${ph(s,'th',it.v?`<div class="done-ov">${I.check}</div>`:'')}<span class="idx ${it.v?'done':''}">${it.v?'✓':i+1}</span></div>${it.v?'<span class="stamp">VISITED</span>':''}
+          <div class="info"><div class="kicker">${i+1}件目 · ${gOf(s.genre).e} ${esc(s.genre||'その他')}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}${s.area?' · '+esc(s.area):''}</div>${visitLine(it)}</div>
           <div class="handle" data-handle aria-label="並べ替え">${I.grip}</div>
         </div></div></div>`;
     });
@@ -494,6 +521,8 @@ let MAP,LAYER,fitKey='';
 function drawMap(){
   if(!window.L){$('#map').innerHTML='<div class="map-msg">地図を読み込めませんでした。<br>通信環境をご確認ください。</div>';renderMapUI();return}
   if(!MAP){MAP=L.map('map',{zoomControl:false,attributionControl:true});L.control.zoom({position:'topright'}).addTo(MAP);
+    const Loc=L.Control.extend({onAdd(){const d=L.DomUtil.create('div','leaflet-bar');d.innerHTML=`<a href="#" class="loc-btn" role="button" aria-label="現在地">${I.loc}</a>`;L.DomEvent.disableClickPropagation(d);d.querySelector('a').addEventListener('click',e=>{e.preventDefault();ACT.locate()});return d}});
+    new Loc({position:'topright'}).addTo(MAP);
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,attribution:'© OpenStreetMap © CARTO'}).addTo(MAP);
     LAYER=L.layerGroup().addTo(MAP);MAP.setView([35.681,139.767],11)}
   setTimeout(()=>MAP.invalidateSize(),0);
@@ -505,18 +534,18 @@ function drawMap(){
     L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="dot"></div>',iconSize:[14,14]})}).addTo(LAYER).bindPopup(el);pts.push([s.lat,s.lng])});
   const route=[];
   c.rows.forEach(({s,i})=>{if(!hasLL(s))return;route.push([s.lat,s.lng]);
-    L.marker([s.lat,s.lng],{zIndexOffset:1000+i,icon:L.divIcon({className:'',html:`<div class="pin"><span>${i+1}</span></div>`,iconSize:[30,30],iconAnchor:[15,32]})})
+    L.marker([s.lat,s.lng],{zIndexOffset:1000+i,icon:L.divIcon({className:'',html:`<div class="pin ${d.items[i].v?'done':''}"><span>${d.items[i].v?'✓':i+1}</span></div>`,iconSize:[30,30],iconAnchor:[15,32]})})
      .addTo(LAYER).on('click',()=>hl(i))});
   if(route.length>1){L.polyline(route,{color:'#fff',weight:8,opacity:.9}).addTo(LAYER);L.polyline(route,{color:'#FF5B3A',weight:4,opacity:.95,dashArray:'1 0'}).addTo(LAYER)}
   const key=p.id+'|'+ui.day+'|'+route.length+'|'+pts.length;
   if(key!==fitKey){fitKey=key;const b=route.length?route:pts;
     if(b.length)MAP.fitBounds(b.length>1?b:[b[0],b[0]],{padding:[70,40],paddingBottomRight:[40,170],maxZoom:16})}
-  renderMapUI();
+  renderMapUI();drawMe();
 }
 function renderMapUI(){
   const p=P(),c=calc(D());
   $('#mapDays').innerHTML=`${p.days.length>1?p.days.map((x,i)=>`<button class="chip ${i===ui.day?'on':''}" data-act="day" data-i="${i}">DAY ${i+1}</button>`).join(''):''}<button class="chip ${ui.showCands?'on':''}" data-act="cands">候補も表示</button>`;
-  $('#carousel').innerHTML=c.rows.map(({s,i,arr})=>`<button class="cc ${ui.hl===i?'hl':''}" data-act="fly" data-i="${i}">${ph(s,'')}<div class="info"><div class="kicker num">${i+1}件目 · ${fmtT(arr)}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}</div></div></button>`).join('');
+  const d0=D();$('#carousel').innerHTML=c.rows.map(({s,i,arr})=>`<button class="cc ${ui.hl===i?'hl':''}" data-act="fly" data-i="${i}">${ph(s,'')}<div class="info"><div class="kicker num">${i+1}件目 · ${fmtT(arr)}${d0.items[i].v?' · ✓訪問済':''}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}</div></div></button>`).join('');
 }
 function hl(i){ui.hl=i;renderMapUI();const el=$(`#carousel [data-i="${i}"]`);el&&el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})}
 
@@ -557,6 +586,7 @@ function detailHTML(){
   <div class="row">${s.url?`<a class="btn sm" href="${esc(s.url)}" target="_blank" rel="noopener">${I.link}公式・情報</a>`:''}
     <a class="btn sm" href="${gsearch(s.name+' '+(s.area||''))}" target="_blank" rel="noopener">${I.search}ネットで調べる</a>
     <a class="btn sm" href="${gmaps(s)}" target="_blank" rel="noopener">${I.pin}Googleマップ</a></div>
+  ${row?`<div class="lbl">訪問記録</div><div class="row" style="justify-content:space-between">${row.it.v?`<span class="visit" style="margin:0">✓ ${visitText(row.it.v)}</span><button class="btn sm" data-act="visit" data-i="${pos}">記録を消す</button>`:`<span class="meta">${GEO.watch!=null?'10分以上滞在すると自動で記録されます':'おでかけモードで自動記録できます'}</span><button class="btn sm" data-act="visit" data-i="${pos}">✓ 訪問済みにする</button>`}</div>`:''}
   <div class="lbl">メモ</div>
   <textarea rows="2" data-f="memo" placeholder="予約情報・予算・持ち物など">${esc(s.memo||'')}</textarea>
   <div class="sticky-foot">
@@ -726,6 +756,9 @@ async function doShare(){
 
 /* ================= 操作 ================= */
 const ACT={
+  geo:()=>GEO.watch!=null?stopGeo():startGeo(),
+  locate:()=>{if(GEO.watch==null){GEO.fly=1;startGeo()}else if(GEO.pos&&MAP)MAP.flyTo([GEO.pos.lat,GEO.pos.lng],16,{duration:.6});else{GEO.fly=1;toast('現在地を取得中…')}},
+  visit:el=>{const it=D().items[+el.dataset.i];if(it.v)delete it.v;else{it.v={a:Date.now(),d:Date.now(),m:1};GEO.justDone=it.id;setTimeout(()=>GEO.justDone=null,1500)}save();render();refreshSheet()},
   tab:el=>{ui.tab=el.dataset.tab;render();scrollTo({top:0})},
   day:el=>{ui.day=+el.dataset.i;ui.hl=null;render()},
   addDay:()=>{const p=P(),l=p.days.at(-1);p.days.push({date:addDays(l.date,1),start:l.start||'09:00',items:[]});ui.day=p.days.length-1;save();render();toast(`DAY ${p.days.length} を追加しました`)},
@@ -802,7 +835,74 @@ $('#fileImport').onchange=async e=>{const f=e.target.files[0];e.target.value='';
     save();closeSheet();render();toast(`${n}件のプランを読み込みました`)}catch(_){toast('読み込めないファイルです')}};
 wide.addEventListener('change',()=>{if(MAP)setTimeout(()=>MAP.invalidateSize(),50);render()});
 
-load().then(render);
+/* ================= 現在地・滞在記録 ================= */
+const GEO={watch:null,pos:null,wake:null,me:null,acc:null,fly:0,justDone:null,lastMin:-1};
+let presence=null;try{presence=JSON.parse(localStorage.getItem('tabinote-presence'))}catch(_){}
+const STAY_MS=10*60e3;
+const hm=t=>{const d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+function visitText(v){return v.m&&v.d-v.a<60e3?`訪問済み（${hm(v.a)}）`:`${hm(v.a)}〜${hm(v.d)} 滞在${dur((v.d-v.a)/60e3)}`}
+function visitLine(it){
+  if(it.v)return `<div class="visit">✓ ${visitText(it.v)}</div>`;
+  if(GEO.watch!=null&&presence&&presence.iid===it.id){const st=Date.now()-presence.since,pc=Math.min(100,st/STAY_MS*100);
+    return `<div class="here">📍 いまここ · あと${Math.max(1,Math.ceil((STAY_MS-st)/60e3))}分で滞在を記録</div><div class="prog"><i style="width:${pc}%"></i></div>`}
+  return '';
+}
+function geoBar(){
+  if(GEO.watch==null)return `<div class="geo-bar">📍<span>おでかけモードをONにすると、現在地を地図に表示し、<b>10分以上の滞在</b>を自動で記録します。</span><button class="btn sm" data-act="geo">ON</button></div>`;
+  return `<div class="geo-bar"><span class="me" style="flex:none;width:12px;height:12px;border-width:2px"></span><span><b>おでかけモード中</b>${GEO.pos?'':' · 現在地を取得中…'}<br><span class="meta">アプリを開いている間、自動で記録</span></span><button class="btn sm" data-act="geo">OFF</button></div>`;
+}
+async function wake(){try{if('wakeLock' in navigator&&GEO.watch!=null&&!GEO.wake){GEO.wake=await navigator.wakeLock.request('screen');GEO.wake.addEventListener('release',()=>GEO.wake=null)}}catch(_){}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')wake()});
+function startGeo(quiet){
+  if(!navigator.geolocation){toast('この端末では位置情報を使えません');return}
+  if(GEO.watch!=null)return;
+  GEO.watch=navigator.geolocation.watchPosition(onPos,onGeoErr,{enableHighAccuracy:true,maximumAge:5000,timeout:30000});
+  try{localStorage.setItem('tabinote-geo','1')}catch(_){}
+  wake();render();if(!quiet)toast('おでかけモードON：10分以上の滞在を自動で記録します');
+}
+function stopGeo(quiet){
+  if(GEO.watch!=null)navigator.geolocation.clearWatch(GEO.watch);GEO.watch=null;GEO.pos=null;
+  try{localStorage.removeItem('tabinote-geo')}catch(_){}
+  GEO.wake&&GEO.wake.release();GEO.wake=null;render();if(!quiet)toast('おでかけモードをOFFにしました');
+}
+function onGeoErr(e){if(e.code===1){stopGeo(1);toast('位置情報が許可されていません。端末の設定で許可してください')}}
+function onPos(p){
+  GEO.pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy||50};
+  drawMe();
+  if(GEO.fly&&MAP){GEO.fly=0;MAP.flyTo([GEO.pos.lat,GEO.pos.lng],16,{duration:.6})}
+  detect();
+}
+function drawMe(){
+  if(!MAP)return;document.querySelector('.loc-btn')?.classList.toggle('on',GEO.watch!=null);
+  if(!GEO.pos||GEO.watch==null){if(GEO.me){GEO.me.remove();GEO.acc.remove();GEO.me=GEO.acc=null}return}
+  const ll=[GEO.pos.lat,GEO.pos.lng];
+  if(!GEO.me){GEO.acc=L.circle(ll,{radius:GEO.pos.acc,color:'#2F80ED',weight:1,opacity:.4,fillOpacity:.1,interactive:false}).addTo(MAP);
+    GEO.me=L.marker(ll,{zIndexOffset:3000,interactive:false,icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[18,18]})}).addTo(MAP)}
+  else{GEO.me.setLatLng(ll);GEO.acc.setLatLng(ll).setRadius(GEO.pos.acc)}
+}
+function detect(){
+  const now=Date.now(),pos=GEO.pos,R=Math.max(80,Math.min(pos.acc+40,250)),today=new Date().toLocaleDateString('sv-SE');
+  const near=[];
+  P().days.forEach((d,di)=>d.items.forEach(it=>{const s=S(it.spot);if(!hasLL(s))return;const m=dist(pos,s)*1000;if(m<=R)near.push({it,s,m,di,today:d.date===today})}));
+  near.sort((a,b)=>(!!a.it.v-!!b.it.v)||(b.today-a.today)||((b.di===ui.day)-(a.di===ui.day))||(a.m-b.m));
+  const best=near[0];let changed=false;
+  if(best){
+    if(presence&&presence.iid===best.it.id&&now-presence.last<5*60e3)presence.last=now;
+    else{presence={iid:best.it.id,since:now,last:now};changed=true}
+    const v=best.it.v;
+    if(v&&presence.mark){v.d=now;save()}
+    else if(!v&&now-presence.since>=STAY_MS){best.it.v={a:presence.since,d:now};presence.mark=1;changed=true;save();
+      GEO.justDone=best.it.id;setTimeout(()=>{GEO.justDone=null},1500);
+      navigator.vibrate&&navigator.vibrate([90,60,90]);toast(`🎉「${best.s.name}」の滞在を記録しました`)}
+  }else if(presence&&now-presence.last>2*60e3){presence=null;changed=true}
+  try{localStorage.setItem('tabinote-presence',JSON.stringify(presence))}catch(_){}
+  const mi=Math.floor(now/60e3);
+  if(changed||mi!==GEO.lastMin){GEO.lastMin=mi;renderPlan();renderHeader();if(MAP&&(ui.tab==='map'||wide.matches))drawMap()}
+}
+
+load().then(()=>{render();
+  try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
+});
 </script>
 </body>
 </html>
