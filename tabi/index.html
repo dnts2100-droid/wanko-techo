@@ -405,6 +405,15 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 .welcome{position:fixed;left:12px;right:12px;bottom:calc(150px + var(--safe));z-index:1500;background:var(--surface);border-radius:22px;box-shadow:var(--sh2);padding:14px;display:grid;gap:10px;animation:celePop .4s cubic-bezier(.2,1.4,.4,1);max-width:440px;margin:0 auto}
 .wl-in{display:flex;align-items:center;gap:12px}.wl-in b{display:block;font-size:16px}.wl-in span{font-size:13px;color:var(--sub)}
 
+.rec{font-size:10px;font-weight:800;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px;margin-left:4px;vertical-align:2px}
+.geo-bar .qx{flex:none}
+.intro{text-align:center;padding:10px 6px 0}
+.intro .pk{margin:0 auto}
+.intro p{color:var(--sub);font-size:14px;line-height:1.8;margin:0 0 6px}
+.intro p b{color:var(--ink)}
+.dots{display:flex;gap:6px;justify-content:center;margin:10px 0 2px}
+.dots i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:all .2s}.dots i.on{width:18px;background:var(--ink)}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -592,7 +601,7 @@ async function load(){
 const ui={tab:'plan',day:0,fArea:'',fGenre:'グルメ',fRad:1000,fRes:null,fState:'',here:null,showCands:true,fArea2:'',fGenre2:'',hl:null,lastExt:''};
 const UIKEY='router-ui';
 try{Object.assign(ui,JSON.parse(localStorage.getItem(UIKEY))||{})}catch(_){}
-function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind}))}catch(_){}}
+function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide}))}catch(_){}}
 const wide=matchMedia('(min-width:1000px)');
 const P=()=>db.plans.find(p=>p.id===db.cur)||db.plans[0];
 const S=id=>P().spots.find(s=>s.id===id);
@@ -1057,7 +1066,9 @@ function modeHTML(){
   const d=D(),it=d.items[modeIdx],a=S(d.items[modeIdx-1].spot),b=S(it.spot);
   return `<h3><span>移動手段</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
   <div class="meta" style="margin:-8px 0 14px">${esc(a.name)} → ${esc(b.name)}</div>
-  <div class="mode-list">${Object.entries(MODES).map(([k,m])=>{const L=legInfo(a,b,k);return `<button class="mode ${k===it.mode?'on':''}" data-act="setMode" data-m="${k}"><span class="e">${m.e}</span><span class="n">${m.n}</span><span class="t num">${L?dur(L.min)+`<small>${L.km.toFixed(1)}km</small>`:'—'}</span></button>`}).join('')}</div>
+  ${(()=>{const km=hasLL(a)&&hasLL(b)?dist(a,b):null,rec=suggestMode(a,b);
+    const ok=k=>km==null||k===it.mode||!((k==='shinkansen'&&km<40)||(k==='plane'&&km<200)||(k==='walk'&&km>15)||(k==='bike'&&km>40)||(k==='taxi'&&km>80)||(k==='bus'&&km>150));
+    return `<div class="mode-list">${Object.entries(MODES).filter(([k])=>ok(k)).map(([k,m])=>{const L=legInfo(a,b,k);return `<button class="mode ${k===it.mode?'on':''}" data-act="setMode" data-m="${k}"><span class="e">${m.e}</span><span class="n">${m.n}${k===rec&&km!=null?' <span class="rec">おすすめ</span>':''}</span><span class="t num">${L?dur(L.min)+`<small>${L.km.toFixed(1)}km</small>`:'—'}</span></button>`}).join('')}</div>`})()}
   ${hasLL(a)&&hasLL(b)?`<a class="btn block" style="margin-top:14px" href="${gdir(a,b,it.mode)}" target="_blank" rel="noopener">${I.route}Googleマップで正確な経路を見る ↗</a>`:'<div class="note">2地点の位置を設定すると時間を計算できます。</div>'}`;
 }
 /* --- プラン --- */
@@ -1070,6 +1081,7 @@ function planHTML(){
   <button class="btn block" style="margin-top:8px" data-act="newPlan">${I.plus}新しいプランを作成</button>
   <div class="lbl">このプラン</div>
   <div class="row"><button class="btn sm" data-act="share">${I.link}共有</button><button class="btn sm" data-act="dupPlan">複製</button><button class="btn sm" data-act="export">書き出し</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm danger" data-act="delPlan">削除</button></div>
+  <button class="btn block" style="margin-top:10px" data-act="help">❓ 使い方を見る</button>
   <div class="note">データはこの端末のブラウザ内に保存されます。機種変更や別端末で使う場合は「書き出し」したファイルを「読み込み」してください。</div>`;
 }
 /* --- スポット編集 --- */
@@ -1266,7 +1278,7 @@ function shareHTML(){
   <div class="card" style="box-shadow:none;background:var(--bg)">
     <div style="font-weight:800;font-size:15px;margin-bottom:4px">🔗 共有リンク（1回だけ送る）</div>
     <div class="meta" style="line-height:1.7">共有リンクをLINEなどで送ると、受け取った人のアプリにこのプランが入ります。<br>だれかが変更したら、その人が同じボタンで送り返すと、全員のプランに反映（上書き更新）されます。</div>
-    <button class="btn acc block" style="margin-top:12px" data-act="shareLink">${I.link}共有リンクを送る</button>
+    <button class="btn block" style="margin-top:12px" data-act="shareLink">${I.link}共有リンクを送る</button>
   </div>
   <button class="btn block" style="margin-top:10px" data-act="shareText">📝 予定をテキストで送る</button>
   <div class="note">自分で撮った写真はリンクに含まれません（容量のため）。ネットの写真は共有されます。</div>`;
@@ -1396,8 +1408,29 @@ function joinNow(){
   db.cur=p.id;ui.day=0;fitKey='';incoming=null;save(false);live.watch(p);closeSheet();render();toast('グループに参加しました');autoPhotoAll();
 }
 
+/* --- はじめての案内 --- */
+const INTRO=[
+  ['ようこそ Router へ','行きたい場所を集めて、順番に並べるだけで<br>移動時間つきのプランができあがります。','map'],
+  ['① 候補を集める','「候補」タブから、食べログやGoogleマップで見つけたお店・スポットを<br><b>URLを貼るだけ</b>でストックできます。','stock'],
+  ['② 予定に並べる','候補の「＋」で予定に追加。<br>⋮⋮ をドラッグして順番を入れ替え、移動手段をタップで変更できます。','plan'],
+  ['③ 当日を楽しむ','📍おでかけモードで現在地を表示。<br>10分以上いた場所は<b>自動で訪問記録</b>され、「進捗」で予定との差が分かります。','prog'],
+  ['④ みんなで計画','右上の共有ボタンからグループを作ると、<br>メンバーの変更が<b>リアルタイムで反映</b>されます。','share']
+];
+function introHTML(){
+  const i=Math.min(ui.introStep||0,INTRO.length-1),[t,d]=INTRO[i];
+  return `<div class="intro">${pinkun(i===INTRO.length-1?96:96,i===0?'joy':'')}
+    <div class="dots">${INTRO.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>
+    <h3 style="justify-content:center">${t}</h3><p>${d}</p></div>
+  <div class="sticky-foot"><button class="btn" data-act="introSkip">${i===INTRO.length-1?'閉じる':'スキップ'}</button><button class="btn pri" data-act="introNext">${i===INTRO.length-1?'はじめる':'次へ'}</button></div>`;
+}
+function openIntro(){ui.introStep=0;openSheet(introHTML)}
+
 /* ================= 操作 ================= */
 const ACT={
+  geoHide:()=>{ui.geoHide=1;saveUI();render();toast('右上の📍ボタンからいつでもONにできます')},
+  help:()=>{closeSheet();setTimeout(()=>openIntro(),220)},
+  introNext:()=>{ui.introStep=(ui.introStep||0)+1;if(ui.introStep>=INTRO.length){closeSheet();localStorage.setItem('router-intro','1')}else refreshSheet()},
+  introSkip:()=>{closeSheet();try{localStorage.setItem('router-intro','1')}catch(_){}},
   wlClose:()=>document.querySelector('.welcome')?.remove(),
   addMode:el=>{ui.addMode=el.dataset.v;if(ui.addMode==='spot'&&FOODK.includes(ui.fGenre))ui.fGenre='観光';if(ui.addMode==='food'&&!FOODK.includes(ui.fGenre))ui.fGenre='グルメ';ui.fRes=null;ui.fState='';renderStock()},
   spotSearch:()=>spotSearch(),
@@ -1617,7 +1650,7 @@ function visitLine(it){
   return '';
 }
 function geoBar(){
-  if(GEO.watch==null)return `<div class="geo-bar">📍<span>おでかけモードをONにすると、現在地を地図に表示し、<b>10分以上の滞在</b>を自動で記録します。</span><button class="btn sm" data-act="geo">ON</button></div>`;
+  if(GEO.watch==null)return ui.geoHide?'':`<div class="geo-bar">📍<span><b>おでかけモード</b><br><span class="meta">現在地の表示と、10分以上の滞在を自動で記録</span></span><button class="btn sm" data-act="geo">ON</button><button class="qx" data-act="geoHide" aria-label="この案内を閉じる">${I.x}</button></div>`;
   return `<div class="geo-bar"><span class="me" style="flex:none;width:12px;height:12px;border-width:2px"></span><span><b>おでかけモード中</b>${GEO.pos?'':' · 現在地を取得中…'}<br><span class="meta">アプリを開いている間、自動で記録</span></span><button class="btn sm" data-act="geo">OFF</button></div>`;
 }
 async function wake(){try{if('wakeLock' in navigator&&GEO.watch!=null&&!GEO.wake){GEO.wake=await navigator.wakeLock.request('screen');GEO.wake.addEventListener('release',()=>GEO.wake=null)}}catch(_){}}
@@ -1677,7 +1710,13 @@ async function ensureLibs(){
   }
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
-load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();live.boot();setTimeout(recheckSpots,2500);
+let errT=0;
+window.addEventListener('error',e=>{if(Date.now()-errT<8000||!e.message||/Script error|ResizeObserver/.test(e.message))return;errT=Date.now();toast('うまく動かなかった操作があります。もう一度お試しください')});
+window.addEventListener('unhandledrejection',()=>{});
+load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();live.boot();
+  try{if(!localStorage.getItem('router-intro')&&!P().spots.length&&!location.hash)setTimeout(openIntro,400)}catch(_){}
+  try{navigator.storage?.persist?.()}catch(_){}
+  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});setTimeout(recheckSpots,2500);
   {const q=new URLSearchParams(location.search);const t=[q.get('st'),q.get('sx'),q.get('su')].filter(Boolean).join('\n');
    if(t){history.replaceState(null,'',location.pathname);ui.tab='stock';render();quickAdd(t)}}setTimeout(autoPhotoAll,1500);
   try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
