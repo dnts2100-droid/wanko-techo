@@ -658,7 +658,7 @@ function addCardHTML(){
       <div class="row"><button class="btn acc" data-act="openTabelog">食べログで探す ↗</button><button class="btn sm" data-act="openGmaps">Googleマップで探す ↗</button></div>
     </div></div>
     <div class="step"><span class="no">2</span><div class="sb2"><b>気に入ったお店のURLをコピー</b>
-      <div class="meta">お店のページで「共有」→「コピー」（アプリなら「リンクをコピー」）</div></div></div>
+      <div class="meta">検索結果から食べログのお店ページを開き、「共有」→「コピー」（アプリなら「リンクをコピー」）</div></div></div>
     <div class="step"><span class="no">3</span><div class="sb2"><b>ここに貼り付け</b>
       <div class="field"><input id="pasteIn" data-f="paste" placeholder="URL・共有テキストを貼り付け" value="${esc(pst?.text||'')}"><button class="btn sm pri" data-act="pasteClip">📋 貼り付け</button></div>
       <div class="meta">お店の名前だけでもOK。2件目からは画面下の「📋 貼り付けて追加」が便利です</div>
@@ -754,7 +754,8 @@ async function quickAdd(text){
 }
 function openExt(kind){
   const area=(($('#fArea')?.value)||ui.fArea||'').replace('現在地','').trim(),g=ui.fGenre,kw=g==='グルメ'?'':g;
-  const url=kind==='tabelog'?`https://tabelog.com/rstLst/?vs=1&sa=${encodeURIComponent(area)}&sk=${encodeURIComponent(kw)}`
+  // 食べログ内の検索URLは条件が引き継がれずトップに戻ることがあるため、食べログのページだけを確実に表示できるGoogle検索を使う
+  const url=kind==='tabelog'?`https://www.google.com/search?q=${encodeURIComponent([area,kw||'グルメ','site:tabelog.com'].filter(Boolean).join(' '))}`
     :`https://www.google.com/maps/search/${encodeURIComponent((area+' '+g).trim())}`;
   ui.lastExt=url;ui.lastKind=kind;saveUI();renderQuick();
   window.open(url,'_blank','noopener');
