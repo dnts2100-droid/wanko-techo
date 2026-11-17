@@ -518,12 +518,25 @@ function extLinks(){const k=(ui.fArea==='現在地'?'':ui.fArea)+' '+ui.fGenre;
 
 /* ================= 地図 ================= */
 let MAP,LAYER,fitKey='';
+// 地図画像：国土地理院（淡色）→ OpenStreetMap → CARTO の順に、読めなければ自動で切り替え
+const TILES=[
+  {u:'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',o:{maxZoom:18,attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>'}},
+  {u:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',o:{maxZoom:19,attribution:'© OpenStreetMap'}},
+  {u:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',o:{subdomains:'abcd',maxZoom:20,attribution:'© OpenStreetMap © CARTO'}}
+];
+let tileIdx=0;
+function addTiles(map,i=tileIdx){
+  const t=TILES[i],l=L.tileLayer(t.u,t.o).addTo(map);let ok=0,err=0;
+  l.on('tileload',()=>{ok++;tileIdx=i});
+  l.on('tileerror',()=>{if(ok||l._gone||++err<3)return;l._gone=1;map.removeLayer(l);
+    if(TILES[i+1])addTiles(map,i+1);else map.getContainer().insertAdjacentHTML('beforeend','<div class="map-msg" style="pointer-events:none">地図の画像を読み込めませんでした。<br>通信環境をご確認ください。</div>')});
+}
 function drawMap(){
   if(!window.L){$('#map').innerHTML='<div class="map-msg">地図を読み込めませんでした。<br>通信環境をご確認ください。</div>';renderMapUI();return}
   if(!MAP){MAP=L.map('map',{zoomControl:false,attributionControl:true});L.control.zoom({position:'topright'}).addTo(MAP);
     const Loc=L.Control.extend({onAdd(){const d=L.DomUtil.create('div','leaflet-bar');d.innerHTML=`<a href="#" class="loc-btn" role="button" aria-label="現在地">${I.loc}</a>`;L.DomEvent.disableClickPropagation(d);d.querySelector('a').addEventListener('click',e=>{e.preventDefault();ACT.locate()});return d}});
     new Loc({position:'topright'}).addTo(MAP);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,attribution:'© OpenStreetMap © CARTO'}).addTo(MAP);
+    addTiles(MAP);
     LAYER=L.layerGroup().addTo(MAP);MAP.setView([35.681,139.767],11)}
   setTimeout(()=>MAP.invalidateSize(),0);
   LAYER.clearLayers();
@@ -644,7 +657,7 @@ function openForm(s){
   if(!window.L){$('#pickmap').style.display='none';return}
   setTimeout(()=>{
     pickMap=L.map('pickmap',{zoomControl:false});
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:20,attribution:'© OSM © CARTO'}).addTo(pickMap);
+    addTiles(pickMap);
     const ref=hasLL(draft)?draft:P().spots.find(hasLL);pickMk=null;
     pickMap.setView(ref?[ref.lat,ref.lng]:[35.681,139.767],ref?15:10);
     if(hasLL(draft))setLL(draft.lat,draft.lng);
@@ -900,7 +913,15 @@ function detect(){
   if(changed||mi!==GEO.lastMin){GEO.lastMin=mi;renderPlan();renderHeader();if(MAP&&(ui.tab==='map'||wide.matches))drawMap()}
 }
 
-load().then(()=>{render();
+function loadScript(src){return new Promise(r=>{const e=document.createElement('script');e.src=src;e.onload=e.onerror=r;document.head.append(e)})}
+async function ensureLibs(){
+  if(!window.L){
+    for(const [css,js] of [['https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css','https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'],['https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css','https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js']]){
+      const l=document.createElement('link');l.rel='stylesheet';l.href=css;document.head.append(l);await loadScript(js);if(window.L)break}
+  }
+  if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
+}
+load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();
   try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
 });
 </script>

@@ -1,5 +1,5 @@
 /* わんこ手帖 service worker: offline start-up and quiet updates */
-const VERSION = "wanko-techo-4.0.0";
+const VERSION = "wanko-techo-4.0.1";
 const RUNTIME = "wanko-techo-runtime";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable.png", "./apple-touch-icon.png"];
 const LIBS = [
@@ -28,6 +28,8 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  // 別アプリ（/tabi/ など）はこのサービスワーカーでは扱わない
+  if (url.origin === self.location.origin && url.pathname.includes("/tabi/")) return;
 
   // App page: network first (gets fixes right away), cached copy when offline
   if (req.mode === "navigate") {
