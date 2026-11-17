@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>おでかけプランナー</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#222;--sub:#777;--line:#e3dfd6;--acc:#e8663d;--acc2:#2f7d6d;--chip:#f0ece4}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1b1d;--card:#262629;--ink:#eee;--sub:#999;--line:#3a3a3e;--chip:#333337}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;padding-bottom:40px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:6px 10px}
+button.pri{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button.ghost{border:none;background:none;padding:4px 6px}
+header{position:sticky;top:0;z-index:1000;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;flex:1;min-width:140px}
+header select{max-width:46vw;border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--card)}
+main{max-width:1100px;margin:0 auto;padding:12px 16px;display:grid;gap:14px}
+.sec{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.sec h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.sec h2 .sp{flex:1}
+.scenes{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.scene{padding:16px 10px;text-align:center;border-radius:14px;font-size:14px}
+.scene b{display:block;font-size:28px}
+.scene.on{border:2px solid var(--acc);background:color-mix(in srgb,var(--acc) 10%,var(--card))}
+.days{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.days button{white-space:nowrap}
+.days button.on{background:var(--acc2);border-color:var(--acc2);color:#fff}
+.dayhead{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0;font-size:13px;color:var(--sub)}
+.dayhead input{border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--card)}
+.layout{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:860px){.layout{grid-template-columns:1.1fr 1fr}}
+.stop{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--card)}
+.num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700}
+.stop .body{flex:1;min-width:0}
+.stop .nm{font-weight:700;word-break:break-all}
+.meta{font-size:12px;color:var(--sub)}
+.tm{font-size:13px;font-weight:600;color:var(--acc2)}
+.ops{display:flex;flex-direction:column;gap:2px}
+.ops button{padding:2px 6px;font-size:12px}
+.leg{display:flex;align-items:center;gap:8px;margin:4px 0 4px 14px;padding-left:16px;border-left:3px dashed var(--line);font-size:13px;color:var(--sub);min-height:36px;flex-wrap:wrap}
+.leg select{border:1px solid var(--line);border-radius:8px;padding:3px;background:var(--card)}
+.leg a{color:var(--acc2)}
+.sum{margin-top:10px;font-size:13px;background:var(--chip);border-radius:10px;padding:8px 10px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.chip{border-radius:999px;padding:3px 10px;font-size:12px;background:var(--chip);border:1px solid transparent}
+.chip.on{border-color:var(--acc);color:var(--acc);font-weight:700}
+.cands{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;max-height:520px;overflow:auto}
+.cand{border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.cand .nm{font-weight:700;font-size:14px;word-break:break-all}
+.cand.used{opacity:.55}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:6px;background:var(--chip);margin-right:3px}
+.row{display:flex;gap:4px;flex-wrap:wrap}
+.row button,.row a{font-size:12px;padding:3px 7px}
+a.btn{border:1px solid var(--line);border-radius:10px;text-decoration:none;color:inherit;background:var(--card)}
+#map{height:420px;border-radius:12px;z-index:0}
+.empty{color:var(--sub);font-size:13px;text-align:center;padding:16px}
+dialog{border:none;border-radius:16px;padding:0;width:min(520px,94vw);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:#0006}
+.dlg{padding:16px;display:grid;gap:10px}
+.dlg label{font-size:12px;color:var(--sub);display:grid;gap:3px}
+.dlg input,.dlg select,.dlg textarea{border:1px solid var(--line);border-radius:8px;padding:7px;background:var(--bg);width:100%}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#pickmap{height:220px;border-radius:10px}
+.sres{max-height:140px;overflow:auto;font-size:13px}
+.sres div{padding:5px;border-bottom:1px solid var(--line);cursor:pointer}
+.mk{background:var(--acc);color:#fff;border-radius:50%;width:26px;height:26px;display:grid;place-items:center;font-weight:700;border:2px solid #fff;box-shadow:0 1px 4px #0006;font-size:13px}
+.mk.c{background:#999;width:14px;height:14px}
+.note{font-size:11px;color:var(--sub)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺 おでかけプランナー</h1>
+  <select id="planSel" aria-label="プラン切替"></select>
+  <button id="newPlan">＋新規</button>
+  <button id="menuBtn">⋯</button>
+</header>
+<main id="app"></main>
+
+<dialog id="spotDlg"><form method="dialog" class="dlg" id="spotForm">
+  <b id="spotTitle">訪問先</b>
+  <label>名前<input name="name" required></label>
+  <div class="g2">
+    <label>エリア<input name="area" list="areaList" placeholder="例：浅草"></label>
+    <label>ジャンル<input name="genre" list="genreList" placeholder="例：グルメ"></label>
+  </div>
+  <div class="g2">
+    <label>滞在予測（分）<input name="stay" type="number" min="0" step="5" value="60"></label>
+    <label>予算・メモ<input name="memo"></label>
+  </div>
+  <label>情報URL（公式・食べログ等）<input name="url" type="url" placeholder="https://"></label>
+  <label>場所を検索<div style="display:flex;gap:6px"><input id="q" placeholder="施設名・住所"><button type="button" id="qBtn">検索</button></div></label>
+  <div class="sres" id="sres"></div>
+  <div id="pickmap"></div>
+  <div class="note">地図をタップしても位置を指定できます。<span id="ll"></span></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button type="button" id="delSpot" style="margin-right:auto;color:#c33">削除</button>
+    <button value="cancel" formnovalidate>キャンセル</button>
+    <button class="pri" value="ok">保存</button>
+  </div>
+</form></dialog>
+<datalist id="areaList"></datalist><datalist id="genreList"></datalist>
+
+<dialog id="menuDlg"><div class="dlg">
+  <b>メニュー</b>
+  <button id="renameBtn">プラン名を変更</button>
+  <button id="sceneBtn">シーンを変更</button>
+  <button id="expBtn">データを書き出し（JSON）</button>
+  <label>データを読み込み<input type="file" id="impFile" accept=".json,application/json"></label>
+  <button id="delPlan" style="color:#c33">このプランを削除</button>
+  <button onclick="this.closest('dialog').close()">閉じる</button>
+</div></dialog>
+
+<script>
+const SCENES={
+  day:{icon:'🚗',label:'日帰り旅行',days:1,start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','体験']},
+  stay:{icon:'🏨',label:'宿泊旅行',days:2,start:'09:00',genres:['観光','グルメ','カフェ','買い物','温泉','宿','体験']},
+  biz:{icon:'💼',label:'出張',days:1,start:'08:30',genres:['訪問先','会議','ランチ','ホテル','会食','移動拠点']},
+  drink:{icon:'🍻',label:'飲み会',days:1,start:'18:00',genres:['集合','一次会','二次会','三次会','カラオケ','締めラーメン']},
+  other:{icon:'✨',label:'その他',days:1,start:'10:00',genres:['観光','グルメ','買い物','その他']}
+};
+// 移動手段：速度(km/h)・道のり補正・待ち時間(分)・Googleマップの travelmode
+const MODES={
+  walk:{label:'🚶 徒歩',v:4.5,f:1.3,w:0,g:'walking'},
+  bike:{label:'🚲 自転車',v:13,f:1.3,w:0,g:'bicycling'},
+  car:{label:'🚗 車',v:30,f:1.4,w:5,g:'driving'},
+  taxi:{label:'🚕 タクシー',v:25,f:1.4,w:5,g:'driving'},
+  bus:{label:'🚌 バス',v:18,f:1.4,w:8,g:'transit'},
+  train:{label:'🚃 電車',v:35,f:1.25,w:10,g:'transit'},
+  shinkansen:{label:'🚄 新幹線',v:180,f:1.2,w:20,g:'transit'},
+  plane:{label:'✈ 飛行機',v:500,f:1.1,w:90,g:'transit'}
+};
+const KEY='odekake-planner-v1';
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let db;
+try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!db||!db.plans||!db.plans.length){db={cur:null,plans:[]};newPlan(null,'はじめてのプラン')}
+let ui={day:0,area:'',genre:''};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}
+function P(){return db.plans.find(p=>p.id===db.cur)||db.plans[0]}
+function newPlan(scene,title){
+  const p={id:uid(),title:title||'新しいプラン',scene,days:[],spots:[]};
+  db.plans.push(p);db.cur=p.id;
+  if(scene)applyScene(p,scene);
+  save();return p;
+}
+function applyScene(p,scene){
+  p.scene=scene;const s=SCENES[scene];
+  while(p.days.length<s.days)p.days.push({date:'',start:s.start,items:[]});
+  p.days.forEach(d=>{if(!d.items.length)d.start=s.start});
+}
+function spot(id){return P().spots.find(s=>s.id===id)}
+function dist(a,b){
+  const R=6371,t=x=>x*Math.PI/180,dl=t(b.lat-a.lat),dg=t(b.lng-a.lng);
+  const h=Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dg/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function legInfo(a,b,mode){
+  if(!a||!b||a.lat==null||b.lat==null)return null;
+  const m=MODES[mode]||MODES.walk,km=dist(a,b)*m.f;
+  return {km,min:Math.round(km/m.v*60+(km>0.05?m.w:0))};
+}
+const toMin=t=>{const[h,m]=(t||'09:00').split(':').map(Number);return h*60+m};
+const fmt=x=>{x=Math.round(x);const d=Math.floor(x/1440),r=x-d*1440;return (d?`翌${d>1?d:''}`:'')+String(Math.floor(r/60)).padStart(2,'0')+':'+String(r%60).padStart(2,'0')};
+const dur=m=>m>=60?`${Math.floor(m/60)}時間${m%60?m%60+'分':''}`:`${m}分`;
+function gmaps(s){return s.lat!=null?`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+' '+(s.area||''))}`}
+function gdir(a,b,mode){return `https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=${MODES[mode].g}`}
+
+/* ---------- 描画 ---------- */
+let map,layer;
+function render(){
+  const p=P();
+  document.getElementById('planSel').innerHTML=db.plans.map(x=>`<option value="${x.id}" ${x.id===p.id?'selected':''}>${esc(x.title)}</option>`).join('');
+  const app=document.getElementById('app');
+  if(!p.scene){
+    app.innerHTML=`<section class="sec"><h2>① シーンを選択</h2><div class="scenes">${Object.entries(SCENES).map(([k,s])=>`<button class="scene" data-scene="${k}"><b>${s.icon}</b>${s.label}</button>`).join('')}</div></section>`;
+    if(map){map.remove();map=null}
+    return;
+  }
+  if(ui.day>=p.days.length)ui.day=p.days.length-1;
+  const sc=SCENES[p.scene],d=p.days[ui.day];
+  const areas=[...new Set(p.spots.map(s=>s.area).filter(Boolean))];
+  const genres=[...new Set([...sc.genres,...p.spots.map(s=>s.genre).filter(Boolean)])];
+  document.getElementById('areaList').innerHTML=areas.map(a=>`<option value="${esc(a)}">`).join('');
+  document.getElementById('genreList').innerHTML=genres.map(a=>`<option value="${esc(a)}">`).join('');
+  const used=new Set(p.days.flatMap(x=>x.items.map(i=>i.spot)));
+
+  // 行程
+  let t=toMin(d.start),moveT=0,stayT=0,km=0,stops='';
+  d.items.forEach((it,i)=>{
+    const s=spot(it.spot);if(!s)return;
+    if(i>0){
+      const prev=spot(d.items[i-1].spot),L=legInfo(prev,s,it.mode);
+      if(L){t+=L.min;moveT+=L.min;km+=L.km}
+      stops+=`<div class="leg"><select data-mode="${i}">${Object.entries(MODES).map(([k,m])=>`<option value="${k}" ${k===it.mode?'selected':''}>${m.label}</option>`).join('')}</select>
+      ${L?`約${dur(L.min)}・${L.km.toFixed(1)}km <a href="${gdir(prev,s,it.mode)}" target="_blank" rel="noopener">経路↗</a>`:'<span>位置未設定のため計算不可</span>'}</div>`;
+    }
+    const arr=t,stay=+s.stay||0;t+=stay;stayT+=stay;
+    stops+=`<div class="stop"><div class="num">${i+1}</div><div class="body">
+      <div class="tm">${fmt(arr)} 〜 ${fmt(t)}<span class="meta">（滞在${dur(stay)}）</span></div>
+      <div class="nm">${esc(s.name)}</div>
+      <div class="meta">${s.area?`<span class="tag">${esc(s.area)}</span>`:''}${s.genre?`<span class="tag">${esc(s.genre)}</span>`:''}${esc(s.memo||'')}</div>
+      <div class="row" style="margin-top:4px">${s.url?`<a class="btn" href="${esc(s.url)}" target="_blank" rel="noopener">🔗 情報</a>`:''}<a class="btn" href="${gmaps(s)}" target="_blank" rel="noopener">📍 地図</a><button data-edit="${s.id}">✏</button></div>
+    </div><div class="ops"><button data-up="${i}" ${i?'':'disabled'}>▲</button><button data-down="${i}" ${i<d.items.length-1?'':'disabled'}>▼</button><button data-rm="${i}">✕</button></div></div>`;
+  });
+
+  const fl=p.spots.filter(s=>(!ui.area||s.area===ui.area)&&(!ui.genre||s.genre===ui.genre));
+  app.innerHTML=`
+  <section class="sec">
+    <h2>${sc.icon} ${esc(p.title)}<span class="meta">${sc.label}</span><span class="sp"></span><button data-addday>＋日を追加</button></h2>
+    <div class="days">${p.days.map((x,i)=>`<button data-day="${i}" class="${i===ui.day?'on':''}">${i+1}日目${x.date?' '+x.date.slice(5).replace('-','/'):''}</button>`).join('')}</div>
+    <div class="dayhead">日付 <input type="date" id="dDate" value="${d.date||''}"> 出発 <input type="time" id="dStart" value="${d.start}">
+      ${p.days.length>1?'<button class="ghost" data-delday style="color:#c33">この日を削除</button>':''}</div>
+  </section>
+  <div class="layout">
+    <section class="sec"><h2>② ${ui.day+1}日目の訪問順</h2>
+      ${stops||'<div class="empty">右の候補から「＋追加」で訪問先を並べましょう</div>'}
+      ${d.items.length?`<div class="sum">⏱ 終了予定 <b>${fmt(t)}</b>（移動 ${dur(moveT)}・${km.toFixed(1)}km／滞在 ${dur(stayT)}）<div class="note">移動時間は直線距離×補正で算出した目安です。正確な時間は「経路↗」で確認してください。</div></div>`:''}
+    </section>
+    <section class="sec"><h2>③ 候補ストック<span class="meta">${p.spots.length}件</span><span class="sp"></span><button class="pri" data-new>＋候補</button></h2>
+      <div class="chips"><span class="meta">エリア</span><button class="chip ${ui.area?'':'on'}" data-area="">すべて</button>${areas.map(a=>`<button class="chip ${ui.area===a?'on':''}" data-area="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+      <div class="chips"><span class="meta">ジャンル</span><button class="chip ${ui.genre?'':'on'}" data-genre="">すべて</button>${genres.map(a=>`<button class="chip ${ui.genre===a?'on':''}" data-genre="${esc(a)}">${esc(a)}</button>`).join('')}</div>
+      <div class="cands">${fl.map(s=>`<div class="cand ${used.has(s.id)?'used':''}">
+        <div class="nm">${esc(s.name)}</div>
+        <div>${s.area?`<span class="tag">${esc(s.area)}</span>`:''}${s.genre?`<span class="tag">${esc(s.genre)}</span>`:''}</div>
+        <div class="meta">滞在 ${dur(+s.stay||0)}${s.lat==null?'・📍未設定':''}${used.has(s.id)?'・計画済':''}</div>
+        <div class="row"><button class="pri" data-add="${s.id}">＋追加</button>${s.url?`<a class="btn" href="${esc(s.url)}" target="_blank" rel="noopener">🔗</a>`:''}<a class="btn" href="${gmaps(s)}" target="_blank" rel="noopener">📍</a><button data-edit="${s.id}">✏</button></div>
+      </div>`).join('')||'<div class="empty">候補がありません。「＋候補」から登録しましょう</div>'}</div>
+    </section>
+  </div>
+  <section class="sec"><h2>④ 地図<span class="meta">番号＝${ui.day+1}日目の訪問順／灰色＝候補</span></h2><div id="map"></div></section>`;
+  drawMap(p,d);
+}
+function drawMap(p,d){
+  if(!window.L){document.getElementById('map').innerHTML='<div class="empty">地図を読み込めませんでした（オフライン？）</div>';return}
+  if(map)map.remove();
+  map=L.map('map');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const pts=[],inDay=new Set(d.items.map(i=>i.spot));
+  p.spots.filter(s=>s.lat!=null&&!inDay.has(s.id)).forEach(s=>{
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="mk c"></div>',iconSize:[14,14]})}).addTo(map).bindPopup(`${esc(s.name)}<br><button onclick="addTo('${s.id}')">＋${ui.day+1}日目に追加</button>`);
+    pts.push([s.lat,s.lng]);
+  });
+  const route=[];
+  d.items.forEach((it,i)=>{const s=spot(it.spot);if(!s||s.lat==null)return;
+    route.push([s.lat,s.lng]);pts.push([s.lat,s.lng]);
+    L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:`<div class="mk">${i+1}</div>`,iconSize:[26,26]}),zIndexOffset:1000}).addTo(map).bindPopup(`<b>${i+1}. ${esc(s.name)}</b>`);
+  });
+  if(route.length>1)L.polyline(route,{color:'#e8663d',weight:4,opacity:.8}).addTo(map);
+  if(route.length)map.fitBounds(route.length>1?route:[route[0],route[0]],{padding:[30,30],maxZoom:16});
+  else if(pts.length)map.fitBounds(pts,{padding:[30,30],maxZoom:15});
+  else map.setView([35.681,139.767],11);
+}
+function addTo(id){const d=P().days[ui.day];d.items.push({spot:id,mode:d.items.length?(d.items.at(-1).mode||'walk'):'walk'});save();render()}
+
+/* ---------- 操作 ---------- */
+document.getElementById('app').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const p=P(),d=p.days[ui.day],ds=b.dataset;
+  if(ds.scene){applyScene(p,ds.scene);ui.day=0}
+  else if(ds.day)ui.day=+ds.day;
+  else if('addday' in ds){p.days.push({date:'',start:SCENES[p.scene].start,items:[]});ui.day=p.days.length-1}
+  else if('delday' in ds){if(!confirm(`${ui.day+1}日目を削除しますか？`))return;p.days.splice(ui.day,1)}
+  else if(ds.add)return addTo(ds.add);
+  else if(ds.up){const i=+ds.up;[d.items[i-1],d.items[i]]=[d.items[i],d.items[i-1]]}
+  else if(ds.down){const i=+ds.down;[d.items[i+1],d.items[i]]=[d.items[i],d.items[i+1]]}
+  else if(ds.rm)d.items.splice(+ds.rm,1);
+  else if(ds.edit)return openSpot(ds.edit);
+  else if('new' in ds)return openSpot();
+  else if('area' in ds)ui.area=ds.area;
+  else if('genre' in ds)ui.genre=ds.genre;
+  else return;
+  save();render();
+});
+document.getElementById('app').addEventListener('change',e=>{
+  const p=P(),d=p.days[ui.day],el=e.target;
+  if(el.dataset.mode)d.items[+el.dataset.mode].mode=el.value;
+  else if(el.id==='dDate')d.date=el.value;
+  else if(el.id==='dStart')d.start=el.value||'09:00';
+  else return;
+  save();render();
+});
+document.getElementById('planSel').onchange=e=>{db.cur=e.target.value;ui={day:0,area:'',genre:''};save();render()};
+document.getElementById('newPlan').onclick=()=>{const t=prompt('プラン名','新しいプラン');if(t===null)return;newPlan(null,t||'新しいプラン');ui={day:0,area:'',genre:''};render()};
+const menu=document.getElementById('menuDlg');
+document.getElementById('menuBtn').onclick=()=>menu.showModal();
+document.getElementById('renameBtn').onclick=()=>{const t=prompt('プラン名',P().title);if(t){P().title=t;save();render()}menu.close()};
+document.getElementById('sceneBtn').onclick=()=>{P().scene=null;save();render();menu.close()};
+document.getElementById('delPlan').onclick=()=>{if(!confirm('このプランを削除しますか？'))return;db.plans=db.plans.filter(x=>x.id!==db.cur);if(!db.plans.length)newPlan(null,'新しいプラン');db.cur=db.plans[0].id;save();render();menu.close()};
+document.getElementById('expBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,1)],{type:'application/json'}));a.download='odekake-plans.json';a.click()};
+document.getElementById('impFile').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());if(!x.plans)throw 0;
+  if(confirm('読み込んだプランを追加しますか？（キャンセルで中止）')){db.plans.push(...x.plans.filter(p=>!db.plans.some(q=>q.id===p.id)));save();render();menu.close()}}catch(_){alert('読み込めないファイルです')}};
+
+/* ---------- 訪問先ダイアログ ---------- */
+const dlg=document.getElementById('spotDlg'),form=document.getElementById('spotForm');
+let editId=null,pick=null,pmap,pmk;
+function setPick(lat,lng){pick={lat,lng};document.getElementById('ll').textContent=` 指定済み（${lat.toFixed(4)}, ${lng.toFixed(4)}）`;
+  if(pmk)pmk.setLatLng([lat,lng]);else pmk=L.marker([lat,lng]).addTo(pmap);}
+function openSpot(id){
+  editId=id||null;const s=id?spot(id):{stay:60,area:ui.area,genre:ui.genre};
+  document.getElementById('spotTitle').textContent=id?'訪問先を編集':'候補を追加';
+  ['name','area','genre','stay','memo','url'].forEach(k=>form.elements[k].value=s[k]??'');
+  document.getElementById('delSpot').style.display=id?'':'none';
+  document.getElementById('sres').innerHTML='';document.getElementById('q').value='';document.getElementById('ll').textContent='';
+  pick=null;pmk=null;dlg.showModal();
+  if(!window.L)return;
+  if(pmap)pmap.remove();
+  pmap=L.map('pickmap');L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OSM'}).addTo(pmap);
+  const ref=s.lat!=null?s:P().spots.find(x=>x.lat!=null);
+  pmap.setView(ref?[ref.lat,ref.lng]:[35.681,139.767],ref?14:10);
+  if(s.lat!=null)setPick(s.lat,s.lng);
+  pmap.on('click',e=>setPick(e.latlng.lat,e.latlng.lng));
+  setTimeout(()=>pmap.invalidateSize(),50);
+}
+async function search(){
+  const q=document.getElementById('q').value.trim()||form.elements.name.value.trim();if(!q)return;
+  const box=document.getElementById('sres');box.textContent='検索中…';
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&accept-language=ja&q=${encodeURIComponent(q)}`);const js=await r.json();
+    box.innerHTML=js.length?'':'見つかりません。地図をタップして指定してください';
+    js.forEach(x=>{const el=document.createElement('div');el.textContent=x.display_name;el.onclick=()=>{setPick(+x.lat,+x.lon);pmap.setView([+x.lat,+x.lon],16);
+      if(!form.elements.name.value)form.elements.name.value=x.display_name.split(',')[0];box.innerHTML=''};box.append(el)});
+  }catch(_){box.textContent='検索に失敗しました。地図をタップして指定してください'}
+}
+document.getElementById('qBtn').onclick=search;
+document.getElementById('q').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();search()}};
+document.getElementById('delSpot').onclick=()=>{if(!confirm('この候補を削除しますか？（行程からも外れます）'))return;
+  const p=P();p.spots=p.spots.filter(s=>s.id!==editId);p.days.forEach(d=>d.items=d.items.filter(i=>i.spot!==editId));save();dlg.close();render()};
+dlg.addEventListener('close',()=>{
+  if(dlg.returnValue!=='ok')return;
+  const f=Object.fromEntries(new FormData(form));const p=P();
+  const s=editId?spot(editId):{id:uid()};
+  Object.assign(s,{name:f.name.trim(),area:f.area.trim(),genre:f.genre.trim(),stay:+f.stay||0,memo:f.memo.trim(),url:f.url.trim()},pick?pick:{});
+  if(!editId)p.spots.push(s);
+  save();render();
+});
+render();
+</script>
+</body>
+</html>
