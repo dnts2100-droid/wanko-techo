@@ -402,6 +402,9 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 @media (prefers-color-scheme:dark){.locrow.warn{color:#F5B451}}
 .search-card>.seg button.on{background:var(--ink);color:var(--bg)}
 
+.welcome{position:fixed;left:12px;right:12px;bottom:calc(150px + var(--safe));z-index:1500;background:var(--surface);border-radius:22px;box-shadow:var(--sh2);padding:14px;display:grid;gap:10px;animation:celePop .4s cubic-bezier(.2,1.4,.4,1);max-width:440px;margin:0 auto}
+.wl-in{display:flex;align-items:center;gap:12px}.wl-in b{display:block;font-size:16px}.wl-in span{font-size:13px;color:var(--sub)}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -663,7 +666,7 @@ function renderPlan(){
 function renderStock(){
   const p=P(),n=p.spots.length;
   const open=ui.addOpen??!n;
-  let h=open?addCardHTML():`<button class="card add-bar" data-act="addToggle">🍽 <b>お店・スポットを追加</b><span class="meta">食べログから</span><span class="chev">＋</span></button>`;
+  let h=open?addCardHTML():`<button class="card add-bar" data-act="addToggle">🍽 <b>お店・スポットを追加</b><span class="meta">食べログ・Googleマップ</span><span class="chev">＋</span></button>`;
   if(open&&n)h=`<div class="add-close"><button class="btn sm" data-act="addToggle">追加パネルを閉じる</button></div>`+h;
   h+=`<div class="sec-head"><h2>候補<span>${n}</span></h2><button class="btn sm" data-act="newSpot">${I.plus}手入力</button></div>`;
   if(!n){$('#pane-stock').innerHTML=h+`<div class="card empty">${pinkun(88)}<b>候補はまだありません</b>上の手順で気になるお店をストックしましょう。</div>`;return}
@@ -744,7 +747,7 @@ function spotModeHTML(){
       ${resultsHTML()}
     </div></div>
     <div class="step"><span class="no">3</span><div class="sb2"><b>Googleマップから追加</b>
-      <div class="meta">Googleマップで場所を開き「共有」→「コピー」して、画面下の「📋 貼り付けて追加」</div>
+      <div class="meta">Googleマップで場所を開き「共有」→「<b>Router</b>」を選ぶと自動で追加されます（Androidでアプリとしてインストールした場合）。それ以外は「コピー」して戻り、「📋 貼り付けて追加」</div>
       <div class="row"><button class="btn sm" data-act="openGmaps">Googleマップで探す ↗</button></div>
     </div></div>`;
 }
@@ -761,7 +764,7 @@ function pasteConfirmHTML(){
 }
 function locLine(x){return x.loc==='busy'?'📍 場所を探しています…':hasLL(x)?`${x.approx?'⚠️':'📍'} ${esc(x.locLabel||'位置を設定しました')}`:'📍 位置が見つかりませんでした（あとで編集から設定できます）'}
 const PREF={hokkaido:'北海道',aomori:'青森',iwate:'岩手',miyagi:'宮城',akita:'秋田',yamagata:'山形',fukushima:'福島',ibaraki:'茨城',tochigi:'栃木',gunma:'群馬',saitama:'埼玉',chiba:'千葉',tokyo:'東京',kanagawa:'神奈川',niigata:'新潟',toyama:'富山',ishikawa:'石川',fukui:'福井',yamanashi:'山梨',nagano:'長野',gifu:'岐阜',shizuoka:'静岡',aichi:'愛知',mie:'三重',shiga:'滋賀',kyoto:'京都',osaka:'大阪',hyogo:'兵庫',nara:'奈良',wakayama:'和歌山',tottori:'鳥取',shimane:'島根',okayama:'岡山',hiroshima:'広島',yamaguchi:'山口',tokushima:'徳島',kagawa:'香川',ehime:'愛媛',kochi:'高知',fukuoka:'福岡',saga:'佐賀',nagasaki:'長崎',kumamoto:'熊本',oita:'大分',miyazaki:'宮崎',kagoshima:'鹿児島',okinawa:'沖縄'};
-const GWORD=[[/居酒屋|焼鳥|焼き鳥|やきとり|串焼|大衆酒場|酒場/,'居酒屋'],[/焼肉|ホルモン/,'焼肉'],[/寿司|鮨|すし/,'寿司'],[/ラーメン|らーめん|つけ麺|中華そば/,'ラーメン'],[/カフェ|喫茶|珈琲|コーヒー/,'カフェ'],[/スイーツ|ケーキ|パン|甘味|和菓子|パフェ/,'スイーツ'],[/バー|BAR|Bar|ワイン|ビール/,'バー'],[/カラオケ/,'カラオケ'],[/温泉|銭湯|スパ|サウナ/,'温泉'],[/ホテル|旅館|民宿|宿泊|ゲストハウス|^宿/,'宿'],[/神社|寺|大社/,'寺社'],[/公園/,'公園'],[/駅|空港/,'駅・空港'],[/美術館|博物館|水族館|動物園|城|タワー|展望/,'観光']];
+const GWORD=[[/居酒屋|焼鳥|焼き鳥|やきとり|串焼|大衆酒場|酒場/,'居酒屋'],[/焼肉|ホルモン/,'焼肉'],[/寿司|鮨|すし/,'寿司'],[/ラーメン|らーめん|つけ麺|中華そば/,'ラーメン'],[/カフェ|喫茶|珈琲|コーヒー/,'カフェ'],[/スイーツ|ケーキ|パン|甘味|和菓子|パフェ/,'スイーツ'],[/バー|BAR|Bar|ワイン|ビール/,'バー'],[/カラオケ/,'カラオケ'],[/温泉|銭湯|スパ|サウナ/,'温泉'],[/ホテル|旅館|民宿|宿泊|ゲストハウス|^宿/,'宿'],[/神社|寺|大社/,'寺社'],[/公園/,'公園'],[/駅|空港/,'駅・空港'],[/美術館|博物館|水族館|動物園|城|タワー|ツリー|展望|スカイ|遊園地|テーマパーク|記念館|庭園|植物園/,'観光']];
 function parsePaste(text){
   const t=String(text||'').trim();if(!t)return null;
   const url=(t.match(/https?:\/\/[^\s「」<>"]+/)||[''])[0];
@@ -774,21 +777,58 @@ function parsePaste(text){
     const m=url.match(/\/place\/([^/@]+)/);if(m&&!r.name)r.name=decodeURIComponent(m[1].replace(/\+/g,' '));
     const c=url.match(/!3d(-?[\d.]+)!4d(-?[\d.]+)/)||url.match(/@(-?[\d.]+),(-?[\d.]+)/);if(c){r.lat=+c[1];r.lng=+c[2];r.locLabel='Googleマップの位置'}
   }
+  if(!r.area&&/google|goo\.gl/.test(url)){const ad=t.replace(url,'').replace(r.name,'');r.area=areaFromAddr(ad)}
   const tb=url.match(/tabelog\.com\/([a-z]+)\//);if(tb&&!r.area&&PREF[tb[1]])r.area=PREF[tb[1]];
   const hay=(r.genreText||'')+' '+r.name+' '+t;
-  r.genre=(GWORD.find(([re])=>re.test(hay))||[])[1]||(/tabelog/.test(url)?'グルメ':(FOODK.includes(ui.fGenre)||!url?ui.fGenre:'その他'));
+  r.genre=(GWORD.find(([re])=>re.test(hay))||[])[1]||(/tabelog/.test(url)?'グルメ':/google|goo\.gl/.test(url)?(ui.addMode==='spot'||ui.lastKind==='gmaps'?'観光':'その他'):(FOODK.includes(ui.fGenre)||!url?ui.fGenre:'その他'));
   if(!r.area&&ui.fArea&&ui.fArea!=='現在地')r.area=ui.fArea;
   return r;
 }
 let pasteT;
+// Googleマップの共有リンク（maps.app.goo.gl など）から、名前と位置を取り出す
+const isShortMaps=u=>/(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs)/.test(u||'');
+function parsePlaceURL(u){
+  const r={};if(!u)return r;
+  const m=u.match(/\/maps\/place\/([^/@?]+)/);if(m)r.name=decodeURIComponent(m[1].replace(/\+/g,' '));
+  const c=u.match(/!3d(-?[\d.]+)!4d(-?[\d.]+)/)||u.match(/@(-?[\d.]+),(-?[\d.]+)/)||u.match(/[?&](?:q|ll|query)=(-?[\d.]+),(-?[\d.]+)/);
+  if(c){r.lat=+c[1];r.lng=+c[2]}
+  const q=u.match(/[?&]q=([^&]+)/);if(!r.name&&q&&!/^-?[\d.]+,/.test(decodeURIComponent(q[1])))r.name=decodeURIComponent(q[1].replace(/\+/g,' '));
+  return r;
+}
+async function getText(url,ms=12000){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),ms);
+  try{const r=await fetch(url,{signal:ac.signal});if(!r.ok)throw 0;return await r.text()}finally{clearTimeout(tm)}}
+async function resolveMaps(url){
+  const fromTitle=t=>{t=(t||'').replace(/\s*[-–]\s*Google\s*マップ.*$|\s*[-–]\s*Google Maps.*$/i,'').trim();const [n,...a]=t.split(/\s*·\s*/);return {name:n,addr:a.join(' ')}};
+  // 1) 公開ページ読み取りサービス
+  try{const t=await getText('https://r.jina.ai/'+url);
+    const src=(t.match(/URL Source:\s*(\S+)/)||[])[1],tt=(t.match(/Title:\s*(.+)/)||[])[1];
+    const r={...parsePlaceURL(src),...(tt?fromTitle(tt):{})};if(!r.name)r.name=parsePlaceURL(src).name;
+    if(r.name&&!/^Google/.test(r.name))return r}catch(_){}
+  // 2) 転送先URLの取得
+  try{const j=await getJSON('https://api.allorigins.win/get?url='+encodeURIComponent(url),12000);
+    const r=parsePlaceURL(j.status?.url||'');const og=(j.contents||'').match(/property="og:title"\s+content="([^"]+)"/)||(j.contents||'').match(/content="([^"]+)"\s+property="og:title"/);
+    if(og)Object.assign(r,fromTitle(og[1].replace(/&amp;/g,'&')));if(r.name)return r}catch(_){}
+  return null;
+}
+const areaFromAddr=a=>{const m=(a||'').replace(/〒?\s*[\d０-９-－−]+/g,' ').match(/(?:東京都|北海道|大阪府|京都府|\S{2,3}県)\s*(\S+?[市区町村])/)||(a||'').match(/([^\s\d０-９〒]{1,6}?[市区町村])/);return m?m[1].replace(/^.*?[都道府県]/,''):''};
+async function enrich(r){
+  if(r.url&&isShortMaps(r.url)&&(!r.name||!hasLL(r))){
+    toast('Googleマップから場所の情報を取得中…');
+    const x=await resolveMaps(r.url);
+    if(x){if(!r.name||r.fromText===false)r.name=x.name||r.name;if(x.lat!=null){r.lat=x.lat;r.lng=x.lng;r.locLabel='Googleマップの位置'}
+      if(!r.area)r.area=areaFromAddr(x.addr);r.genre=(GWORD.find(([re])=>re.test(r.name||''))||[])[1]||r.genre||'観光'}
+  }
+  return r;
+}
 async function handlePaste(text){
-  const r=parsePaste(text);if(!r){ui.pst=null;renderStock();return}
+  let r=parsePaste(text);if(!r){ui.pst=null;renderStock();return}
+  r=await enrich(r);
   r.text=text;
   if(!r.name&&r.url){r.name='';}
   ui.pst=r;if(!hasLL(r))r.loc='busy';
   renderStock();
   setTimeout(()=>$('.confirm')?.scrollIntoView({behavior:'smooth',block:'center'}),50);
-  if(!r.name){document.querySelector('[data-f="pst.name"]')?.focus();toast('お店の名前を入力してください')}
+  if(!r.name){document.querySelector('[data-f="pst.name"]')?.focus();toast(isShortMaps(r.url)?'場所の名前を取得できませんでした。名前を入力してください':'お店の名前を入力してください')}
   if(!hasLL(r))locate(r);
 }
 // 位置の特定：まずエリアの中心を求め、その周辺（約8km以内）に限定して店名を探す。
@@ -841,10 +881,31 @@ const STANDALONE=matchMedia('(display-mode: standalone)').matches||navigator.sta
 const ANDROID=/Android/i.test(navigator.userAgent);
 function openURL(url){
   if(!url)return;
+  ui.away=Date.now();
   if(STANDALONE&&ANDROID){
-    const u=new URL(url);location.href=`intent://${u.host}${u.pathname}${u.search}${u.hash}#Intent;scheme=${u.protocol.replace(':','')};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(url)};end`;return;
+    const u=new URL(url),isMaps=/google\.[^/]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(url);
+    // Googleマップはマップアプリで直接開く（「戻る」でRouterに帰れる）。それ以外はChromeで開く
+    location.href=`intent://${u.host}${u.pathname}${u.search}${u.hash}#Intent;scheme=${u.protocol.replace(':','')};package=${isMaps?'com.google.android.apps.maps':'com.android.chrome'};S.browser_fallback_url=${encodeURIComponent(url)};end`;return;
   }
   window.open(url,'_blank','noopener');
+}
+// 外部アプリから戻ってきたとき：迷子にならないよう候補タブで「おかえり」バナーを出し、
+// クリップボードの読み取りが許可済みなら、コピーした場所を自動で追加する
+let lastClip='';
+document.addEventListener('visibilitychange',async()=>{
+  if(document.visibilityState!=='visible'||!ui.away)return;
+  if(Date.now()-ui.away>30*60e3){ui.away=0;return}
+  ui.away=0;
+  if(ui.tab!=='stock'&&ui.tab!=='plan'){ui.tab='stock';render()}
+  try{const st=await navigator.permissions.query({name:'clipboard-read'});
+    if(st.state==='granted'){const t=await navigator.clipboard.readText();if(t&&t!==lastClip&&/https?:\/\//.test(t)){lastClip=t;return quickAdd(t)}}}catch(_){}
+  welcome();
+});
+function welcome(){
+  document.querySelector('.welcome')?.remove();
+  const w=document.createElement('div');w.className='welcome';
+  w.innerHTML=`<div class="wl-in">${pinkun(54)}<div><b>おかえりなさい！</b><span>コピーした場所を追加しますか？</span></div></div><div class="row"><button class="btn" data-act="wlClose">あとで</button><button class="btn acc" data-act="quickPaste" style="flex:1">📋 貼り付けて追加</button></div>`;
+  document.body.append(w);setTimeout(()=>w.remove(),12000);
 }
 document.addEventListener('click',e=>{const a=e.target.closest('a[target=_blank]');if(!a)return;e.preventDefault();openURL(a.href)},true);
 // 連続追加用：画面下のクイックバー
@@ -855,7 +916,8 @@ function renderQuick(){
   el.classList.toggle('on',!!show);
 }
 async function quickAdd(text){
-  const r=parsePaste(text);if(!r)return toast('コピーした内容が見つかりません');
+  let r=parsePaste(text);if(!r)return toast('コピーした内容が見つかりません');
+  r=await enrich(r);
   if(!r.name){ui.tab='stock';render();return handlePaste(text)}
   const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||x.name===r.name);
   if(dup)return toast(`「${dup.name}」は追加済みです`);
@@ -1336,6 +1398,7 @@ function joinNow(){
 
 /* ================= 操作 ================= */
 const ACT={
+  wlClose:()=>document.querySelector('.welcome')?.remove(),
   addMode:el=>{ui.addMode=el.dataset.v;if(ui.addMode==='spot'&&FOODK.includes(ui.fGenre))ui.fGenre='観光';if(ui.addMode==='food'&&!FOODK.includes(ui.fGenre))ui.fGenre='グルメ';ui.fRes=null;ui.fState='';renderStock()},
   spotSearch:()=>spotSearch(),
   spotAdd:el=>{const x=ui.sres[+el.dataset.i],p=P();if(p.spots.some(s=>s.name===x.nm))return;
@@ -1343,7 +1406,7 @@ const ACT={
   addToggle:()=>{ui.addOpen=!(ui.addOpen??!P().spots.length);renderStock()},
   f2clear:()=>{ui.fArea2=ui.fGenre2=ui.st2=ui.q2='';renderStock()},
   extAgain:()=>openURL(ui.lastExt),
-  quickPaste:async()=>{try{const t=await navigator.clipboard.readText();if(!t)throw 0;quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
+  quickPaste:async()=>{document.querySelector('.welcome')?.remove();try{const t=await navigator.clipboard.readText();if(!t)throw 0;lastClip=t;quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
   quickClose:()=>{ui.lastExt='';saveUI();renderQuick()},
   openTabelog:()=>openExt('tabelog'),
   openGmaps:()=>openExt('gmaps'),
@@ -1616,7 +1679,7 @@ async function ensureLibs(){
 }
 load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML='';render();checkIncoming();live.boot();setTimeout(recheckSpots,2500);
   {const q=new URLSearchParams(location.search);const t=[q.get('st'),q.get('sx'),q.get('su')].filter(Boolean).join('\n');
-   if(t){history.replaceState(null,'',location.pathname);ui.tab='stock';render();handlePaste(t)}}setTimeout(autoPhotoAll,1500);
+   if(t){history.replaceState(null,'',location.pathname);ui.tab='stock';render();quickAdd(t)}}setTimeout(autoPhotoAll,1500);
   try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
 });
 </script>
