@@ -6,7 +6,9 @@
 <meta name="theme-color" content="#F6F5F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Tabi Note</title>
+<title>Router</title>
+<meta name="apple-mobile-web-app-title" content="Router">
+<meta name="application-name" content="Router">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -358,7 +360,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 <body>
 <header class="top">
   <button class="plan-btn" data-act="planMenu" aria-label="プランを切り替え">
-    <div class="eyebrow" style="display:flex;align-items:center;gap:6px"><img src="icon-192.png" alt="" style="width:18px;height:18px;border-radius:5px">TABI NOTE</div>
+    <div class="eyebrow" style="display:flex;align-items:center;gap:6px"><img src="icon-192.png" alt="" style="width:18px;height:18px;border-radius:5px">ROUTER</div>
     <h1><span id="hTitle"></span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></h1>
     <div class="plan-sub" id="hSub"></div>
   </button>
@@ -928,7 +930,7 @@ function shareHTML(){
 }
 async function shareLink(){
   try{const url=location.href.split('#')[0]+'#p='+await pack(P());
-    const text=`「${P().title}」のプランを共有します。開くとTabi Noteに取り込まれます。`;
+    const text=`「${P().title}」のプランを共有します。開くとRouterに取り込まれます。`;
     try{if(navigator.share){await navigator.share({title:P().title,text,url});return}}catch(e){if(e.name==='AbortError')return}
     await navigator.clipboard.writeText(text+'\n'+url);toast('共有リンクをコピーしました。LINEなどに貼り付けてください')}
   catch(_){toast('共有リンクを作成できませんでした')}
@@ -983,7 +985,7 @@ const ACT={
   newPlan:()=>{const p=mkPlan();db.plans.push(p);db.cur=p.id;ui.day=0;fitKey='';save();closeSheet();render();setTimeout(()=>{openSheet(planHTML);const i=document.querySelector('.sheet [data-f="title"]');i&&(i.select(),i.focus())},250)},
   dupPlan:()=>{const x=JSON.parse(snap());x.id=uid();x.title+='（コピー）';db.plans.push(x);db.cur=x.id;save();closeSheet();render();toast('プランを複製しました')},
   delPlan:()=>{const s=snap(),p=P();db.plans=db.plans.filter(x=>x.id!==p.id);if(!db.plans.length)db.plans.push(mkPlan());db.cur=db.plans[0].id;ui.day=0;fitKey='';save();closeSheet();render();toast(`「${p.title}」を削除しました`,()=>{restore(s)();db.cur=p.id})},
-  export:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));a.download=`tabinote-${new Date().toLocaleDateString('sv-SE')}.json`;a.click();toast('書き出しました')},
+  export:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));a.download=`router-${new Date().toLocaleDateString('sv-SE')}.json`;a.click();toast('書き出しました')},
   import:()=>$('#fileImport').click(),
   share:()=>openSheet(shareHTML),
   shareText:()=>doShare(),
