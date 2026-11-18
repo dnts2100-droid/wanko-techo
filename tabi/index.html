@@ -779,6 +779,18 @@ function pasteConfirmHTML(){
 }
 function locLine(x){return x.loc==='busy'?'📍 場所を探しています…':hasLL(x)?`${x.approx?'⚠️':'📍'} ${esc(x.locLabel||'位置を設定しました')}`:'📍 位置が見つかりませんでした（あとで編集から設定できます）'}
 const PREF={hokkaido:'北海道',aomori:'青森',iwate:'岩手',miyagi:'宮城',akita:'秋田',yamagata:'山形',fukushima:'福島',ibaraki:'茨城',tochigi:'栃木',gunma:'群馬',saitama:'埼玉',chiba:'千葉',tokyo:'東京',kanagawa:'神奈川',niigata:'新潟',toyama:'富山',ishikawa:'石川',fukui:'福井',yamanashi:'山梨',nagano:'長野',gifu:'岐阜',shizuoka:'静岡',aichi:'愛知',mie:'三重',shiga:'滋賀',kyoto:'京都',osaka:'大阪',hyogo:'兵庫',nara:'奈良',wakayama:'和歌山',tottori:'鳥取',shimane:'島根',okayama:'岡山',hiroshima:'広島',yamaguchi:'山口',tokushima:'徳島',kagawa:'香川',ehime:'愛媛',kochi:'高知',fukuoka:'福岡',saga:'佐賀',nagasaki:'長崎',kumamoto:'熊本',oita:'大分',miyazaki:'宮崎',kagoshima:'鹿児島',okinawa:'沖縄'};
+// 飲食店のジャンル辞書（食べログのジャンル表記に対応）。上から順に優先
+const FOODWORD=[
+  [/ダイニングバー|居酒屋|焼鳥|焼き鳥|やきとり|串焼|串カツ|串揚げ|もつ鍋|もつ焼|大衆酒場|酒場|立ち飲み|立呑|日本酒バー|海鮮|魚介|炉端|おでん|鍋|水炊き|ちゃんこ/,'居酒屋'],
+  [/焼肉|ホルモン|ジンギスカン|韓国料理/,'焼肉'],
+  [/寿司|鮨|すし|回転寿司/,'寿司'],
+  [/ラーメン|らーめん|拉麺|つけ麺|担々麺|担担麺|油そば|まぜそば|中華そば/,'ラーメン'],
+  [/カフェ|喫茶|珈琲|コーヒー|紅茶|ティー/,'カフェ'],
+  [/スイーツ|ケーキ|パン|ベーカリー|和菓子|甘味|パフェ|ドーナツ|ジェラート|アイス|チョコ|クレープ|洋菓子|たい焼/,'スイーツ'],
+  [/ワインバー|ビアバー|ビアホール|ビアガーデン|パブ|^バー$|[^ダイニング]バー|BAR|Bar/,'バー'],
+  [/カラオケ/,'カラオケ']
+];
+const foodGenre=t=>t?((FOODWORD.find(([re])=>re.test(t))||[])[1]||''):'';
 const GWORD=[[/居酒屋|焼鳥|焼き鳥|やきとり|串焼|大衆酒場|酒場/,'居酒屋'],[/焼肉|ホルモン/,'焼肉'],[/寿司|鮨|すし/,'寿司'],[/ラーメン|らーめん|つけ麺|中華そば/,'ラーメン'],[/カフェ|喫茶|珈琲|コーヒー/,'カフェ'],[/スイーツ|ケーキ|パン|甘味|和菓子|パフェ/,'スイーツ'],[/バー|BAR|Bar|ワイン|ビール/,'バー'],[/カラオケ/,'カラオケ'],[/温泉|銭湯|スパ|サウナ/,'温泉'],[/ホテル|旅館|民宿|宿泊|ゲストハウス|^宿/,'宿'],[/神社|寺|大社/,'寺社'],[/公園/,'公園'],[/駅|空港/,'駅・空港'],[/美術館|博物館|水族館|動物園|城|タワー|ツリー|展望|スカイ|遊園地|テーマパーク|記念館|庭園|植物園/,'観光']];
 function parsePaste(text){
   const t=String(text||'').trim();if(!t)return null;
@@ -797,8 +809,10 @@ function parsePaste(text){
   }
   if(!r.area&&/google|goo\.gl/.test(url)){const ad=t.replace(url,'').replace(r.name,'');r.area=areaFromAddr(ad)}
   const tb=url.match(/tabelog\.com\/([a-z]+)\//);if(tb&&!r.area&&PREF[tb[1]])r.area=PREF[tb[1]];
-  const hay=(r.genreText||'')+' '+r.name+' '+t;
-  r.genre=(GWORD.find(([re])=>re.test(hay))||[])[1]||(/tabelog/.test(url)?'グルメ':/google|goo\.gl/.test(url)?(ui.addMode==='spot'||ui.lastKind==='gmaps'?'観光':'その他'):(FOODK.includes(ui.fGenre)||!url?ui.fGenre:'その他'));
+  // ジャンル判定：食べログは飲食ジャンルだけから選ぶ。ジャンル表記 → 店名 の順に見る（住所や駅名は見ない）
+  const isFoodSite=/tabelog|hotpepper|retty|gnavi|食べログ/.test(url+' '+t);
+  const fg=isFoodSite?foodGenre(r.genreText)||foodGenre(r.name)||'グルメ':null;
+  r.genre=fg||(r.genreText&&(foodGenre(r.genreText)||(GWORD.find(([re])=>re.test(r.genreText))||[])[1]))||(GWORD.find(([re])=>re.test(r.name))||[])[1]||(/tabelog/.test(url)?'グルメ':/google|goo\.gl/.test(url)?(ui.addMode==='spot'||ui.lastKind==='gmaps'?'観光':'その他'):(FOODK.includes(ui.fGenre)||!url?ui.fGenre:'その他'));
   if(!r.area&&ui.fArea&&ui.fArea!=='現在地')r.area=ui.fArea;
   return r;
 }
@@ -866,7 +880,7 @@ async function pageInfo(url){
   let info=null;
   try{const m=parseMeta(await fetchHTML(url));
     let name='',area='',genre='';
-    if(/tabelog/.test(url)){const t=parsePaste((m.title||'').replace(/\s*[-|]\s*食べログ.*$/,'').replace(/\s*\[食べログ\]/,''));name=m.ldName||t?.name||'';area=t?.area||'';genre=t?.genre||''}
+    if(/tabelog/.test(url)){const t=parsePaste((m.title||'').replace(/\s*[-|]\s*食べログ.*$/,'').replace(/\s*\[食べログ\]/,''));name=m.ldName||t?.name||'';area=t?.area||'';genre=foodGenre(t?.genreText)||foodGenre(name)||'グルメ'}
     else{const t=(m.title||'').replace(/\s*[-–]\s*Google\s*マップ.*$|\s*[-–]\s*Google Maps.*$/i,'');const [n,...a]=t.split(/\s*·\s*/);name=(n&&!/^Google/.test(n))?n:(m.placeName||'');if(!name&&m.placeName)name=m.placeName;if(!m.addr)m.addr=a.join(' ')}
     const img=[m.ldImage,m.image].find(u=>u&&/^https:/.test(u)&&!/staticmap|maps\.google|googleusercontent\.com\/.*=w\d+-h\d+-k|logo|noimage/i.test(u));
     info={name,area:area||areaFromAddr(m.addr),genre,lat:m.lat,lng:m.lng,addr:m.addr,photo:img||''};
@@ -1103,6 +1117,7 @@ function detailHTML(){
   return `<div class="hero">${ph(s,'',`<button class="btn sm chg" data-act="photo" data-sid="${s.id}">${I.cam}写真を変更</button>`)}</div>
   <div class="kicker">${gOf(s.genre).e} ${esc(s.genre||'その他')}${s.area?' · '+esc(s.area):''}${row?` · DAY ${ui.day+1} の ${pos+1}件目`:''}</div>
   <div class="dname">${esc(s.name)}</div>
+  <div class="hscroll" style="margin:2px -18px 6px;padding:2px 18px">${GENRES.map(g=>`<button class="chip ${s.genre===g.k?'on':''}" data-act="setGenre" data-g="${g.k}">${g.e} ${g.k}</button>`).join('')}</div>
   ${row?`<div class="tline num"><div><small>到着</small><b>${fmtT(row.arr)}</b></div><div style="color:var(--faint)">→</div><div><small>出発</small><b>${fmtT(row.dep)}</b></div><div style="flex:1"></div></div>`:''}
   <div class="row" style="justify-content:space-between;margin-top:8px"><span class="meta" style="font-weight:700">滞在予測</span>
     <div class="stepper"><button data-act="stay" data-v="-15" aria-label="15分減らす">−</button><b class="num">${dur(+s.stay||0)}</b><button data-act="stay" data-v="15" aria-label="15分増やす">＋</button></div></div>
@@ -1242,6 +1257,7 @@ async function autoPhoto(s,force){
 }
 // 以前に追加した食べログ由来の候補で、エリアから大きく離れた位置になっているものを自動で見直す
 async function recheckSpots(){
+  P().spots.forEach(sp=>{if(sp.url&&/tabelog/.test(sp.url)&&!sp.gchk){sp.gchk=1;if(!FOODK.includes(sp.genre))sp.genre=foodGenre(sp.name)||'グルメ'}});
   for(const sp of P().spots.filter(x=>x.url&&/tabelog/.test(x.url)&&x.area&&!x.chk)){
     sp.chk=1;let c=null;try{c=await geocode(sp.area)}catch(_){}
     if(c&&(!hasLL(sp)||dist(c,sp)>10)){const r={name:sp.name,area:sp.area};await locate(r);
@@ -1493,6 +1509,7 @@ function openIntro(){ui.introStep=0;openSheet(introHTML)}
 
 /* ================= 操作 ================= */
 const ACT={
+  setGenre:el=>{const s=S(detail.sid);if(!s)return;const prev=gOf(s.genre).stay;s.genre=el.dataset.g;if(+s.stay===prev)s.stay=gOf(s.genre).stay;save();refreshSheet();render()},
   install:async()=>{if(!installEvt)return toast('ブラウザのメニューから「アプリをインストール」を選んでください');installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;renderStock();if(r.outcome==='accepted')toast('インストールしました！共有メニューに Router が出ます')},
   geoHide:()=>{ui.geoHide=1;saveUI();render();toast('右上の📍ボタンからいつでもONにできます')},
   help:()=>{closeSheet();setTimeout(()=>openIntro(),220)},
