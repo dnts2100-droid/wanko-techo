@@ -69,6 +69,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .tab.on{background:var(--ink);color:var(--bg)}
 .tab .cnt{font-size:10px;background:var(--acc);color:#fff;border-radius:999px;padding:0 6px;line-height:16px}
 
+@media (max-width:380px){.top .ibtn{width:36px;height:36px}}
 @media (min-width:1000px){
   .top{padding-left:28px;padding-right:28px;width:480px}
   .panes{width:480px;padding:4px 28px 120px}
@@ -475,6 +476,53 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 .shrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--bg);font-size:13px}
 .shrow small{color:var(--sub);font-size:11.5px}
 
+/* プラン一覧（ホーム） */
+body.at-home .top,body.at-home .tabbar,body.at-home .quick{display:none!important}
+body.at-home #pane-map{display:none!important}
+.home-top{display:flex;align-items:center;gap:8px;padding-top:calc(14px + env(safe-area-inset-top,0px));font-weight:900;letter-spacing:.14em;font-size:12px;color:var(--sub)}
+.home-top img{width:26px;height:26px;border-radius:7px}
+.home-h{font-size:32px;font-weight:900;letter-spacing:-.03em;margin:18px 0 16px}
+.plist{display:grid;gap:10px}
+.pcard{display:flex;align-items:center;gap:14px;padding:12px;border-radius:22px;background:var(--surface);box-shadow:var(--sh);cursor:pointer;transition:transform .12s}
+.pcard:active{transform:scale(.985)}
+.pcard.past{opacity:.6}
+.pc-ph{position:relative;flex:none;width:64px;height:64px;border-radius:16px;overflow:hidden;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:900;font-size:22px}
+.pc-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pc-in{flex:1;min-width:0}
+.pc-t{font-weight:900;font-size:17px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-d{font-size:12.5px;color:var(--sub);margin-top:2px}
+.pc-m{font-size:12px;font-weight:700;color:#1F9D74;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nowtag{color:#fff;background:var(--acc);border-radius:999px;padding:0 7px;font-size:10.5px}
+.pnew{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:12px;padding:18px;border-radius:22px;border:1.5px dashed var(--faint);color:var(--ink);font-weight:800;font-size:15px}
+.plan-btn h1 .back{width:20px;height:20px;color:var(--sub);margin-left:-4px}
+.mline{font-weight:700;color:#1F9D74}
+.mems{display:flex;flex-wrap:wrap;gap:6px}
+.mem{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:999px;background:var(--surface);font-size:12.5px}
+.mem::first-letter{}
+.mem{position:relative}.mem>b{font-weight:700}
+.mem{--c:#1F9D74}.mem.me{--c:var(--acc)}
+.mem:before{content:"";display:none}
+.danger-pri{background:#E5484D!important;color:#fff!important}
+/* 進捗の追加 */
+.ring{display:flex;align-items:center;gap:14px;margin-top:14px;position:relative}
+.rg{width:84px;height:84px;flex:none;transform:rotate(-90deg)}
+.rg-b{fill:none;stroke:var(--line);stroke-width:9}.rg-f{fill:none;stroke:var(--acc);stroke-width:9;stroke-linecap:round;transition:stroke-dashoffset 1s}
+.rg-n{position:absolute;left:16px;width:84px;text-align:center;line-height:1.1}.rg-n b{font-size:22px;font-weight:900}.rg-n em{font-style:normal;font-size:12px}.rg-n small{display:block;font-size:10px;color:var(--sub);font-weight:700}
+.rg-s{flex:1;display:grid;gap:6px}.rg-s div{display:flex;justify-content:space-between;align-items:baseline}.rg-s small{font-size:11.5px;color:var(--sub);font-weight:700}.rg-s b{font-size:16px;font-weight:900}.rg-s em{font-style:normal;font-size:11px;color:var(--sub)}
+.next{margin-top:14px;display:grid;gap:10px}
+.next.soon{box-shadow:0 0 0 2px #D97706,var(--sh)}.next.late{box-shadow:0 0 0 2px #E5484D,var(--sh)}
+.nx-big{font-size:24px;font-weight:900;letter-spacing:-.02em}
+.next.soon .nx-big{color:#D97706}.next.late .nx-big{color:#E5484D}
+.nx-to{display:flex;gap:12px;align-items:center;cursor:pointer}.nx-ph{width:52px;height:52px;border-radius:14px}.nx-ph>span{font-size:22px}
+.stamps{margin-top:14px}
+.st-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.st{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.st .ph{overflow:visible}.st-ph{width:100%;max-width:64px;aspect-ratio:1;border-radius:50%;filter:grayscale(1);opacity:.45}
+.st.got .st-ph{filter:none;opacity:1;box-shadow:0 0 0 3px #1F9D74}
+.st-mk{position:absolute;right:-2px;bottom:-2px;width:20px;height:20px;font-size:11px!important;border-radius:50%;background:#1F9D74;color:#fff;font-weight:900;display:grid;place-items:center;font-size:13px}
+.st-no{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-weight:900;font-size:16px;color:var(--ink)}
+.st b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.st small{font-size:10.5px;color:var(--sub)}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -489,12 +537,13 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 </head>
 <body>
 <header class="top">
-  <button class="plan-btn" data-act="planMenu" aria-label="プランを切り替え">
+  <button class="plan-btn" data-act="goHome" aria-label="プラン一覧へ">
     <div class="eyebrow" style="display:flex;align-items:center;gap:6px"><img src="icon-192.png" alt="" style="width:18px;height:18px;border-radius:5px">ROUTER</div>
-    <h1><span id="hTitle"></span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></h1>
+    <h1><svg viewBox="0 0 24 24" class="back"><path d="M15 6l-6 6 6 6"/></svg><span id="hTitle"></span></h1>
     <div class="plan-sub" id="hSub"></div>
   </button>
   <button class="ibtn" id="geoBtn" data-act="geo" aria-label="おでかけモード（現在地・滞在記録）"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
+  <button class="ibtn" data-act="planMenu" aria-label="プランの設定"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
   <button class="ibtn" id="kitBtn" data-act="tab" data-tab="kit" aria-label="トラベルキット"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></button>
   <button class="ibtn" data-act="share" aria-label="共有"><svg viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button>
 </header>
@@ -503,6 +552,7 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
   <section class="pane" id="pane-stock"></section>
   <section class="pane" id="pane-prog"></section>
   <section class="pane" id="pane-kit"></section>
+  <section class="pane" id="pane-home"></section>
 </main>
 <section class="pane" id="pane-map"><div id="map"></div><div class="map-days" id="mapDays"></div><div class="carousel" id="carousel"></div></section>
 <div class="quick" id="quick"></div>
@@ -566,6 +616,7 @@ const I={
  trash:'<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
  up:'<svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
  gantt:'<svg viewBox="0 0 24 24"><path d="M4 6h8M8 12h10M12 18h8" stroke-width="2.6"/></svg>',
+ more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
  check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
  down:'<svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>'
 };
@@ -665,7 +716,10 @@ async function load(){
 const ui={tab:'plan',day:0,fArea:'',fGenre:'グルメ',fRad:1000,fRes:null,fState:'',here:null,showCands:true,fArea2:'',fGenre2:'',hl:null,lastExt:''};
 const UIKEY='router-ui';
 try{Object.assign(ui,JSON.parse(localStorage.getItem(UIKEY))||{})}catch(_){}
-function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide,extTipShown:ui.extTipShown,hideShots:ui.hideShots}))}catch(_){}}
+// 起動時：外部サイトでお店を探している途中（30分以内）なら元の画面、それ以外はプラン一覧から
+if(!(ui.awayAt&&Date.now()-ui.awayAt<30*60e3&&ui.tab==='stock')&&!location.hash&&!location.search.includes('st=')&&!location.search.includes('su='))ui.tab='home';
+ui.awayAt=0;
+function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({awayAt:ui.away||ui.awayAt||0,tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide,extTipShown:ui.extTipShown,hideShots:ui.hideShots}))}catch(_){}}
 const wide=matchMedia('(min-width:1000px)');
 const P=()=>db.plans.find(p=>p.id===db.cur)||db.plans[0];
 const S=id=>P().spots.find(s=>s.id===id);
@@ -697,8 +751,8 @@ function addToDay(sid,di=ui.day,silent){
 
 /* ================= 描画 ================= */
 function render(){
-  renderHeader();renderTabs();renderPlan();renderStock();renderProg();renderKit();$('#kitBtn')?.classList.toggle('on',ui.tab==='kit');renderQuick();saveUI();
-  ['plan','stock','prog','kit'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
+  renderHeader();renderTabs();renderPlan();renderStock();renderProg();renderKit();renderHome();document.body.classList.toggle('at-home',ui.tab==='home');$('#kitBtn')?.classList.toggle('on',ui.tab==='kit');renderQuick();saveUI();
+  ['plan','stock','prog','kit','home'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
   $('#pane-map').classList.toggle('on',ui.tab==='map'||wide.matches);
   document.querySelector('.top').style.display=(ui.tab==='map'&&!wide.matches)?'none':'';
   if(ui.tab==='map'||wide.matches)drawMap();
@@ -708,7 +762,7 @@ function renderHeader(){
   const p=P(),f=p.days[0].date,l=p.days.at(-1).date,n=p.days.length;
   $('#hTitle').textContent=p.title;
   $('#geoBtn').classList.toggle('live',GEO.watch!=null);
-  $('#hSub').innerHTML=(p.gid?`<span class="live-badge ${liveState==='err'?'off':''}">${liveState==='err'?'OFFLINE':'LIVE'}</span> `:'')+esc([f?fmtDate(f)+(n>1&&l?' – '+fmtDate(l):''):'日付未設定',n>1?`${n}日間`:'日帰り',`${p.days.reduce((a,d)=>a+d.items.length,0)}スポット`].join(' · '));
+  $('#hSub').innerHTML=(p.gid?`<span class="live-badge ${liveState==='err'?'off':''}">${liveState==='err'?'OFFLINE':'LIVE'}</span> <b class="mline">👥 ${esc(memberLine(p))}</b> · `:'')+esc([f?fmtDate(f)+(n>1&&l?' – '+fmtDate(l):''):'日付未設定',n>1?`${n}日間`:'日帰り',`${p.days.reduce((a,d)=>a+d.items.length,0)}スポット`].join(' · '));
 }
 function renderTabs(){
   const n=P().spots.length;
@@ -728,22 +782,22 @@ function renderPlan(){
   if(!c.rows.length){
     h+=`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>まだ予定がありません</b>行きたい場所を候補から追加しましょう。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;
   }else{
-    h+=`<div class="card summary num"><div><small>START</small><b>${fmtT(toMin(d.start))}</b></div><div><small>END</small><b>${fmtT(c.end)}</b>${d.end?(()=>{const lim=toMin(d.end)+(toMin(d.end)<toMin(d.start)?1440:0),df=Math.round(lim-c.end);return `<em class="endnote ${df<0?'over':''}">${df<0?dur(-df)+'オーバー':'余裕 '+dur(df)}</em>`})():''}</div><div><small>MOVE</small><b>${durS(c.move)}</b></div><div><small>${c.rows.some(r=>r.it.v)?'VISITED':'SPOTS'}</small><b>${c.rows.some(r=>r.it.v)?c.rows.filter(r=>r.it.v).length+'<em>/'+c.rows.length+'</em>':c.rows.length}</b></div></div><div class="tl" id="tl">`;
+    h+=`<div class="card summary num"><div><small>出発</small><b>${fmtT(toMin(d.start))}</b></div><div><small>終了予定</small><b>${fmtT(c.end)}</b>${d.end?(()=>{const lim=toMin(d.end)+(toMin(d.end)<toMin(d.start)?1440:0),df=Math.round(lim-c.end);return `<em class="endnote ${df<0?'over':''}">${df<0?dur(-df)+'オーバー':'余裕 '+dur(df)}</em>`})():''}</div><div><small>移動時間</small><b>${durS(c.move)}</b></div><div><small>${c.rows.some(r=>r.it.v)?'訪問':'スポット'}</small><b>${c.rows.some(r=>r.it.v)?c.rows.filter(r=>r.it.v).length+'<em>/'+c.rows.length+'</em>':c.rows.length}</b></div></div><div class="tl" id="tl">`;
     c.rows.forEach(({it,s,i,leg,arr,dep})=>{
       const m=MODES[it.mode];
       h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置未設定</span>'} ›</button></div>`:''}
       <div class="stop"><div class="time num"><b>${fmtT(arr)}</b><span>${fmtT(dep)}</span></div>
         <div class="stop-card ${it.v?'done':''} ${GEO.justDone===it.id?'pop':''}" role="button" tabindex="0" data-act="detail" data-sid="${s.id}" data-i="${i}">
           <div class="thumb-wrap">${ph(s,'th',it.v?`<div class="done-ov">${I.check}</div>`:'')}<span class="idx ${it.v?'done':''}">${it.v?'✓':i+1}</span></div>${it.v?'<span class="stamp">VISITED</span>':''}
-          <div class="info"><div class="kicker">${i+1}件目 · ${gOf(s.genre).e} ${esc(s.genre||'その他')}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}${s.area?' · '+esc(s.area):''}</div>${visitLine(it)}</div>
+          <div class="info"><div class="kicker">${i+1}件目 · ${gOf(s.genre).e} ${esc(s.genre||'その他')}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}${s.area?' · '+esc(s.area):''}${(w=>w?` · ${w.e}${w.t}℃`:'')(wxAt(d,arr))}</div>${visitLine(it)}</div>
           <div class="handle" data-handle aria-label="並べ替え">${I.grip}</div>
         </div></div></div>`;
     });
-    h+=`</div><div class="end-mark num"><b>${fmtT(c.end)}</b><span>FINISH · 滞在 ${dur(c.stay)} / 移動 ${c.km.toFixed(1)}km</span></div>
+    h+=`</div><div class="end-mark num"><b>${fmtT(c.end)}</b><span>終了 · 滞在 ${dur(c.stay)} / 移動 ${c.km.toFixed(1)}km</span></div>
     <button class="add-row" data-act="goStock">${I.plus}スポットを追加</button>
     <div class="note" style="margin-left:60px">移動時間は距離からの目安です。区間をタップすると移動手段の変更やGoogleマップでの経路確認ができます。</div>`;
   }
-  $('#pane-plan').innerHTML=h;
+  $('#pane-plan').innerHTML=h;loadWeather(d);
   const tl=$('#tl');
   if(tl&&window.Sortable)Sortable.create(tl,{handle:'[data-handle]',animation:180,ghostClass:'ghost',onEnd(e){
     if(e.oldIndex===e.newIndex)return;const it=D().items;const [m]=it.splice(e.oldIndex,1);it.splice(e.newIndex,0,m);save();render()}});
@@ -1048,7 +1102,7 @@ const STANDALONE=matchMedia('(display-mode: standalone)').matches||navigator.sta
 const ANDROID=/Android/i.test(navigator.userAgent);
 function openURL(url){
   if(!url)return;
-  ui.away=Date.now();
+  ui.away=Date.now();ui.awayAt=ui.away;saveUI();
   const isMapsURL=/google\.[^/]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(url);
   if(ANDROID&&isMapsURL&&!STANDALONE){const u=new URL(url);location.href=`intent://${u.host}${u.pathname}${u.search}#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=${encodeURIComponent(url)};end`;return}
   // インストール版では、Routerの上に重なる画面（左上の✕で閉じるとRouterに戻る）で開く
@@ -1443,6 +1497,7 @@ function shareHTML(){
     <div style="font-weight:800;font-size:15px;margin-bottom:4px">⚡ リアルタイム共有 ${p.gid?'<span class="live-badge">LIVE</span>':''}</div>
     ${!(FIREBASE_CONFIG||window.__FB_MOCK)?`<div class="meta" style="line-height:1.7">リアルタイム共有はまだ準備中です（サーバー未設定）。下の「共有リンク」をお使いください。</div>`
     :p.gid?`<div class="meta" style="line-height:1.7">このプランはグループで共有中です。だれかが変更すると、全員の画面に自動で反映されます。</div>
+      <div class="lbl">メンバー</div><div class="mems">${members(p).map(x=>`<span class="mem ${x.me?'me':''}">${esc([...x.name][0]||'?')}<b>${esc(x.name)}${x.me?'（あなた）':''}</b></span>`).join('')||'<span class="meta">まだ誰も参加していません</span>'}</div>
       <div class="lbl">あなたの表示名</div><div class="field"><input data-f="me" id="meIn" value="${esc(db.me||'')}" placeholder="例：たろう" enterkeyhint="done"><button class="btn sm pri" data-act="meOk">決定</button></div>
       <button class="btn acc block" style="margin-top:12px" data-act="liveInvite">${I.link}メンバーを招待する</button>
       <button class="btn sm danger" style="margin-top:8px" data-act="liveLeave">このプランの共有をやめる</button>`
@@ -1528,6 +1583,10 @@ const live={
       catch(e){setLive('err')}
     },700);
   },
+  me(p){ // 自分をメンバー一覧に登録・更新
+    if(!p?.gid||!this.fb)return;const m=p.members=p.members||{},n=db.me||'メンバー',cur=m[this.fb.uid];
+    if(!cur||cur.n!==n||Date.now()-(cur.t||0)>864e5){m[this.fb.uid]={n,t:Date.now()};save()}
+  },
   apply(gid,r){
     if(!r)return;
     const p=db.plans.find(x=>x.gid===gid);if(!p)return;
@@ -1540,6 +1599,7 @@ const live={
     db.plans[db.plans.indexOf(p)]=x;this.last[gid]=this.body(x);
     save(false);render();if(SHEETS.length&&detail)refreshSheet();
     if(r.by!==this.fb.uid&&x.id===db.cur)toast(`${r.name||'メンバー'}さんがプランを更新しました`);
+    setTimeout(()=>this.me(x),500);
   },
   watch(p){
     if(!p.gid||this.subs[p.gid])return;
@@ -1549,7 +1609,7 @@ const live={
     const fb=await this.init().catch(()=>null);if(!fb)return toast('サーバーに接続できませんでした');
     const p=P();if(!p.gid){const a=new Uint8Array(18);crypto.getRandomValues(a);p.gid=b64u.enc(a).replace(/[-_]/g,'x')}
     p.u=Date.now();await fb.set(p.gid,{data:JSON.stringify(this.strip(p)),u:p.u,by:fb.uid,name:db.me||''});this.last[p.gid]=this.body(p);p.su=p.u;
-    save(false);this.watch(p);render();refreshSheet();this.invite();
+    save(false);this.me(p);this.watch(p);render();refreshSheet();this.invite();
   },
   async invite(){
     const p=P(),url=location.href.split('#')[0]+'#g='+p.gid,text=`「${p.title}」をRouterで一緒に計画しよう！開くとグループに参加できます。`;
@@ -1564,9 +1624,37 @@ const live={
     incoming={...x,gid,_live:r};openSheet(joinHTML);
   },
   leave(){const p=P();if(this.subs[p.gid]){this.subs[p.gid]();delete this.subs[p.gid]}delete p.gid;delete p.su;save(false);render();closeSheet();toast('このプランの共有をやめました（手元には残ります）')},
-  async boot(){if(!db.plans.some(p=>p.gid))return;const fb=await this.init().catch(()=>null);if(!fb)return setLive('err');db.plans.forEach(p=>this.watch(p))}
+  async boot(){if(!db.plans.some(p=>p.gid))return;const fb=await this.init().catch(()=>null);if(!fb)return setLive('err');db.plans.forEach(p=>{this.watch(p);this.me(p)})}
 };
+function delPlanHTML(){const p=P();return `<h3><span>プランを削除しますか？</span></h3>
+  <div class="card" style="box-shadow:none;background:var(--bg)"><b>${esc(p.title)}</b><div class="meta">${p.days.length}日 · 候補 ${p.spots.length}件</div></div>
+  <p class="meta" style="font-size:13.5px;line-height:1.8">予定と候補がすべて削除されます。${p.gid?'<br>共有中のプランは<b>あなたの端末から消えるだけ</b>で、メンバーのプランは残ります。':''}</p>
+  <div class="sticky-foot"><button class="btn" data-act="close">キャンセル</button><button class="btn pri danger-pri" data-act="delPlanYes">削除する</button></div>`}
+function renderHome(){
+  const el=$('#pane-home');if(!el)return;if(ui.tab!=='home'){el.innerHTML='';return}
+  const today=TODAY(),sorted=db.plans.slice().sort((a,b)=>{const da=a.days[0].date||'9999',dbb=b.days[0].date||'9999';const fa=da>=today?0:1,fb=dbb>=today?0:1;return fa-fb||(fa?dbb.localeCompare(da):da.localeCompare(dbb))||(b.u||0)-(a.u||0)});
+  el.innerHTML=`<div class="home-top"><img src="icon-192.png" alt=""><span>Router</span></div>
+  <h1 class="home-h">プラン</h1>
+  <div class="plist">${sorted.map(p=>{const f=p.days[0].date,l=p.days.at(-1).date,n=p.days.reduce((a,d)=>a+d.items.length,0),past=f&&l&&l<today,now=f&&f<=today&&(l||f)>=today;
+    const ph=p.spots.find(x=>x.photo);
+    return `<div class="pcard ${past?'past':''}" role="button" tabindex="0" data-act="openPlan" data-id="${p.id}">
+      <div class="pc-ph">${ph?`<img src="${esc(ph.photo)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`:''}<span>${esc([...p.title][0]||'旅')}</span></div>
+      <div class="pc-in"><div class="pc-t">${esc(p.title)}</div>
+        <div class="pc-d">${now?'<b class="nowtag">開催中</b> ':''}${f?fmtDate(f)+(p.days.length>1&&l?' – '+fmtDate(l):''):'日付未定'} · ${p.days.length>1?p.days.length+'日間':'日帰り'} · ${n}スポット</div>
+        ${p.gid?`<div class="pc-m">👥 ${esc(memberLine(p))}</div>`:''}</div>
+      <button class="ibtn flat pc-more" data-act="planMore" data-id="${p.id}" aria-label="このプランの操作">${I.more||'⋯'}</button>
+    </div>`}).join('')}</div>
+  <button class="pnew" data-act="homeNew">${I.plus}新しいプランを作る</button>`;
+}
+function newPlanHTML(){return `<h3><span>新しいプラン</span></h3>
+  <div class="lbl" style="margin-top:0">プラン名</div><input id="npTitle" placeholder="例：京都 紅葉旅、金曜の飲み会" enterkeyhint="done">
+  <div class="lbl">日付（あとで決めてもOK）</div><input id="npDate" type="date">
+  <div class="sticky-foot"><button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="npOk">作成する</button></div>`}
 let liveState='';
+function members(p){const m=Object.entries(p.members||{}).sort((a,b)=>(a[1].t||0)-(b[1].t||0));const me=live.fb?.uid;
+  return m.map(([k,v])=>({name:v.n||'メンバー',me:k===me}))}
+function memberLine(p){const m=members(p);if(!p.gid)return '';if(!m.length)return '共有中';
+  const others=m.filter(x=>!x.me).map(x=>x.name);return others.length?`${others.slice(0,3).join('・')}${others.length>3?` ほか${others.length-3}人`:''} と共有中`:'招待した人を待っています'}
 function setLive(s){liveState=s;renderHeader()}
 function joinHTML(){
   const x=incoming,cnt=x.days.reduce((a,d)=>a+d.items.length,0),mine=db.plans.find(p=>p.gid===x.gid);
@@ -1580,7 +1668,7 @@ function joinHTML(){
 function joinNow(){
   const x=incoming,r=x._live;let p=db.plans.find(q=>q.gid===x.gid);
   if(!p){delete x._live;p=normalize({plans:[x]}).plans[0];p.id=uid();p.gid=x.gid;p.u=r.u;p.su=r.u;db.plans.push(p);live.last[p.gid]=live.body(p)}
-  db.cur=p.id;ui.day=0;fitKey='';incoming=null;save(false);live.watch(p);closeSheet();render();toast('グループに参加しました');autoPhotoAll();
+  db.cur=p.id;ui.day=0;ui.tab='plan';fitKey='';incoming=null;save(false);live.watch(p);live.me(p);closeSheet();render();toast('グループに参加しました');autoPhotoAll();
 }
 
 /* --- はじめての案内 --- */
@@ -1717,6 +1805,12 @@ $('#fileShot').onchange=async e=>{
 
 /* ================= 操作 ================= */
 const ACT={
+  recap:async()=>{const t=recapText();try{if(navigator.share){await navigator.share({text:t});return}}catch(e){if(e.name==='AbortError')return}try{await navigator.clipboard.writeText(t);toast('ふりかえりをコピーしました')}catch(_){toast('共有できませんでした')}},
+  openPlan:(el,e)=>{if(e.target.closest('[data-act=planMore]'))return;db.cur=el.dataset.id;ui.day=0;fitKey='';ui.tab='plan';save(false);render();scrollTo({top:0});setTimeout(autoPhotoAll,500)},
+  planMore:el=>{db.cur=el.dataset.id;save(false);openSheet(planHTML)},
+  homeNew:()=>{openSheet(newPlanHTML);setTimeout(()=>$('#npTitle')?.focus(),300)},
+  npOk:()=>{const t=($('#npTitle')?.value||'').trim(),d=$('#npDate')?.value||'';const p=mkPlan(t||'新しいプラン');p.days[0].date=d;db.plans.push(p);db.cur=p.id;ui.day=0;ui.tab='stock';ui.addOpen=true;fitKey='';save();closeSheet();render();scrollTo({top:0});toast('プランを作成しました。行きたい場所を追加しましょう')},
+  goHome:()=>{ui.tab='home';render();scrollTo({top:0})},
   shotShare:()=>{const x=shots.find(y=>y.id===shotView);if(x&&!x.remote)shareShot(x,!x.shared)},
   kCat:el=>{ui.kCat=el.dataset.v;renderKit()},
   shotAdd:()=>$('#fileShot').click(),
@@ -1728,7 +1822,7 @@ const ACT={
   ctSave:()=>{const n=($('#ctName')?.value||'').trim(),t=($('#ctTel')?.value||'').trim();if(!n||!t)return toast('名前と電話番号を入力してください');const p=P();(p.contacts=p.contacts||[]).push({name:n,tel:t});save();closeSheet();renderKit();toast('連絡先を追加しました')},
   ctDel:el=>{const sn=snap(),p=P();p.contacts.splice(+el.dataset.i,1);save();renderKit();toast('連絡先を削除しました',restore(sn))},
   titleOk:()=>{const v=($('#titleIn')?.value||'').trim();P().title=v||'無題のプラン';save();render();document.activeElement?.blur();toast('プラン名を保存しました');refreshSheet()},
-  meOk:()=>{db.me=($('#meIn')?.value||'').trim().slice(0,20);save(false);document.activeElement?.blur();toast('表示名を保存しました')},
+  meOk:()=>{db.me=($('#meIn')?.value||'').trim().slice(0,20);save(false);db.plans.filter(x=>x.gid).forEach(x=>live.me(x));document.activeElement?.blur();toast('表示名を保存しました')},
   delSpotD:el=>{const sn=detail?.snap||snap(),p=P(),id=el.dataset.sid,n=S(id)?.name;p.spots=p.spots.filter(x=>x.id!==id);p.days.forEach(d=>d.items=d.items.filter(i=>i.spot!==id));
     if(detail)detail.snap=null;save();closeSheet();render();toast(`「${n}」を削除しました`,restore(sn))},
   setGenre:el=>{const s=S(detail.sid);if(!s)return;const prev=gOf(s.genre).stay;s.genre=el.dataset.g;if(+s.stay===prev)s.stay=gOf(s.genre).stay;save();refreshSheet();render()},
@@ -1782,9 +1876,11 @@ const ACT={
   close:()=>closeSheet(),
   planMenu:()=>openSheet(planHTML),
   switchPlan:el=>{db.cur=el.dataset.id;setTimeout(autoPhotoAll,500);ui.day=0;ui.fRes=null;ui.fState='';fitKey='';save();closeSheet();render()},
-  newPlan:()=>{const p=mkPlan();db.plans.push(p);db.cur=p.id;ui.day=0;fitKey='';save();closeSheet();render();setTimeout(()=>{openSheet(planHTML);const i=document.querySelector('.sheet [data-f="title"]');i&&(i.select(),i.focus())},250)},
+  newPlan:()=>{closeSheet();setTimeout(ACT.homeNew,220)},
+  newPlanOld:()=>{const p=mkPlan();db.plans.push(p);db.cur=p.id;ui.day=0;fitKey='';save();closeSheet();render();setTimeout(()=>{openSheet(planHTML);const i=document.querySelector('.sheet [data-f="title"]');i&&(i.select(),i.focus())},250)},
   dupPlan:()=>{const x=JSON.parse(snap());x.id=uid();x.title+='（コピー）';db.plans.push(x);db.cur=x.id;save();closeSheet();render();toast('プランを複製しました')},
-  delPlan:()=>{const s=snap(),p=P();db.plans=db.plans.filter(x=>x.id!==p.id);if(!db.plans.length)db.plans.push(mkPlan());db.cur=db.plans[0].id;ui.day=0;fitKey='';save();closeSheet();render();toast(`「${p.title}」を削除しました`,()=>{restore(s)();db.cur=p.id})},
+  delPlan:()=>{closeSheet();setTimeout(()=>openSheet(delPlanHTML),220)},
+  delPlanYes:()=>{const s=snap(),p=P();db.plans=db.plans.filter(x=>x.id!==p.id);if(!db.plans.length)db.plans.push(mkPlan());db.cur=db.plans[0].id;ui.day=0;ui.tab='home';fitKey='';save();closeSheet();render();toast(`「${p.title}」を削除しました`,()=>{restore(s)();db.cur=p.id})},
   export:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));a.download=`router-${new Date().toLocaleDateString('sv-SE')}.json`;a.click();toast('書き出しました')},
   import:()=>$('#fileImport').click(),
   share:()=>openSheet(shareHTML),
@@ -1822,6 +1918,7 @@ const ACT={
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const f=ACT[el.dataset.act];if(f){f(el,e)}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target.id==='fArea'){e.preventDefault();ui.fArea=e.target.value;(ui.addMode==='spot')?find():openExt('tabelog')}
+  if(e.key==='Enter'&&e.target.id==='npTitle'){e.preventDefault();ACT.npOk()}
   if(e.key==='Enter'&&e.target.id==='titleIn'){e.preventDefault();ACT.titleOk()}
   if(e.key==='Enter'&&e.target.id==='meIn'){e.preventDefault();ACT.meOk()}
   if(e.key==='Enter'&&e.target.id==='spotQ'){e.preventDefault();ui.spotQ=e.target.value;spotSearch()}
@@ -1938,7 +2035,8 @@ function renderProg(){
   let h=p.days.length>1?`<div class="hscroll days-row">${p.days.map((x,i)=>`<button class="day-chip ${i===ui.day?'on':''}" data-act="day" data-i="${i}"><small>DAY ${i+1}</small><b>${x.date?fmtDate(x.date):x.items.length+'件'}</b></button>`).join('')}</div>`:'';
   if(!g){el.innerHTML=h+`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>予定を作るとレースが始まります</b>スケジュールにスポットを追加すると、予定と実際の進み具合を比べられます。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;return}
   if(!d.date)h+=`<div class="geo-bar" style="margin-top:12px">📅<span>日付が未設定のため<b>今日</b>として表示しています。</span><button class="btn sm" data-act="progDate">今日に設定</button></div>`;
-  h+=raceHTML(g,d)+ganttHTML(g);
+  h+=ringHTML(g,d)+nextHTML(g,d)+raceHTML(g,d)+stampHTML(g)+ganttHTML(g)+`<button class="btn block" data-act="recap" style="margin-top:14px">📝 今日のふりかえりを送る</button>`;
+  loadWeather(d);
   if(GEO.watch==null)h+=`<div class="geo-bar">📍<span>おでかけモードをONにすると、到着・出発が自動で記録され、進捗に反映されます。</span><button class="btn sm" data-act="geo">ON</button></div>`;
   h+=`<div class="note">進捗は訪問記録（自動・手動の✓）をもとに計算しています。</div>`;
   const sc=$('#gantt')?.scrollLeft;
@@ -1946,7 +2044,59 @@ function renderProg(){
   const gt=$('#gantt'),nw=gt?.querySelector('.g-now');
   if(gt){if(ui.gScroll||sc==null){ui.gScroll=0;gt.scrollLeft=nw?nw.offsetLeft-gt.clientWidth/3:0}else gt.scrollLeft=sc}
 }
-setInterval(()=>{if(document.visibilityState==='visible'&&(ui.tab==='prog'))renderProg()},30000);
+setInterval(()=>{if(document.visibilityState==='visible'&&(ui.tab==='prog'))renderProg()},20000);
+
+/* --- 進捗の追加機能 --- */
+const WX={},WXI=c=>c===0?'☀️':c<=2?'🌤️':c===3?'☁️':c<=48?'🌫️':c<=57?'🌦️':c<=67?'🌧️':c<=77?'❄️':c<=82?'🌦️':'⛈️';
+async function loadWeather(d){
+  const date=d.date||TODAY(),sp=d.items.map(i=>S(i.spot)).find(hasLL);if(!sp)return;
+  const key=date+'|'+sp.lat.toFixed(1)+','+sp.lng.toFixed(1);if(WX[key]!==undefined)return;WX[key]=null;
+  const diff=(new Date(date+'T00:00')-new Date(TODAY()+'T00:00'))/864e5;if(diff<0||diff>14)return;
+  try{const j=await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${sp.lat}&longitude=${sp.lng}&hourly=temperature_2m,precipitation_probability,weathercode&timezone=Asia%2FTokyo&start_date=${date}&end_date=${date}`,10000);
+    WX[key]=j.hourly;if(ui.tab==='prog'||ui.tab==='plan')render()}catch(_){}
+}
+function wxAt(d,min){const sp=d.items.map(i=>S(i.spot)).find(hasLL);if(!sp)return null;const h=WX[(d.date||TODAY())+'|'+sp.lat.toFixed(1)+','+sp.lng.toFixed(1)];if(!h)return null;
+  const i=Math.min(23,Math.max(0,Math.floor(min/60)));return {e:WXI(h.weathercode[i]),t:Math.round(h.temperature_2m[i]),p:h.precipitation_probability?.[i]??null}}
+// 移動距離（おでかけモード中の実測）
+const TRK=()=>{try{return JSON.parse(localStorage.getItem('router-track'))||{}}catch(_){return {}}};
+function trackPos(pos){if(pos.acc>60)return;const t=TRK(),k=TODAY(),cur=t[k]||{km:0};
+  if(cur.lat!=null){const m=dist(cur,pos);if(m<.015)return;if(m<2)cur.km+=m}cur.lat=pos.lat;cur.lng=pos.lng;t[k]=cur;try{localStorage.setItem('router-track',JSON.stringify(t))}catch(_){}}
+function ringHTML(g,d){
+  const n=g.rows.length,v=g.rows.filter(r=>r.it.v).length,pct=n?Math.round(v/n*100):0,R=34,C=2*Math.PI*R;
+  const walked=(TRK()[d.date||TODAY()]||{}).km||0,elapsed=Math.max(0,g.now-g.start);
+  return `<div class="card ring"><svg viewBox="0 0 84 84" class="rg"><circle cx="42" cy="42" r="${R}" class="rg-b"/><circle cx="42" cy="42" r="${R}" class="rg-f" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg>
+    <div class="rg-n num"><b>${pct}<em>%</em></b><small>達成</small></div>
+    <div class="rg-s"><div><small>訪問</small><b class="num">${v}<em>/${n}</em></b></div><div><small>移動した距離</small><b class="num">${walked.toFixed(1)}<em>km</em></b></div><div><small>${g.state==='pre'?'スタートまで':'経過時間'}</small><b class="num">${g.state==='pre'?dur((g.start-g.now)/60e3):dur(elapsed/60e3)}</b></div></div></div>`;
+}
+function nextHTML(g,d){
+  if(g.state==='goal')return '';
+  const cur=g.state==='at'?g.rows[g.k]:null,nx=g.state==='at'?g.rows[g.k+1]:g.state==='pre'||g.state==='run'?g.rows[0]:g.rows[g.k+1];
+  if(!nx)return '';
+  // 出発すべき時刻＝次の到着予定 − 移動時間
+  const leaveAt=nx.A-(nx.leg?nx.leg.min*60e3:0),left=Math.round((leaveAt-g.now)/60e3);
+  const w=wxAt(d,nx.arr);
+  let big,cls='';
+  if(g.state==='move'){const ar=Math.round((nx.A-g.now)/60e3);big=ar>0?`あと ${dur(ar)} で到着予定`:`到着予定を ${dur(-ar)} 過ぎています`;if(ar<0)cls=ar<-10?'late':'soon'}
+  else if(g.state==='pre'&&!cur){big=left>0?`あと ${dur(left)} で出発`:'出発の時間です';}else if(left>0){big=`あと ${dur(left)} で出発`;if(left<=10)cls='soon'}else{big=`出発時刻を ${dur(-left)} 過ぎています`;cls='late'}
+  const a=cur?cur.s:(g.rows[g.k]?.s),b=nx.s,mode=MODES[nx.it.mode];
+  if(cls==='soon'&&!ui.nudged?.[nx.it.id]){ui.nudged={...(ui.nudged||{}),[nx.it.id]:1};navigator.vibrate&&navigator.vibrate([60,40,60])}
+  return `<div class="card next ${cls}"><div class="eyebrow">NEXT</div>
+    <div class="nx-big num">${big}</div>
+    <div class="nx-to" role="button" data-act="detail" data-sid="${b.id}" data-i="${nx.i}">${ph(b,'nx-ph')}<div><b>${esc(b.name)}</b><div class="meta">${fmtT(nx.arr)} 着予定 · ${mode.e} ${mode.n}${nx.leg?' 約'+dur(nx.leg.min):''}${w?` · ${w.e} ${w.t}℃${w.p!=null?' 降水'+w.p+'%':''}`:''}</div></div></div>
+    ${a&&hasLL(a)&&hasLL(b)?`<a class="btn block pri" href="${gdir(a,b,nx.it.mode)}" target="_blank" rel="noopener">${I.route}ここまでの経路を開く</a>`:hasLL(b)?`<a class="btn block pri" href="${gmaps(b)}" target="_blank" rel="noopener">${I.pin}地図で開く</a>`:''}
+  </div>`;
+}
+function stampHTML(g){
+  return `<div class="card stamps"><div class="ktl"><span>スタンプ帳</span><span class="meta">${g.rows.filter(r=>r.it.v).length}/${g.rows.length}</span></div>
+  <div class="st-grid">${g.rows.map(r=>`<button class="st ${r.it.v?'got':''}" data-act="detail" data-sid="${r.s.id}" data-i="${r.i}">${ph(r.s,'st-ph',r.it.v?'<span class="st-mk">✓</span>':`<span class="st-no">${r.i+1}</span>`)}<b>${esc(r.s.name)}</b><small>${r.it.v?hm(r.it.v.a)+' 訪問':fmtT(r.arr)+' 予定'}</small></button>`).join('')}</div></div>`;
+}
+function recapText(){
+  const p=P(),d=D(),g=progress(d);if(!g)return '';
+  const v=g.rows.filter(r=>r.it.v),walked=(TRK()[d.date||TODAY()]||{}).km||0;
+  let t=`【${p.title}】DAY ${ui.day+1} のふりかえり\n訪問 ${v.length}/${g.rows.length}スポット${walked?` · 移動 ${walked.toFixed(1)}km`:''}\n\n`;
+  g.rows.forEach(r=>{t+=`${r.it.v?'✅':'⬜'} ${r.it.v?hm(r.it.v.a):fmtT(r.arr)} ${r.s.name}${r.it.v&&r.it.v.d-r.it.v.a>=60e3?`（${dur((r.it.v.d-r.it.v.a)/60e3)}）`:''}\n`});
+  return t+'\n#Router';
+}
 
 /* ================= 現在地・滞在記録 ================= */
 const GEO={watch:null,pos:null,wake:null,me:null,acc:null,fly:0,justDone:null,lastMin:-1};
@@ -1980,7 +2130,7 @@ function stopGeo(quiet){
 }
 function onGeoErr(e){if(e.code===1){stopGeo(1);toast('位置情報が許可されていません。端末の設定で許可してください')}}
 function onPos(p){
-  GEO.pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy||50};
+  GEO.pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy||50};trackPos(GEO.pos);
   drawMe();
   if(GEO.fly&&MAP){GEO.fly=0;MAP.flyTo([GEO.pos.lat,GEO.pos.lng],16,{duration:.6})}
   detect();
