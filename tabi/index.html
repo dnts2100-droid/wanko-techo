@@ -1930,7 +1930,7 @@ function payHTML(){
   <div class="hscroll">${spots.map(o=>`<button class="chip ${x.sid===o.sid&&!x.t?'on':''}" data-act="paySpot" data-sid="${o.sid}">${o.k+1}件目 ${esc(o.s.name)}</button>`).join('')}<button class="chip ${x.t||!x.sid?'on':''}" data-act="payFree">その他</button></div>
   ${x.t||!x.sid?`<input id="payT" data-f="pay.t" value="${esc(x.t||'')}" placeholder="例：タクシー代、お土産、ホテル" style="margin-top:8px">`:''}
   <div class="lbl">金額</div>
-  <div class="field amt">¥<input id="payAmt" data-f="pay.amt" type="number" inputmode="numeric" value="${x.amt||''}" placeholder="0"></div>
+  <div class="field amt">¥<input id="payAmt" data-f="pay.amt" type="text" inputmode="numeric" autocomplete="off" value="${x.amt?Number(x.amt).toLocaleString('ja-JP'):''}" placeholder="0"></div>
   <div class="lbl">払った人</div>
   <div class="gchips">${m.mem.map(u=>`<button class="chip ${x.payer===u.id?'on':''}" data-act="payPayer" data-id="${u.id}">${esc(u.n)}</button>`).join('')}</div>
   <div class="lbl">割り方</div>
@@ -1939,14 +1939,19 @@ function payHTML(){
   <div class="lbl">割る人 <span class="meta">（タップで外す）</span></div>
   <div class="wlist">${m.mem.map(u=>{const on=(x.who||[]).includes(u.id),v=sh[u.id]||0;return `<div class="wrow ${on?'':'off'}"><button class="wchk" data-act="payWho" data-id="${u.id}">${on?'☑':'☐'}</button><span class="wn">${esc(u.n)}</span>
     ${on&&x.mode==='tilt'?`<select data-f="pay.w" data-id="${u.id}" class="sort">${TILT.map(([w,l])=>`<option value="${w}" ${+((x.w||{})[u.id]??1)===w?'selected':''}>${l}</option>`).join('')}</select>`:''}
-    ${on&&x.mode==='fix'?`<input class="fixin" id="fix_${u.id}" data-f="pay.fix" data-id="${u.id}" type="number" inputmode="numeric" placeholder="自動" value="${(x.fix||{})[u.id]||''}">`:''}
-    <b class="num">${on?yen(v):'—'}</b></div>`}).join('')}</div>
-  ${x.amt&&Math.abs(sum-x.amt)>1?`<div class="note" style="color:#E5484D">指定した金額の合計が支払い額と合いません</div>`:''}`}
+    ${on&&x.mode==='fix'?`<input class="fixin" id="fix_${u.id}" data-f="pay.fix" data-id="${u.id}" type="text" inputmode="numeric" autocomplete="off" placeholder="自動" value="${(x.fix||{})[u.id]||''}">`:''}
+    <b class="num" data-sh="${u.id}">${on?yen(v):'—'}</b></div>`}).join('')}</div>
+  <div class="note" id="payWarn" style="color:#E5484D">${x.amt&&Math.abs(sum-x.amt)>1?'指定した金額の合計が支払い額と合いません':''}</div>`}
   <div class="sticky-foot">${x._new?'':`<button class="ibtn" data-act="payDel" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button>`}<button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="paySave">保存</button></div>`;
 }
 function openPay(it,sid){
   const m=M();pay=it?JSON.parse(JSON.stringify(it)):{_new:1,id:uid(),day:ui.day,sid:sid||null,t:'',amt:0,payer:m.mem[0]?.id,who:m.mem.map(x=>x.id),mode:'eq',w:{},fix:{}};
   openSheet(payHTML);setTimeout(()=>{if(pay._new)$('#payAmt')?.focus()},300);
+}
+function payUpdate(){
+  const sh=shares(pay),sum=Object.values(sh).reduce((a,v)=>a+v,0);
+  document.querySelectorAll('.sheet [data-sh]').forEach(el=>{const id=el.dataset.sh;el.textContent=(pay.who||[]).includes(id)?yen(sh[id]||0):'—'});
+  const w=$('#payWarn');if(w)w.textContent=pay.amt&&Math.abs(sum-pay.amt)>1?'指定した金額の合計が支払い額と合いません':'';
 }
 function payRefresh(){const a=document.activeElement?.id;refreshSheet();if(a){const e=$('#'+a);if(e){e.focus();try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}
 function moneyText(){const p=P(),m=M(),tr=settle(),total=m.items.reduce((a,x)=>a+x.amt,0);
@@ -2105,9 +2110,9 @@ document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f==='fArea'){ui.fArea=e.target.value;return}
   if(f==='spotQ'){ui.spotQ=e.target.value;return}
   if(f==='q2'){ui.q2=e.target.value;renderStockList();return}
-  if(f==='pay.amt'&&pay){pay.amt=+e.target.value||0;clearTimeout(pay._t);pay._t=setTimeout(payRefresh,500);return}
+  if(f==='pay.amt'&&pay){const n=e.target.value.replace(/[^0-9０-９]/g,'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248));pay.amt=+n||0;payUpdate();return}
   if(f==='pay.t'&&pay){pay.t=e.target.value;return}
-  if(f==='pay.fix'&&pay){(pay.fix=pay.fix||{})[e.target.dataset.id]=+e.target.value||0;clearTimeout(pay._t);pay._t=setTimeout(payRefresh,600);return}
+  if(f==='pay.fix'&&pay){(pay.fix=pay.fix||{})[e.target.dataset.id]=+e.target.value.replace(/[^0-9]/g,'')||0;payUpdate();return}
   if(f==='kAll'){ui.kAll=e.target.checked;renderKit();return}
   if(f==='paste'){clearTimeout(pasteT);const v=e.target.value;pasteT=setTimeout(()=>{if(v.trim().length>=2)handlePaste(v)},900);return}
   if(f==='pst.name'&&ui.pst){ui.pst.name=e.target.value;return}
@@ -2117,6 +2122,7 @@ document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f==='me'){db.me=e.target.value.trim().slice(0,20);save(false)}
 });
 document.addEventListener('change',e=>{const f=e.target.dataset.f,p=P(),d=D();
+  if(f==='pay.amt'&&pay){e.target.value=pay.amt?pay.amt.toLocaleString('ja-JP'):'';return}
   if(f==='date'){const prev=d.date;d.date=e.target.value;
     p.days.forEach((x,i)=>{if(i>ui.day&&(!x.date||(prev&&x.date===addDays(prev,i-ui.day))))x.date=addDays(d.date,i-ui.day)});save();render()}
   else if(f==='start'){d.start=e.target.value||'09:00';save();render()}
