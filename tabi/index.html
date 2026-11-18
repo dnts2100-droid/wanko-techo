@@ -601,7 +601,7 @@ async function load(){
 const ui={tab:'plan',day:0,fArea:'',fGenre:'グルメ',fRad:1000,fRes:null,fState:'',here:null,showCands:true,fArea2:'',fGenre2:'',hl:null,lastExt:''};
 const UIKEY='router-ui';
 try{Object.assign(ui,JSON.parse(localStorage.getItem(UIKEY))||{})}catch(_){}
-function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide}))}catch(_){}}
+function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide,extTipShown:ui.extTipShown}))}catch(_){}}
 const wide=matchMedia('(min-width:1000px)');
 const P=()=>db.plans.find(p=>p.id===db.cur)||db.plans[0];
 const S=id=>P().spots.find(s=>s.id===id);
@@ -745,7 +745,7 @@ function foodModeHTML(){
 }
 function androidTip(){
   if(!ANDROID)return '';
-  if(STANDALONE)return `<div class="geo-bar" style="margin-top:0">📤<span><b>いちばん楽な追加方法</b><br><span class="meta">食べログ・Googleマップでお店を開き「共有」→「<b>Router</b>」を選ぶだけで追加されます</span></span></div>`;
+  if(STANDALONE)return `<div class="geo-bar" style="margin-top:0">📤<span><b>いちばん楽な追加方法</b><br><span class="meta">食べログ・Googleマップのアプリでお店を開き「共有」→「<b>Router</b>」。追加したら自動で元のアプリに戻るので、続けて探せます</span></span></div>`;
   return `<div class="geo-bar" style="margin-top:0">📲<span><b>Routerをインストールすると楽になります</b><br><span class="meta">食べログ・Googleマップの「共有」から直接追加できます${installEvt?'':'（Chromeの「︙」→「アプリをインストール」）'}</span></span>${installEvt?'<button class="btn sm" data-act="install">入れる</button>':''}</div>`;
 }
 function spotModeHTML(){
@@ -968,11 +968,8 @@ function openURL(url){
   ui.away=Date.now();
   const isMapsURL=/google\.[^/]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(url);
   if(ANDROID&&isMapsURL&&!STANDALONE){const u=new URL(url);location.href=`intent://${u.host}${u.pathname}${u.search}#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=${encodeURIComponent(url)};end`;return}
-  if(STANDALONE&&ANDROID){
-    const u=new URL(url),isMaps=/google\.[^/]+\/maps|maps\.app\.goo\.gl|goo\.gl\/maps/.test(url);
-    // Googleマップはマップアプリで直接開く（「戻る」でRouterに帰れる）。それ以外はChromeで開く
-    location.href=`intent://${u.host}${u.pathname}${u.search}${u.hash}#Intent;scheme=${u.protocol.replace(':','')};package=${isMaps?'com.google.android.apps.maps':'com.android.chrome'};S.browser_fallback_url=${encodeURIComponent(url)};end`;return;
-  }
+  // インストール版では、Routerの上に重なる画面（左上の✕で閉じるとRouterに戻る）で開く
+  if(STANDALONE&&!ui.extTipShown){ui.extTipShown=1;saveUI();toast('見終わったら左上の ✕ でRouterに戻れます')}
   window.open(url,'_blank','noopener');
 }
 // 外部アプリから戻ってきたとき：迷子にならないよう候補タブで「おかえり」バナーを出し、
@@ -995,6 +992,17 @@ function welcome(){
   document.body.append(w);setTimeout(()=>w.remove(),12000);
 }
 document.addEventListener('click',e=>{const a=e.target.closest('a[target=_blank]');if(!a)return;e.preventDefault();openURL(a.href)},true);
+// 共有メニューから届いたとき：追加して、元のアプリ（食べログ・Googleマップ）へ自動で戻る
+async function shareIn(t){
+  await quickAdd(t);
+  const msg=document.querySelector('.toast span')?.textContent||'追加しました！';document.querySelector('.toast')?.remove();
+  const w=document.createElement('div');w.className='welcome';
+  w.innerHTML=`<div class="wl-in">${pinkun(54,'joy')}<div><b>${esc(msg.replace(/を候補に追加しました$/,' を追加しました！'))}</b><span>元のアプリに戻ります…</span></div></div><div class="row"><button class="btn" data-act="wlClose" style="flex:1">Routerで続ける</button></div>`;
+  document.body.append(w);
+  let stay=false;w.querySelector('button').addEventListener('click',()=>{stay=true});
+  setTimeout(()=>{if(stay)return;try{window.close()}catch(_){}
+    setTimeout(()=>{if(!stay&&document.visibilityState==='visible'){const sp=w.querySelector('.wl-in span');if(sp)sp.textContent='スマホの「戻る」で元のアプリに戻れます'}},400)},1600);
+}
 // 連続追加用：画面下のクイックバー
 function renderQuick(){
   const el=$('#quick');if(!el)return;
@@ -1802,7 +1810,7 @@ load().then(ensureLibs).then(()=>{if(window.L&&$('.map-msg'))$('#map').innerHTML
   try{navigator.storage?.persist?.()}catch(_){}
   if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});setTimeout(recheckSpots,2500);
   {const q=new URLSearchParams(location.search);const t=[q.get('st'),q.get('sx'),q.get('su')].filter(Boolean).join('\n');
-   if(t){history.replaceState(null,'',location.pathname);ui.tab='stock';render();quickAdd(t)}}setTimeout(autoPhotoAll,1500);
+   if(t){history.replaceState(null,'',location.pathname);ui.tab='stock';render();shareIn(t)}}setTimeout(autoPhotoAll,1500);
   try{if(localStorage.getItem('tabinote-geo'))startGeo(1)}catch(_){}
 });
 </script>
