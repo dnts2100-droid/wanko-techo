@@ -556,6 +556,18 @@ body.at-home #pane-map{display:none!important}
 @media (max-width:440px){.tab:not(.on) .tl{display:none}.tab{padding:10px 12px}.tab.on{padding:10px 14px}}
 .seg.mini button{white-space:nowrap}
 
+.ubs{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;flex:none;max-width:42%}
+.ubadge{opacity:.75}.ubadge.cur{opacity:1;box-shadow:0 0 0 1.5px #1F9D74 inset}
+.dpl{display:grid;gap:8px}
+.dp{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;border-radius:16px;background:var(--bg);text-align:left;width:100%}
+.dp.cur{box-shadow:inset 0 0 0 2px var(--ink)}
+.dp b{display:block;font-size:15px}.dp small{font-size:12px;color:var(--sub)}
+.dp em{font-style:normal;font-weight:800;font-size:13px;display:flex;align-items:center;gap:4px}.dp em svg{width:16px;height:16px}
+.dp em.in{color:#1F9D74;font-size:12px}
+.ring{flex-wrap:wrap}.rg-e{width:100%;margin-bottom:-4px}
+.ring .rg-n{top:calc(50% + 4px)}
+.dl{font-size:11px;color:var(--sub);font-weight:700;margin-left:8px}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -781,7 +793,10 @@ function tryAddToDay(sid,di=ui.day){
   if(['駅・空港','宿'].includes(s.genre)){dupAsk={sid,di,at};openSheet(dupHTML);return false}
   toast(`「${s.name}」はすでに DAY ${di+1} の ${at+1}件目に入っています`);return false;
 }
-let dupAsk=null;
+let dupAsk=null,dayPick=null;
+function dayPickHTML(){const s=S(dayPick);return `<h3><span>どの日に追加しますか？</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
+  <div class="meta" style="margin:-6px 0 12px">${esc(s?.name||'')}</div>
+  <div class="dpl">${P().days.map((d,i)=>{const k=d.items.findIndex(x=>x.spot===dayPick);return `<button class="dp ${i===ui.day?'cur':''}" data-act="pickDay" data-i="${i}"><span><b>DAY ${i+1}</b><small>${d.date?fmtDate(d.date):'日付未定'} · ${d.items.length}件</small></span>${k>=0?`<em class="in">${k+1}件目に追加済み</em>`:`<em>${I.plus}追加</em>`}</button>`}).join('')}</div>`}
 function dupHTML(){const s=S(dupAsk.sid);return `<h3><span>もう一度追加しますか？</span></h3>
   <p class="meta" style="font-size:14px;line-height:1.8;margin:0">「${esc(s.name)}」はすでに DAY ${dupAsk.di+1} の ${dupAsk.at+1}件目に入っています。<br>行きと帰りなど、同じ場所を2回使う場合は追加してください。</p>
   <div class="sticky-foot"><button class="btn" data-act="close">やめる</button><button class="btn pri" data-act="dupYes">追加する</button></div>`}
@@ -883,7 +898,7 @@ function renderStockList(){
     h+=`<div class="srow" role="button" tabindex="0" data-act="detail" data-sid="${s.id}">
       ${ph(s,'sth')}
       <div class="info"><div class="name">${esc(s.name)}</div><div class="meta">${gOf(s.genre).e} ${esc(s.genre||'その他')}${s.area?' · '+esc(s.area):''} · ${dur(+s.stay||0)}${!hasLL(s)?' · 📍未設定':s.approx?' · ⚠️位置要確認':''}</div></div>
-      ${u.length?`<span class="ubadge">DAY${u[0].di+1}·${u[0].i+1}</span>`:''}
+      ${u.length?`<span class="ubs">${u.map(x=>`<span class="ubadge ${x.di===ui.day?'cur':''}">${P().days.length>1?'D'+(x.di+1)+'·':''}${x.i+1}件目</span>`).join('')}</span>`:''}
       <button class="addbtn" data-act="toDay" data-sid="${s.id}" aria-label="DAY ${ui.day+1}に追加">${I.plus}</button>
     </div>`;
   });
@@ -1311,6 +1326,7 @@ function detailHTML(){
   ${row?`<div class="tline num"><div><small>到着</small><b>${fmtT(row.arr)}</b></div><div style="color:var(--faint)">→</div><div><small>出発</small><b>${fmtT(row.dep)}</b></div><div style="flex:1"></div></div>`:''}
   <div class="row" style="justify-content:space-between;margin-top:8px"><span class="meta" style="font-weight:700">滞在予測</span>
     <div class="stepper"><button data-act="stay" data-v="-15" aria-label="15分減らす">−</button><b class="num">${dur(+s.stay||0)}</b><button data-act="stay" data-v="15" aria-label="15分増やす">＋</button></div></div>
+  ${(u=>u.length&&P().days.length>1?`<div class="lbl">予定</div><div class="ubs" style="max-width:none;justify-content:flex-start">${u.map(x=>`<span class="ubadge ${x.di===ui.day?'cur':''}">DAY ${x.di+1}${P().days[x.di].date?' '+fmtDate(P().days[x.di].date):''} · ${x.i+1}件目</span>`).join('')}</div>`:'')(usedIn(s.id))}
   <div class="lbl">場所</div>
   <div class="locrow ${s.approx||!hasLL(s)?'warn':''}"><span>${!hasLL(s)?'📍 位置が未設定です':s.approx?'⚠️ おおよその位置です。正しい場所に直してください':'📍 位置は設定済み'}</span><button class="btn sm" data-act="editSpot" data-sid="${s.id}">地図で直す</button></div>
   <div class="lbl">情報</div>
@@ -1323,7 +1339,8 @@ function detailHTML(){
   <div class="lbl">操作</div><div class="row">
     ${row?`<button class="ibtn" data-act="move" data-v="-1" ${pos===0?'disabled style="opacity:.3"':''} aria-label="前へ">${I.up}</button><button class="ibtn" data-act="move" data-v="1" ${pos===d.items.length-1?'disabled style="opacity:.3"':''} aria-label="後へ">${I.down}</button>
       <button class="btn danger" data-act="unplan" data-i="${pos}">予定から外す</button>`
-     :`<button class="btn acc" data-act="toDay" data-sid="${s.id}">${I.plus}DAY ${ui.day+1} に追加</button>`}
+     :`<button class="btn acc" data-act="toDay" data-sid="${s.id}">${I.plus}${P().days.length>1?'予定に追加':'DAY '+(ui.day+1)+' に追加'}</button>`}
+     ${row&&P().days.length>1?`<button class="btn" data-act="toDay" data-sid="${s.id}">${I.plus}ほかの日にも追加</button>`:''}
     <button class="btn" data-act="editSpot" data-sid="${s.id}">${I.edit}編集</button>
     <button class="btn" data-act="payFromSpot" data-sid="${s.id}">💴 支払いを記録</button>
     <button class="btn danger" data-act="delSpotD" data-sid="${s.id}">${I.trash}候補から削除</button>
@@ -2046,7 +2063,8 @@ const ACT={
   move:el=>{const d=D(),i=d.items.findIndex(x=>x.spot===detail.sid&&(detail.i==null||d.items.indexOf(x)===detail.i)),j=i+ +el.dataset.v;
     if(i<0||j<0||j>=d.items.length)return;[d.items[i],d.items[j]]=[d.items[j],d.items[i]];detail.i=j;save();render();refreshSheet()},
   unplan:el=>{const s=snap(),d=D(),[x]=d.items.splice(+el.dataset.i,1);save();closeSheet();render();toast(`「${S(x.spot).name}」を予定から外しました`,restore(s))},
-  toDay:el=>{if(tryAddToDay(el.dataset.sid)){if(SHEETS.length&&detail)refreshSheet();render()}},
+  toDay:el=>{const sid=el.dataset.sid;if(P().days.length>1){dayPick=sid;openSheet(dayPickHTML);return}if(tryAddToDay(sid)){if(SHEETS.length&&detail)refreshSheet();render()}},
+  pickDay:el=>{const di=+el.dataset.i,sid=dayPick;closeSheet();setTimeout(()=>{ui.day=di;if(tryAddToDay(sid,di)){render();if(detail)refreshSheet()}else render()},220)},
   dupYes:()=>{const x=dupAsk;closeSheet();addToDay(x.sid,x.di);render();if(detail)setTimeout(refreshSheet,220)},
   editSpot:el=>{detail&&(detail.snap=null);closeSheet();setTimeout(()=>openForm(S(el.dataset.sid)),210)},
   newSpot:()=>openForm(),
@@ -2177,7 +2195,7 @@ function raceHTML(g,d){
     if(cand){const cut=Math.min(Math.ceil(m/5)*5,cand.s.stay-15);if(cut>=5)rec=`<button class="btn recover" data-act="recover" data-i="${cand.i}" data-m="${cut}">💡 <span><b>リカバリー案</b><br>「${esc(cand.s.name)}」の滞在を${cut}分短くして遅れを取り戻す</span></button>`}
   }
   return `<div class="card race">
-    <div class="eyebrow">PACE · DAY ${ui.day+1}</div>
+    <div class="eyebrow">PACE · ${dayLabel()}</div>
     <div class="race-status ${cls}"><span class="sdot"></span><div><b class="num">${big}</b><small>${sub}</small></div></div>
     <div class="track"><div class="rail"></div><div class="fill" style="width:${youP}%"></div>
       ${g.rows.map(r=>`<div class="cp ${r.it.v?'done':''}" role="button" data-act="detail" data-sid="${r.s.id}" data-i="${r.i}" style="left:${pos(r.A)}%;cursor:pointer" title="${esc(r.s.name)}"></div>`).join('')}
@@ -2206,7 +2224,7 @@ function ganttHTML(g){
       ${v?`<div class="g-act" style="left:${x(v.a)}px;width:${Math.max(4,x(v.d)-x(v.a))}px"></div>`:''}
       ${lv?`<div class="g-act live" style="left:${x(presence.since)}px;width:${Math.max(4,x(g.now)-x(presence.since))}px"></div>`:''}
     </div>`}).join('');
-  return `<div class="card gantt-card"><div class="ttl"><span>タイムライン</span><span class="lg"><i style="background:var(--acc-soft);box-shadow:inset 0 0 0 1px var(--acc)"></i>予定</span><span class="lg"><i style="background:#1F9D74"></i>実績</span></div>
+  return `<div class="card gantt-card"><div class="ttl"><span>タイムライン<small class="dl">${dayLabel()}</small></span><span class="lg"><i style="background:var(--acc-soft);box-shadow:inset 0 0 0 1px var(--acc)"></i>予定</span><span class="lg"><i style="background:#1F9D74"></i>実績</span></div>
     <div class="gantt" id="gantt"><div class="g-in" style="width:${W}px"><div class="g-axis">${ticks}</div>${rows}
     ${showNow?`<div class="g-now" style="left:${x(g.now)}px"><span>NOW ${hmS(g.now)}</span></div>`:''}</div></div>
     <div class="note" style="padding:0 16px">帯をタップすると詳細を確認・変更できます。</div></div>`;
@@ -2245,10 +2263,11 @@ function wxAt(d,min){if(!SET.weather)return null;const sp=d.items.map(i=>S(i.spo
 const TRK=()=>{try{return JSON.parse(localStorage.getItem('router-track'))||{}}catch(_){return {}}};
 function trackPos(pos){if(pos.acc>60)return;const t=TRK(),k=TODAY(),cur=t[k]||{km:0};
   if(cur.lat!=null){const m=dist(cur,pos);if(m<.015)return;if(m<2)cur.km+=m}cur.lat=pos.lat;cur.lng=pos.lng;t[k]=cur;try{localStorage.setItem('router-track',JSON.stringify(t))}catch(_){}}
+const dayLabel=()=>{const d=D();return `DAY ${ui.day+1}${d.date?' · '+fmtDate(d.date):''}`};
 function ringHTML(g,d){
   const n=g.rows.length,v=g.rows.filter(r=>r.it.v).length,pct=n?Math.round(v/n*100):0,R=34,C=2*Math.PI*R;
   const walked=(TRK()[d.date||TODAY()]||{}).km||0,elapsed=Math.max(0,g.now-g.start);
-  return `<div class="card ring"><svg viewBox="0 0 84 84" class="rg"><circle cx="42" cy="42" r="${R}" class="rg-b"/><circle cx="42" cy="42" r="${R}" class="rg-f" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg>
+  return `<div class="card ring"><div class="eyebrow rg-e">${dayLabel()}</div><svg viewBox="0 0 84 84" class="rg"><circle cx="42" cy="42" r="${R}" class="rg-b"/><circle cx="42" cy="42" r="${R}" class="rg-f" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-pct/100)}"/></svg>
     <div class="rg-n num"><b>${pct}<em>%</em></b><small>達成</small></div>
     <div class="rg-s"><div><small>訪問</small><b class="num">${v}<em>/${n}</em></b></div><div><small>移動した距離</small><b class="num">${walked.toFixed(1)}<em>km</em></b></div><div><small>${g.state==='pre'?'スタートまで':'経過時間'}</small><b class="num">${g.state==='pre'?dur((g.start-g.now)/60e3):dur(elapsed/60e3)}</b></div></div></div>`;
 }
@@ -2264,15 +2283,15 @@ function nextHTML(g,d){
   else if(g.state==='pre'&&!cur){big=left>0?`あと ${dur(left)} で出発`:'出発の時間です';}else if(left>0){big=`あと ${dur(left)} で出発`;if(left<=10)cls='soon'}else{big=`出発時刻を ${dur(-left)} 過ぎています`;cls='late'}
   const a=cur?cur.s:(g.rows[g.k]?.s),b=nx.s,mode=MODES[nx.it.mode];
   if(SET.nudge&&cls==='soon'&&!ui.nudged?.[nx.it.id]){ui.nudged={...(ui.nudged||{}),[nx.it.id]:1};navigator.vibrate&&navigator.vibrate([60,40,60])}
-  return `<div class="card next ${cls}"><div class="eyebrow">NEXT</div>
+  return `<div class="card next ${cls}"><div class="eyebrow">NEXT · ${dayLabel()}</div>
     <div class="nx-big num">${big}</div>
     <div class="nx-to" role="button" data-act="detail" data-sid="${b.id}" data-i="${nx.i}">${ph(b,'nx-ph')}<div><b>${esc(b.name)}</b><div class="meta">${fmtT(nx.arr)} 着予定 · ${mode.e} ${mode.n}${nx.leg?' 約'+dur(nx.leg.min):''}${w?` · ${w.e} ${w.t}℃${w.p!=null?' 降水'+w.p+'%':''}`:''}</div></div></div>
     ${a&&hasLL(a)&&hasLL(b)?`<a class="btn block pri" href="${gdir(a,b,nx.it.mode)}" target="_blank" rel="noopener">${I.route}ここまでの経路を開く</a>`:hasLL(b)?`<a class="btn block pri" href="${gmaps(b)}" target="_blank" rel="noopener">${I.pin}地図で開く</a>`:''}
   </div>`;
 }
 function stampHTML(g){
-  return `<div class="card stamps"><div class="ktl"><span>スタンプ帳</span><span class="meta">${g.rows.filter(r=>r.it.v).length}/${g.rows.length}</span></div>
-  <div class="st-grid">${g.rows.map(r=>`<button class="st ${r.it.v?'got':''}" data-act="detail" data-sid="${r.s.id}" data-i="${r.i}">${ph(r.s,'st-ph',r.it.v?'<span class="st-mk">✓</span>':`<span class="st-no">${r.i+1}</span>`)}<b>${esc(r.s.name)}</b><small>${r.it.v?hm(r.it.v.a)+' 訪問':fmtT(r.arr)+' 予定'}</small></button>`).join('')}</div></div>`;
+  return `<div class="card stamps"><div class="ktl"><span>スタンプ帳<small class="dl">${dayLabel()}</small></span><span class="meta">${g.rows.filter(r=>r.it.v).length}/${g.rows.length}</span></div>
+  <div class="st-grid">${g.rows.map(r=>`<button class="st ${r.it.v?'got':''}" data-act="detail" data-sid="${r.s.id}" data-i="${r.i}">${ph(r.s,'st-ph',r.it.v?'<span class="st-mk">✓</span>':`<span class="st-no">${r.i+1}</span>`)}<b>${esc(r.s.name)}</b><small>${(D().date?fmtDate(D().date).replace(/\(.\)/,'')+' ':'')+(r.it.v?hm(r.it.v.a)+' 訪問':fmtT(r.arr)+' 予定')}</small></button>`).join('')}</div></div>`;
 }
 function recapText(){
   const p=P(),d=D(),g=progress(d);if(!g)return '';
