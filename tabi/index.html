@@ -1486,7 +1486,9 @@ function shareText(){
   p.days.forEach((d,di)=>{const c=calc(d);if(!c.rows.length)return;
     t+=`\n■ DAY ${di+1}${d.date?' '+fmtDate(d.date):''}\n`;
     c.rows.forEach(({s,i,leg,arr,dep,it})=>{if(i>0)t+=`　↓ ${MODES[it.mode].e}${MODES[it.mode].n}${leg?' 約'+dur(leg.min):''}\n`;
-      t+=`${fmtT(arr)}〜${fmtT(dep)} ${i+1}件目 ${s.name}\n`;if(hasLL(s))t+=`　${gmaps(s)}\n`});
+      t+=`${fmtT(arr)}〜${fmtT(dep)} ${i+1}件目 ${s.name}\n`;
+      if(s.url&&!/google|goo\.gl/.test(s.url))t+=`　🔗 ${/tabelog/.test(s.url)?'食べログ':'お店の情報'}：${s.url}\n`;
+      if(hasLL(s)&&!s.approx)t+=`　📍 地図：${gmaps(s)}\n`;else if(s.url&&/google|goo\.gl/.test(s.url))t+=`　📍 地図：${s.url}\n`;else t+=`　📍 地図：${gmaps({name:s.name,area:s.area})}\n`});
     t+=`${fmtT(c.end)} 解散\n`});
   return t;
 }
