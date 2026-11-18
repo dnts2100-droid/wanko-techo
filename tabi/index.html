@@ -741,7 +741,12 @@ function foodModeHTML(){
       <div class="meta">お店の名前だけでもOK。2件目からは画面下の「📋 貼り付けて追加」が便利です</div>
     </div></div>
     ${pst?pasteConfirmHTML():''}
-    ${installEvt&&!STANDALONE?`<div class="geo-bar" style="margin-top:0">📲<span><b>もっと楽に追加</b><br><span class="meta">Routerをインストールすると、食べログ・Googleマップの「共有」から直接追加できます</span></span><button class="btn sm" data-act="install">入れる</button></div>`:''}`;
+    ${androidTip()}`;
+}
+function androidTip(){
+  if(!ANDROID)return '';
+  if(STANDALONE)return `<div class="geo-bar" style="margin-top:0">📤<span><b>いちばん楽な追加方法</b><br><span class="meta">食べログ・Googleマップでお店を開き「共有」→「<b>Router</b>」を選ぶだけで追加されます</span></span></div>`;
+  return `<div class="geo-bar" style="margin-top:0">📲<span><b>Routerをインストールすると楽になります</b><br><span class="meta">食べログ・Googleマップの「共有」から直接追加できます${installEvt?'':'（Chromeの「︙」→「アプリをインストール」）'}</span></span>${installEvt?'<button class="btn sm" data-act="install">入れる</button>':''}</div>`;
 }
 function spotModeHTML(){
   const r=ui.sres;
@@ -782,6 +787,9 @@ function parsePaste(text){
   const r={url,name:'',area:'',genre:'',lat:null,lng:null};
   const sub=rest.match(/[（(\[［]\s*([^/／（）()\[\]［］]+?)\s*[/／]\s*([^（）()\[\]［］]+?)\s*[）)\]］]/);
   if(sub){r.area=sub[1].trim().replace(/駅$/,'');rest=rest.replace(sub[0],' ');r.genreText=sub[2]}
+  else{const dash=rest.match(/\s[-–ー]\s*([^/／\s\[\]【】]+?)\s*[/／]\s*([^\s\[\]【】]+)/);
+    if(dash){r.area=dash[1].trim().replace(/駅$/,'');r.genreText=dash[2];rest=rest.replace(dash[0],' ')}}
+  rest=rest.replace(/[\[［]\s*[\]］]|【\s*】/g,' ');
   r.name=(rest.split(/\n|\s[·・|｜]\s|\s-\s|〒/).map(x=>x.trim()).find(x=>x&&!/^https?:/.test(x))||'').replace(/^[「『]|[」』]$/g,'').slice(0,60);
   if(/google\.[^/]+\/maps/.test(url)){
     const m=url.match(/\/place\/([^/@]+)/);if(m&&!r.name)r.name=decodeURIComponent(m[1].replace(/\+/g,' '));
