@@ -822,7 +822,10 @@ async function resolveMaps(url){
 }
 const areaFromAddr=a=>{const m=(a||'').replace(/〒?\s*[\d０-９-－−]+/g,' ').match(/(?:東京都|北海道|大阪府|京都府|\S{2,3}県)\s*(\S+?[市区町村])/)||(a||'').match(/([^\s\d０-９〒]{1,6}?[市区町村])/);return m?m[1].replace(/^.*?[都道府県]/,''):''};
 // 公開ページの情報（名前・住所・位置・写真）を読み取る。複数の中継サービスを同時に試し、最初に成功したものを使う
+// ▼ 自前の中継サーバー（Cloudflare Workers）のURL。設定すると最優先で使い、確実に読み取れる
+const PROXY_URL=null; // 例：'https://router-proxy.xxxx.workers.dev'
 async function fetchHTML(url){
+  if(PROXY_URL){try{const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url));if(r.ok){const t=await r.text();const fin=r.headers.get('X-Final-URL')||'';if(t.length>=400)return fin?`<!--final:${fin}-->`+t:t}}catch(_){}}
   const tm=(pr,ms)=>Promise.race([pr,new Promise((_,j)=>setTimeout(()=>j(0),ms))]);
   const tries=[
     ()=>fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)),
@@ -834,6 +837,7 @@ async function fetchHTML(url){
 }
 function parseMeta(html){
   const meta=k=>{const m=html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${k}["'][^>]*content=["']([^"']+)`,'i'))||html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["']${k}["']`,'i'));return m?m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"'):''};
+  const fin=(html.match(/^<!--final:(\S+)-->/)||[])[1]||'';
   const r={title:meta('og:title')||meta('twitter:title')||((html.match(/<title>([^<]+)/i)||[])[1]||''),image:meta('og:image')};
   // 構造化データ（JSON-LD）
   for(const m of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)){
@@ -845,6 +849,7 @@ function parseMeta(html){
       Object.values(o).forEach(walk)};walk(JSON.parse(m[1]))}catch(_){}
   }
   if(r.lat==null){const c=html.match(/center=(-?\d{1,3}\.\d+)(?:%2C|,)(-?\d{1,3}\.\d+)/)||html.match(/"latitude"\s*:\s*"?(-?\d+\.\d+)[\s\S]{0,40}?"longitude"\s*:\s*"?(-?\d+\.\d+)/)||html.match(/data-lat="(-?\d+\.\d+)"[^>]*data-lng="(-?\d+\.\d+)"/);if(c){r.lat=+c[1];r.lng=+c[2]}}
+  if(fin){const x=parsePlaceURL(fin);if(r.lat==null&&x.lat!=null){r.lat=x.lat;r.lng=x.lng}if(x.name)r.placeName=x.name}
   return r;
 }
 const pageCache={};
@@ -854,7 +859,7 @@ async function pageInfo(url){
   try{const m=parseMeta(await fetchHTML(url));
     let name='',area='',genre='';
     if(/tabelog/.test(url)){const t=parsePaste((m.title||'').replace(/\s*[-|]\s*食べログ.*$/,'').replace(/\s*\[食べログ\]/,''));name=m.ldName||t?.name||'';area=t?.area||'';genre=t?.genre||''}
-    else{const t=(m.title||'').replace(/\s*[-–]\s*Google\s*マップ.*$|\s*[-–]\s*Google Maps.*$/i,'');const [n,...a]=t.split(/\s*·\s*/);name=(n&&!/^Google/.test(n))?n:'';if(!m.addr)m.addr=a.join(' ')}
+    else{const t=(m.title||'').replace(/\s*[-–]\s*Google\s*マップ.*$|\s*[-–]\s*Google Maps.*$/i,'');const [n,...a]=t.split(/\s*·\s*/);name=(n&&!/^Google/.test(n))?n:(m.placeName||'');if(!m.addr)m.addr=a.join(' ')}
     const img=[m.ldImage,m.image].find(u=>u&&/^https:/.test(u)&&!/staticmap|maps\.google|googleusercontent\.com\/.*=w\d+-h\d+-k|logo|noimage/i.test(u));
     info={name,area:area||areaFromAddr(m.addr),genre,lat:m.lat,lng:m.lng,addr:m.addr,photo:img||''};
   }catch(_){}
