@@ -802,7 +802,7 @@ function parsePlaceURL(u){
   const m=u.match(/\/maps\/place\/([^/@?]+)/);if(m)r.name=decodeURIComponent(m[1].replace(/\+/g,' '));
   const c=u.match(/!3d(-?[\d.]+)!4d(-?[\d.]+)/)||u.match(/@(-?[\d.]+),(-?[\d.]+)/)||u.match(/[?&](?:q|ll|query)=(-?[\d.]+),(-?[\d.]+)/);
   if(c){r.lat=+c[1];r.lng=+c[2]}
-  const q=u.match(/[?&]q=([^&]+)/);if(!r.name&&q&&!/^-?[\d.]+,/.test(decodeURIComponent(q[1])))r.name=decodeURIComponent(q[1].replace(/\+/g,' '));
+  const q=u.match(/[?&]q=([^&]+)/);if(!r.name&&q){const v=decodeURIComponent(q[1].replace(/\+/g,' '));if(!/^-?[\d.]+,/.test(v)){const [n,...rest]=v.split(/\s*[,，、]\s*/);r.name=n.trim();r.addr=rest.join(' ')}}
   return r;
 }
 async function getText(url,ms=12000){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),ms);
@@ -823,9 +823,9 @@ async function resolveMaps(url){
 const areaFromAddr=a=>{const m=(a||'').replace(/〒?\s*[\d０-９-－−]+/g,' ').match(/(?:東京都|北海道|大阪府|京都府|\S{2,3}県)\s*(\S+?[市区町村])/)||(a||'').match(/([^\s\d０-９〒]{1,6}?[市区町村])/);return m?m[1].replace(/^.*?[都道府県]/,''):''};
 // 公開ページの情報（名前・住所・位置・写真）を読み取る。複数の中継サービスを同時に試し、最初に成功したものを使う
 // ▼ 自前の中継サーバー（Cloudflare Workers）のURL。設定すると最優先で使い、確実に読み取れる
-const PROXY_URL=null; // 例：'https://router-proxy.xxxx.workers.dev'
+const PROXY_URL='https://router-proxy.dnts2100.workers.dev';
 async function fetchHTML(url){
-  if(PROXY_URL){try{const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url));if(r.ok){const t=await r.text();const fin=r.headers.get('X-Final-URL')||'';if(t.length>=400)return fin?`<!--final:${fin}-->`+t:t}}catch(_){}}
+  if(PROXY_URL){try{const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url));if(r.ok){const t=await r.text();const fin=r.headers.get('X-Final-URL')||'';if(fin&&/google\.[^/]+\/maps|maps\.google\./.test(fin))return `<!--final:${fin}-->`;if(t.length>=400&&!/アクセスが集中/.test(t))return fin?`<!--final:${fin}-->`+t:t}}catch(_){}}
   const tm=(pr,ms)=>Promise.race([pr,new Promise((_,j)=>setTimeout(()=>j(0),ms))]);
   const tries=[
     ()=>fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)),
@@ -859,7 +859,7 @@ async function pageInfo(url){
   try{const m=parseMeta(await fetchHTML(url));
     let name='',area='',genre='';
     if(/tabelog/.test(url)){const t=parsePaste((m.title||'').replace(/\s*[-|]\s*食べログ.*$/,'').replace(/\s*\[食べログ\]/,''));name=m.ldName||t?.name||'';area=t?.area||'';genre=t?.genre||''}
-    else{const t=(m.title||'').replace(/\s*[-–]\s*Google\s*マップ.*$|\s*[-–]\s*Google Maps.*$/i,'');const [n,...a]=t.split(/\s*·\s*/);name=(n&&!/^Google/.test(n))?n:(m.placeName||'');if(!m.addr)m.addr=a.join(' ')}
+    else{const t=(m.title||'').replace(/\s*[-–]\s*Google\s*マップ.*$|\s*[-–]\s*Google Maps.*$/i,'');const [n,...a]=t.split(/\s*·\s*/);name=(n&&!/^Google/.test(n))?n:(m.placeName||'');if(!name&&m.placeName)name=m.placeName;if(!m.addr)m.addr=a.join(' ')}
     const img=[m.ldImage,m.image].find(u=>u&&/^https:/.test(u)&&!/staticmap|maps\.google|googleusercontent\.com\/.*=w\d+-h\d+-k|logo|noimage/i.test(u));
     info={name,area:area||areaFromAddr(m.addr),genre,lat:m.lat,lng:m.lng,addr:m.addr,photo:img||''};
   }catch(_){}
