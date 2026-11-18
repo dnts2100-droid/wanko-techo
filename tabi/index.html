@@ -470,6 +470,11 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 .sosr.hot{background:color-mix(in srgb,#E5484D 12%,var(--surface))}.sosr.hot b{color:#E5484D}
 .near{padding:10px 0;border-top:1px solid var(--line);display:grid;gap:6px}.near b{font-size:13.5px}
 
+.shot .sh{position:absolute;top:6px;right:6px;font-size:9.5px;font-weight:800;background:#1F9D74;color:#fff;border-radius:999px;padding:1px 6px;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shot .sh.lock{background:var(--glass);color:var(--ink)}
+.shrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--bg);font-size:13px}
+.shrow small{color:var(--sub);font-size:11.5px}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -660,7 +665,7 @@ async function load(){
 const ui={tab:'plan',day:0,fArea:'',fGenre:'グルメ',fRad:1000,fRes:null,fState:'',here:null,showCands:true,fArea2:'',fGenre2:'',hl:null,lastExt:''};
 const UIKEY='router-ui';
 try{Object.assign(ui,JSON.parse(localStorage.getItem(UIKEY))||{})}catch(_){}
-function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide,extTipShown:ui.extTipShown}))}catch(_){}}
+function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide,extTipShown:ui.extTipShown,hideShots:ui.hideShots}))}catch(_){}}
 const wide=matchMedia('(min-width:1000px)');
 const P=()=>db.plans.find(p=>p.id===db.cur)||db.plans[0];
 const S=id=>P().spots.find(s=>s.id===id);
@@ -1597,6 +1602,8 @@ function openIntro(){ui.introStep=0;openSheet(introHTML)}
 
 /* ================= トラベルキット ================= */
 const QUICK=[
+  ['✉️','Gmail','メールを開く','https://mail.google.com/'],
+  ['📩','予約メール','Gmailで予約・搭乗を検索','https://mail.google.com/mail/u/0/#search/'+encodeURIComponent('予約 OR 搭乗 OR チケット OR e-ticket OR 宿泊 OR booking')],
   ['🚄','えきねっと','JR東日本の予約','https://www.eki-net.com/'],
   ['🚅','スマートEX','東海道・山陽新幹線','https://smart-ex.jp/'],
   ['🎫','EX予約','EX予約サービス','https://expy.jp/'],
@@ -1620,7 +1627,8 @@ async function saveShots(){try{await IDB.set('shots',shots)}catch(_){toast('保�
 function renderKit(){
   const el=$('#pane-kit');if(!el)return;if(ui.tab!=='kit'&&!el.innerHTML){}
   if(!shotsLoaded){loadShots()}
-  const p=P(),mine=shots.filter(x=>x.plan===p.id||ui.kAll),cat=ui.kCat||'';
+  const p=P(),mine=shots.filter(x=>(x.plan===p.id||(ui.kAll&&!x.remote))&&!(ui.hideShots||[]).includes(x.id)),cat=ui.kCat||'';
+  if(p.gid&&ui.tab==='kit')setTimeout(pullShared,0);
   const list=mine.filter(x=>!cat||x.cat===cat).sort((a,b)=>b.at-a.at);
   // エリアごとの代表地点（緊急時の検索用）
   const areas={};p.spots.filter(hasLL).forEach(s=>{const k=s.area||'旅先';if(!areas[k])areas[k]=s});
@@ -1634,8 +1642,8 @@ function renderKit(){
   <div class="card kit">
     <div class="ktl"><span>チケット・スクショ</span><button class="btn sm pri" data-act="shotAdd">${I.plus}追加</button></div>
     <div class="hscroll" style="margin-bottom:10px"><button class="chip ${cat?'':'on'}" data-act="kCat" data-v="">すべて</button>${KCAT.map(c=>`<button class="chip ${cat===c?'on':''}" data-act="kCat" data-v="${c}">${c}<small>${mine.filter(x=>x.cat===c).length||''}</small></button>`).join('')}</div>
-    ${list.length?`<div class="sgrid">${list.map(x=>`<button class="shot" data-act="shotOpen" data-id="${x.id}"><img src="${x.data}" alt=""><span class="lb">${esc(x.label||x.cat)}</span><span class="ct">${x.cat}</span></button>`).join('')}</div>`
-      :`<div class="empty" style="padding:18px">飛行機・新幹線のQRコードや予約画面のスクショを保存して、ラベルですぐに取り出せます。</div>`}
+    ${list.length?`<div class="sgrid">${list.map(x=>`<button class="shot" data-act="shotOpen" data-id="${x.id}"><img src="${x.data}" alt=""><span class="lb">${esc(x.label||x.cat)}</span><span class="ct">${x.cat}</span>${x.remote?`<span class="sh">👥 ${esc(x.owner)}</span>`:x.shared?'<span class="sh">👥 共有中</span>':'<span class="sh lock">🔒</span>'}</button>`).join('')}</div>`
+      :`<div class="empty" style="padding:18px">飛行機・新幹線のQRコードや予約画面のスクショを保存して、ラベルですぐに取り出せます。<br>画像は<b>この端末だけ</b>に保存され、共有相手には見えません。</div>`}
     <label class="meta" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" data-f="kAll" ${ui.kAll?'checked':''} style="width:auto"> ほかのプランの画像も表示</label>
   </div>
   <div class="card kit">
@@ -1654,10 +1662,45 @@ function shotHTML(){
   return `<div class="shotv"><img src="${x.data}" alt=""></div>
   <div class="field" style="margin-top:10px"><input id="shotLabel" value="${esc(x.label||'')}" placeholder="ラベル（例：行きの新幹線）" enterkeyhint="done"><button class="btn sm pri" data-act="shotSave">決定</button></div>
   <div class="hscroll" style="margin-top:8px">${KCAT.map(c=>`<button class="chip ${x.cat===c?'on':''}" data-act="shotCat" data-v="${c}">${c}</button>`).join('')}</div>
+  <div class="shrow">${x.remote?`<span>👥 <b>${esc(x.owner)}</b> さんが共有した画像です</span>`
+    :P().gid?`<span>${x.shared?'👥 <b>グループに共有中</b><br><small>メンバー全員が見られます</small>':'🔒 <b>自分だけ</b><br><small>共有相手には見えません</small>'}</span><button class="btn sm ${x.shared?'':'pri'}" data-act="shotShare">${x.shared?'共有をやめる':'グループに共有'}</button>`
+    :'<span>🔒 <b>自分だけ</b><br><small>この画像は共有相手には見えません</small></span>'}</div>
   <div class="note">QRコードを読み取ってもらうときは、画面の明るさを上げてください。</div>
   <div class="sticky-foot"><button class="ibtn" data-act="shotDel" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button><button class="btn pri" data-act="close">閉じる</button></div>`;
 }
 let ctDraft=null;
+// --- スクショの共有：基本は自分の端末だけ。選んだ画像だけグループに共有する ---
+// 画像はプラン本体とは別の場所（招待IDに続く専用の保管場所）に置き、プランには一覧だけを載せる
+const shotDoc=(gid,id)=>`${gid}-s-${id}`;
+async function shrink(dataURL,max=1200,q=.8){const img=new Image();img.src=dataURL;await img.decode();const k=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);return c.toDataURL('image/jpeg',q)}
+async function shareShot(x,on){
+  const p=P();if(!p.gid)return toast('グループ共有中のプランでのみ共有できます');
+  const fb=await live.init().catch(()=>null);if(!fb)return toast('サーバーに接続できませんでした');
+  p.shared=(p.shared||[]).filter(y=>y.id!==x.id);
+  try{
+    if(on){toast('共有しています…');const img=await shrink(x.data);
+      await fb.set(shotDoc(p.gid,x.id),{data:JSON.stringify({img,label:x.label||'',cat:x.cat}),u:Date.now(),by:fb.uid,name:db.me||''});
+      p.shared.push({id:x.id,label:x.label||'',cat:x.cat,by:fb.uid,name:db.me||''});x.shared=true;toast('この画像をグループに共有しました')}
+    else{await fb.set(shotDoc(p.gid,x.id),{data:'',u:Date.now(),by:fb.uid,name:db.me||''});x.shared=false;toast('共有をやめました（自分の端末には残ります）')}
+  }catch(_){toast('共有できませんでした');return}
+  await saveShots();save();renderKit();refreshSheet();
+}
+// メンバーが共有した画像を取り込む
+let pulling=false;
+async function pullShared(){
+  const p=P();if(pulling||!p.gid)return;
+  if(!(p.shared||[]).length&&!shots.some(x=>x.remote&&x.plan===p.id))return;pulling=true;
+  p.shared=p.shared||[];
+  try{const fb=await live.init();
+    const want=new Set(p.shared.map(x=>x.id));
+    // 共有が取り消された他人の画像は消す
+    const before=shots.length;shots=shots.filter(x=>!(x.remote&&x.plan===p.id&&!want.has(x.id)));let changed=before!==shots.length;
+    for(const it of p.shared){if(shots.some(x=>x.id===it.id)||(ui.hideShots||[]).includes(it.id))continue;
+      const d=await fb.get(shotDoc(p.gid,it.id)).catch(()=>null);if(!d?.data)continue;
+      const v=JSON.parse(d.data);shots.push({id:it.id,plan:p.id,cat:v.cat,label:v.label,data:v.img,at:d.u,remote:true,owner:it.name||'メンバー'});changed=true}
+    if(changed){await saveShots();renderKit()}
+  }catch(_){}finally{pulling=false}
+}
 function ctHTML(){return `<h3><span>連絡先を追加</span></h3>
   <div class="lbl" style="margin-top:0">名前</div><input id="ctName" placeholder="例：〇〇旅館、同行者の山田さん">
   <div class="lbl">電話番号</div><input id="ctTel" type="tel" placeholder="例：03-1234-5678">
@@ -1674,12 +1717,13 @@ $('#fileShot').onchange=async e=>{
 
 /* ================= 操作 ================= */
 const ACT={
+  shotShare:()=>{const x=shots.find(y=>y.id===shotView);if(x&&!x.remote)shareShot(x,!x.shared)},
   kCat:el=>{ui.kCat=el.dataset.v;renderKit()},
   shotAdd:()=>$('#fileShot').click(),
   shotOpen:el=>{shotView=el.dataset.id;openSheet(shotHTML)},
-  shotSave:async()=>{const x=shots.find(y=>y.id===shotView);if(!x)return;x.label=($('#shotLabel')?.value||'').trim();await saveShots();renderKit();document.activeElement?.blur();toast('ラベルを保存しました')},
+  shotSave:async()=>{const x=shots.find(y=>y.id===shotView);if(!x)return;x.label=($('#shotLabel')?.value||'').trim();await saveShots();if(x.shared)await shareShot(x,true);renderKit();document.activeElement?.blur();toast('ラベルを保存しました')},
   shotCat:async el=>{const x=shots.find(y=>y.id===shotView);if(!x)return;x.cat=el.dataset.v;await saveShots();renderKit();refreshSheet()},
-  shotDel:async()=>{const i=shots.findIndex(y=>y.id===shotView);if(i<0)return;const [x]=shots.splice(i,1);await saveShots();closeSheet();renderKit();toast('画像を削除しました',async()=>{shots.push(x);await saveShots();renderKit()})},
+  shotDel:async()=>{const i=shots.findIndex(y=>y.id===shotView);if(i<0)return;if(shots[i].remote){const id=shots[i].id;ui.hideShots=[...(ui.hideShots||[]),id]}if(shots[i].shared)await shareShot(shots[i],false);const [x]=shots.splice(i,1);await saveShots();closeSheet();renderKit();toast('画像を削除しました',async()=>{shots.push(x);await saveShots();renderKit()})},
   ctAdd:()=>{openSheet(ctHTML);setTimeout(()=>$('#ctName')?.focus(),300)},
   ctSave:()=>{const n=($('#ctName')?.value||'').trim(),t=($('#ctTel')?.value||'').trim();if(!n||!t)return toast('名前と電話番号を入力してください');const p=P();(p.contacts=p.contacts||[]).push({name:n,tel:t});save();closeSheet();renderKit();toast('連絡先を追加しました')},
   ctDel:el=>{const sn=snap(),p=P();p.contacts.splice(+el.dataset.i,1);save();renderKit();toast('連絡先を削除しました',restore(sn))},
