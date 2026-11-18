@@ -66,7 +66,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 
 /* tab bar */
 .tabbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + var(--safe));z-index:600;display:flex;gap:4px;padding:6px;border-radius:999px;background:var(--glass);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);box-shadow:var(--sh2);border:1px solid color-mix(in srgb,var(--line) 60%,transparent);width:max-content;max-width:calc(100vw - 24px)}
-.tab{display:flex;align-items:center;gap:5px;padding:10px 13px;white-space:nowrap;border-radius:999px;font-size:13px;font-weight:700;color:var(--sub);transition:all .2s}
+.tab{display:flex;align-items:center;gap:4px;padding:10px 11px;white-space:nowrap;border-radius:999px;font-size:13px;font-weight:700;color:var(--sub);transition:all .2s}
 .tab.on{background:var(--ink);color:var(--bg)}
 .tab .cnt{font-size:10px;background:var(--acc);color:#fff;border-radius:999px;padding:0 6px;line-height:16px}
 
@@ -536,6 +536,26 @@ body.at-home #pane-map{display:none!important}
 
 .daypill{margin-top:12px;font-size:12.5px;color:var(--sub);display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.daypill b{color:var(--ink)}.daypill span{font-size:11px;margin-left:auto}
 
+.mtop{margin-top:8px}.mt-big{font-size:36px;font-weight:900;letter-spacing:-.03em;margin:2px 0}
+.mcard{margin-top:14px}
+.mlist{display:grid}.mrow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);text-align:left;width:100%}.mlist .mrow:first-child{border-top:none}
+.av{flex:none;width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:800}
+.mn{flex:1;min-width:0}.mn b{display:block;font-size:14.5px}.mn small{font-size:11.5px;color:var(--sub)}
+.mrow .plus{color:#1F9D74}.mrow .minus{color:#E5484D}
+.seg.mini{padding:2px}.seg.mini button{padding:4px 8px;font-size:11px}
+.trow{display:flex;align-items:center;gap:8px;width:100%;padding:12px;border-radius:14px;background:var(--bg);margin-bottom:6px;text-align:left}
+.trow .tf{font-weight:800;font-size:14px}.trow .ta{color:var(--sub)}.trow b{margin-left:auto;font-size:17px;font-weight:900}
+.trow .ck{font-style:normal;font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--surface);color:var(--sub)}
+.trow.done{opacity:.55}.trow.done .ck{background:#1F9D74;color:#fff}
+.field.amt{font-size:22px;font-weight:900;padding-left:16px}.field.amt input{font-size:26px;font-weight:900}
+.wlist{display:grid;gap:4px}.wrow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:12px;background:var(--bg)}
+.wrow.off{opacity:.45}.wchk{font-size:20px;width:28px}.wn{flex:1;font-weight:700;font-size:14px}.wrow b{min-width:72px;text-align:right}
+.fixin{width:90px;padding:6px 8px;background:var(--surface)}
+
+
+@media (max-width:440px){.tab:not(.on) .tl{display:none}.tab{padding:10px 12px}.tab.on{padding:10px 14px}}
+.seg.mini button{white-space:nowrap}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -566,6 +586,7 @@ body.at-home #pane-map{display:none!important}
   <section class="pane" id="pane-prog"></section>
   <section class="pane" id="pane-kit"></section>
   <section class="pane" id="pane-home"></section>
+  <section class="pane" id="pane-money"></section>
 </main>
 <section class="pane" id="pane-map"><div id="map"></div><div class="map-days" id="mapDays"></div><div class="carousel" id="carousel"></div></section>
 <div class="quick" id="quick"></div>
@@ -630,6 +651,7 @@ const I={
  up:'<svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
  gantt:'<svg viewBox="0 0 24 24"><path d="M4 6h8M8 12h10M12 18h8" stroke-width="2.6"/></svg>',
  more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>',
+ yen:'<svg viewBox="0 0 24 24"><path d="M6 4l6 8 6-8M12 12v8M7 13h10M7 17h10"/></svg>',
  check:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
  down:'<svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>'
 };
@@ -771,8 +793,8 @@ function addToDay(sid,di=ui.day,silent){
 
 /* ================= 描画 ================= */
 function render(){
-  renderHeader();renderTabs();renderPlan();renderStock();renderProg();renderKit();renderHome();document.body.classList.toggle('at-home',ui.tab==='home');$('#kitBtn')?.classList.toggle('on',ui.tab==='kit');renderQuick();saveUI();
-  ['plan','stock','prog','kit','home'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
+  renderHeader();renderTabs();renderPlan();renderStock();renderProg();renderKit();renderHome();renderMoney();document.body.classList.toggle('at-home',ui.tab==='home');$('#kitBtn')?.classList.toggle('on',ui.tab==='kit');renderQuick();saveUI();
+  ['plan','stock','prog','kit','home','money'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
   $('#pane-map').classList.toggle('on',ui.tab==='map'||wide.matches);
   document.querySelector('.top').style.display=(ui.tab==='map'&&!wide.matches)?'none':'';
   if(ui.tab==='map'||wide.matches)drawMap();
@@ -786,8 +808,8 @@ function renderHeader(){
 }
 function renderTabs(){
   const n=P().spots.length;
-  $('#tabbar').innerHTML=[['plan',I.list,'予定'],['stock',I.book,'候補',n],['prog',I.gantt,'進捗'],['map',I.map,'地図']]
-    .map(([k,ic,l,c])=>`<button class="tab ${ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')?'on':''}" data-act="tab" data-tab="${k}">${ic}${l}${c?`<span class="cnt">${c}</span>`:''}</button>`).join('');
+  $('#tabbar').innerHTML=[['plan',I.list,'予定'],['stock',I.book,'候補',n],['prog',I.gantt,'進捗'],['money',I.yen,'割勘'],['map',I.map,'地図']]
+    .map(([k,ic,l,c])=>`<button class="tab ${ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')?'on':''}" data-act="tab" data-tab="${k}" aria-label="${l}">${ic}<span class="tl">${l}</span>${c?`<span class="cnt">${c}</span>`:''}</button>`).join('');
 }
 function renderPlan(){
   const p=P(),d=D(),c=calc(d);
@@ -1303,6 +1325,7 @@ function detailHTML(){
       <button class="btn danger" data-act="unplan" data-i="${pos}">予定から外す</button>`
      :`<button class="btn acc" data-act="toDay" data-sid="${s.id}">${I.plus}DAY ${ui.day+1} に追加</button>`}
     <button class="btn" data-act="editSpot" data-sid="${s.id}">${I.edit}編集</button>
+    <button class="btn" data-act="payFromSpot" data-sid="${s.id}">💴 支払いを記録</button>
     <button class="btn danger" data-act="delSpotD" data-sid="${s.id}">${I.trash}候補から削除</button>
   </div>
   <div class="sticky-foot"><button class="btn" data-act="dCancel">キャンセル</button><button class="btn pri" data-act="close">OK</button></div>`;
@@ -1695,6 +1718,10 @@ function setHTML(){
   <div class="row"><button class="btn sm" data-act="export">書き出し（バックアップ）</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm" data-act="help">❓ 使い方</button></div>
   <div class="note">設定はこの端末だけに保存されます。共有メンバーの設定には影響しません。</div>`;
 }
+let memEdit=null;
+function memHTML(){const x=memEdit?M().mem.find(y=>y.id===memEdit):null;return `<h3><span>${x?'メンバーを編集':'メンバーを追加'}</span></h3>
+  <div class="lbl" style="margin-top:0">名前</div><input id="memName" value="${esc(x?.n||'')}" placeholder="例：たろう" enterkeyhint="done">
+  <div class="sticky-foot">${x?`<button class="ibtn" data-act="memDel" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button>`:''}<button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="memSave">決定</button></div>`}
 let liveState='';
 function members(p){const m=Object.entries(p.members||{}).sort((a,b)=>(a[1].t||0)-(b[1].t||0));const me=live.fb?.uid;
   return m.map(([k,v])=>({name:v.n||'メンバー',me:k===me}))}
@@ -1848,8 +1875,105 @@ $('#fileShot').onchange=async e=>{
   if(files.length===1){shotView=shots.at(-1).id;openSheet(shotHTML);setTimeout(()=>{const i=$('#shotLabel');i&&(i.select(),i.focus())},300)}else toast(`${files.length}枚を保存しました`);
 };
 
+/* ================= 割り勘 ================= */
+// データはプランの中（共有中ならメンバー全員で同じ割り勘を見られる）
+// money = {mem:[{id,n}], items:[{id,t,sid,day,amt,payer,who:[],mode:'eq'|'tilt'|'treat'|'fix',w:{},fix:{},at}], unit, done:{}}
+const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+function M(){const p=P();if(!p.money)p.money={mem:[],items:[],unit:100,done:{}};const m=p.money;
+  if(!m.mem.length){const g=Object.values(p.members||{}).map(x=>x.n).filter(Boolean);(g.length?g:[db.me||'自分']).forEach(n=>m.mem.push({id:uid(),n}))}
+  m.done=m.done||{};m.unit=m.unit??100;return m}
+const memName=id=>M().mem.find(x=>x.id===id)?.n||'？';
+const TILT=[[.5,'少なめ'],[1,'普通'],[1.5,'多め'],[2,'かなり多め']];
+// 1件の支払いを、各メンバーの負担額に分ける
+function shares(it){
+  const who=it.mode==='treat'?[it.payer]:(it.who||[]).filter(id=>M().mem.some(x=>x.id===id)),r={};if(!who.length)return r;
+  if(it.mode==='fix'){let rest=it.amt;const free=[];who.forEach(id=>{const v=+(it.fix||{})[id];if(v>0){r[id]=v;rest-=v}else free.push(id)});
+    if(free.length)free.forEach(id=>r[id]=(r[id]||0)+rest/free.length);else if(rest)r[it.payer]=(r[it.payer]||0)+rest;return r}
+  const w=id=>it.mode==='tilt'?+((it.w||{})[id]??1):1,tw=who.reduce((a,id)=>a+w(id),0);who.forEach(id=>r[id]=it.amt*w(id)/tw);return r;
+}
+function balances(){const m=M(),b={};m.mem.forEach(x=>b[x.id]={paid:0,owe:0});
+  m.items.forEach(it=>{if(b[it.payer])b[it.payer].paid+=it.amt;const sh=shares(it);Object.entries(sh).forEach(([id,v])=>{if(b[id])b[id].owe+=v})});return b}
+// 精算：送金回数が少なくなるように、多く払った人へまとめて送る
+function settle(){const m=M(),b=balances(),u=+m.unit||1;
+  const cr=[],dr=[];Object.entries(b).forEach(([id,x])=>{const d=x.paid-x.owe;if(d>.5)cr.push({id,v:d});else if(d<-.5)dr.push({id,v:-d})});
+  cr.sort((a,b)=>b.v-a.v);dr.sort((a,b)=>b.v-a.v);const out=[];
+  let i=0,j=0;while(i<dr.length&&j<cr.length){const v=Math.min(dr[i].v,cr[j].v);out.push({from:dr[i].id,to:cr[j].id,v:Math.ceil(v/u-1e-9)*u,raw:v});dr[i].v-=v;cr[j].v-=v;if(dr[i].v<.5)i++;if(cr[j].v<.5)j++}
+  return out.filter(x=>x.v>0);
+}
+function itemLabel(it){if(it.t)return it.t;if(it.sid){const s=S(it.sid);if(s){const d=P().days[it.day??0],k=d?d.items.findIndex(i=>i.spot===it.sid):-1;return (k>=0?`${k+1}件目 `:'')+s.name}}return '支払い'}
+function modeText(it){const n=it.mode==='treat'?1:(it.who||[]).length;return it.mode==='treat'?`${memName(it.payer)}のおごり`:it.mode==='tilt'?`${n}人で傾斜割り`:it.mode==='fix'?`${n}人・金額指定あり`:`${n}人で均等割り`}
+function renderMoney(){
+  const el=$('#pane-money');if(!el)return;if(ui.tab!=='money'){el.innerHTML='';return}
+  const p=P(),m=M(),b=balances(),total=m.items.reduce((a,x)=>a+x.amt,0),tr=settle();
+  const byDay={};m.items.forEach(it=>{(byDay[it.day??0]=byDay[it.day??0]||[]).push(it)});
+  el.innerHTML=`
+  <div class="card mtop"><div class="eyebrow">割り勘</div>
+    <div class="mt-big num">${yen(total)}</div><div class="meta">合計 · ${m.items.length}件の支払い · ${m.mem.length}人</div>
+    <button class="btn acc block" style="margin-top:12px" data-act="payAdd">${I.plus}支払いを記録</button></div>
+  <div class="card mcard"><div class="ktl"><span>メンバー</span><button class="btn sm" data-act="memAdd">${I.plus}追加</button></div>
+    <div class="mlist">${m.mem.map(x=>{const v=b[x.id],d=v.paid-v.owe;return `<button class="mrow" data-act="memEdit" data-id="${x.id}"><span class="av">${esc([...x.n][0]||'?')}</span><span class="mn"><b>${esc(x.n)}</b><small>支払い ${yen(v.paid)} · 負担 ${yen(v.owe)}</small></span><b class="num ${d>.5?'plus':d<-.5?'minus':''}">${d>.5?'+':d<-.5?'−':''}${yen(Math.abs(d))}</b></button>`}).join('')}</div></div>
+  <div class="card mcard"><div class="ktl"><span>精算</span><div class="seg mini">${[[1,'1円'],[10,'10円'],[100,'100円'],[500,'500円']].map(([v,l])=>`<button class="${m.unit==v?'on':''}" data-act="unit" data-v="${v}">${l}</button>`).join('')}</div></div>
+    ${tr.length?tr.map(t=>{const k=t.from+'>'+t.to,dn=m.done[k];return `<button class="trow ${dn?'done':''}" data-act="trDone" data-k="${k}"><span class="tf">${esc(memName(t.from))}</span><span class="ta">→</span><span class="tf">${esc(memName(t.to))}</span><b class="num">${yen(t.v)}</b><i class="ck">${dn?'✓ 済':'未'}</i></button>`}).join('')
+      +`<div class="note">端数は${m.unit}円単位で切り上げています。送金したらタップで「済」にできます。</div><button class="btn block" data-act="payShare" style="margin-top:8px">📤 精算結果を送る</button>`
+      :`<div class="empty" style="padding:16px">${m.items.length?'精算の必要はありません 🎉':'支払いを記録すると、誰が誰にいくら払えばいいかを自動で計算します'}</div>`}</div>
+  ${Object.keys(byDay).sort().map(di=>`<div class="sec-head" style="margin:20px 0 8px"><h2 style="font-size:16px">${p.days.length>1?`DAY ${+di+1}`:'支払い'}</h2></div>
+    <div class="card slist">${byDay[di].map(it=>`<div class="srow" role="button" data-act="payEdit" data-id="${it.id}">${it.sid&&S(it.sid)?ph(S(it.sid),'sth'):`<div class="ph sth" style="--h:30"><span>💴</span></div>`}
+      <div class="info"><div class="name">${esc(itemLabel(it))}</div><div class="meta">${esc(memName(it.payer))}が支払い · ${modeText(it)}</div></div><b class="num">${yen(it.amt)}</b></div>`).join('')}</div>`).join('')}
+  <div style="height:20px"></div>`;
+}
+let pay=null;
+function payHTML(){
+  const m=M(),x=pay,d=P().days[ui.day],spots=d.items.map((i,k)=>({sid:i.spot,k,s:S(i.spot)})).filter(o=>o.s);
+  const sh=shares(x),sum=Object.values(sh).reduce((a,v)=>a+v,0);
+  return `<h3><span>${x._new?'支払いを記録':'支払いを編集'}</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
+  <div class="lbl" style="margin-top:0">どこの支払い？</div>
+  <div class="hscroll">${spots.map(o=>`<button class="chip ${x.sid===o.sid&&!x.t?'on':''}" data-act="paySpot" data-sid="${o.sid}">${o.k+1}件目 ${esc(o.s.name)}</button>`).join('')}<button class="chip ${x.t||!x.sid?'on':''}" data-act="payFree">その他</button></div>
+  ${x.t||!x.sid?`<input id="payT" data-f="pay.t" value="${esc(x.t||'')}" placeholder="例：タクシー代、お土産、ホテル" style="margin-top:8px">`:''}
+  <div class="lbl">金額</div>
+  <div class="field amt">¥<input id="payAmt" data-f="pay.amt" type="number" inputmode="numeric" value="${x.amt||''}" placeholder="0"></div>
+  <div class="lbl">払った人</div>
+  <div class="gchips">${m.mem.map(u=>`<button class="chip ${x.payer===u.id?'on':''}" data-act="payPayer" data-id="${u.id}">${esc(u.n)}</button>`).join('')}</div>
+  <div class="lbl">割り方</div>
+  <div class="seg">${[['eq','均等'],['tilt','傾斜'],['treat','おごり'],['fix','金額指定']].map(([v,l])=>`<button class="${x.mode===v?'on':''}" data-act="payMode" data-v="${v}">${l}</button>`).join('')}</div>
+  ${x.mode==='treat'?`<div class="note">${esc(memName(x.payer))}さんが全額を負担します（ほかの人の負担は0円）。</div>`:`
+  <div class="lbl">割る人 <span class="meta">（タップで外す）</span></div>
+  <div class="wlist">${m.mem.map(u=>{const on=(x.who||[]).includes(u.id),v=sh[u.id]||0;return `<div class="wrow ${on?'':'off'}"><button class="wchk" data-act="payWho" data-id="${u.id}">${on?'☑':'☐'}</button><span class="wn">${esc(u.n)}</span>
+    ${on&&x.mode==='tilt'?`<select data-f="pay.w" data-id="${u.id}" class="sort">${TILT.map(([w,l])=>`<option value="${w}" ${+((x.w||{})[u.id]??1)===w?'selected':''}>${l}</option>`).join('')}</select>`:''}
+    ${on&&x.mode==='fix'?`<input class="fixin" id="fix_${u.id}" data-f="pay.fix" data-id="${u.id}" type="number" inputmode="numeric" placeholder="自動" value="${(x.fix||{})[u.id]||''}">`:''}
+    <b class="num">${on?yen(v):'—'}</b></div>`}).join('')}</div>
+  ${x.amt&&Math.abs(sum-x.amt)>1?`<div class="note" style="color:#E5484D">指定した金額の合計が支払い額と合いません</div>`:''}`}
+  <div class="sticky-foot">${x._new?'':`<button class="ibtn" data-act="payDel" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button>`}<button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="paySave">保存</button></div>`;
+}
+function openPay(it,sid){
+  const m=M();pay=it?JSON.parse(JSON.stringify(it)):{_new:1,id:uid(),day:ui.day,sid:sid||null,t:'',amt:0,payer:m.mem[0]?.id,who:m.mem.map(x=>x.id),mode:'eq',w:{},fix:{}};
+  openSheet(payHTML);setTimeout(()=>{if(pay._new)$('#payAmt')?.focus()},300);
+}
+function payRefresh(){const a=document.activeElement?.id;refreshSheet();if(a){const e=$('#'+a);if(e){e.focus();try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}}}
+function moneyText(){const p=P(),m=M(),tr=settle(),total=m.items.reduce((a,x)=>a+x.amt,0);
+  let t=`【${p.title}】割り勘\n合計 ${yen(total)}\n\n`;m.items.forEach(it=>t+=`・${itemLabel(it)} ${yen(it.amt)}（${memName(it.payer)}が支払い／${modeText(it)}）\n`);
+  t+=`\n■ 精算\n`+(tr.length?tr.map(x=>`${memName(x.from)} → ${memName(x.to)} ${yen(x.v)}`).join('\n'):'精算の必要はありません');return t+'\n\n#Router'}
+
 /* ================= 操作 ================= */
 const ACT={
+  payAdd:()=>openPay(),
+  payFromSpot:el=>{closeSheet();ui.tab='money';render();setTimeout(()=>openPay(null,el.dataset.sid),220)},
+  payEdit:el=>openPay(M().items.find(x=>x.id===el.dataset.id)),
+  paySpot:el=>{pay.sid=el.dataset.sid;pay.t='';refreshSheet()},
+  payFree:()=>{pay.sid=null;refreshSheet();setTimeout(()=>$('#payT')?.focus(),50)},
+  payPayer:el=>{pay.payer=el.dataset.id;refreshSheet()},
+  payMode:el=>{pay.mode=el.dataset.v;refreshSheet()},
+  payWho:el=>{const id=el.dataset.id,w=new Set(pay.who||[]);w.has(id)?w.delete(id):w.add(id);pay.who=[...w];refreshSheet()},
+  paySave:()=>{const x=pay;x.amt=Math.round(+x.amt||0);if(!x.amt)return toast('金額を入力してください');if(x.mode!=='treat'&&!(x.who||[]).length)return toast('割る人を選んでください');
+    const m=M(),isNew=x._new;delete x._new;x.at=x.at||Date.now();const i=m.items.findIndex(y=>y.id===x.id);if(i>=0)m.items[i]=x;else m.items.push(x);m.done={};save();closeSheet();render();toast(isNew?`${yen(x.amt)} を記録しました`:'保存しました')},
+  payDel:()=>{const sn=snap(),m=M();m.items=m.items.filter(y=>y.id!==pay.id);m.done={};save();closeSheet();render();toast('支払いを削除しました',restore(sn))},
+  unit:el=>{M().unit=+el.dataset.v;save();renderMoney()},
+  trDone:el=>{const m=M(),k=el.dataset.k;m.done[k]=!m.done[k];save();renderMoney()},
+  payShare:async()=>{const t=moneyText();try{if(navigator.share){await navigator.share({text:t});return}}catch(e){if(e.name==='AbortError')return}try{await navigator.clipboard.writeText(t);toast('精算結果をコピーしました')}catch(_){toast('共有できませんでした')}},
+  memAdd:()=>{memEdit=null;openSheet(memHTML);setTimeout(()=>$('#memName')?.focus(),300)},
+  memEdit:el=>{memEdit=el.dataset.id;openSheet(memHTML)},
+  memSave:()=>{const n=($('#memName')?.value||'').trim();if(!n)return toast('名前を入力してください');const m=M();
+    if(memEdit){m.mem.find(x=>x.id===memEdit).n=n}else{const id=uid();m.mem.push({id,n});m.items.forEach(it=>{if(it.mode==='eq'&&(it.who||[]).length===m.mem.length-1)it.who.push(id)})}save();closeSheet();render()},
+  memDel:()=>{const m=M();if(m.items.some(it=>it.payer===memEdit))return toast('支払いをした人は削除できません');const sn=snap();m.mem=m.mem.filter(x=>x.id!==memEdit);m.items.forEach(it=>{it.who=(it.who||[]).filter(id=>id!==memEdit)});m.done={};save();closeSheet();render();toast('メンバーを削除しました',restore(sn))},
   settings:()=>openSheet(setHTML),
   setTog:el=>{const k=el.dataset.k;SET[k]=!SET[k];saveSet();refreshSheet();if(k==='geoTip'&&SET[k])ui.geoHide=0;render()},
   setVal:el=>{const k=el.dataset.k,v=el.dataset.v;SET[k]=isNaN(+v)?v:+v;saveSet();refreshSheet();render()},
@@ -1966,6 +2090,7 @@ const ACT={
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const f=ACT[el.dataset.act];if(f){f(el,e)}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target.id==='fArea'){e.preventDefault();ui.fArea=e.target.value;(ui.addMode==='spot')?find():openExt('tabelog')}
+  if(e.key==='Enter'&&e.target.id==='memName'){e.preventDefault();ACT.memSave()}
   if(e.key==='Enter'&&e.target.id==='npTitle'){e.preventDefault();ACT.npOk()}
   if(e.key==='Enter'&&e.target.id==='titleIn'){e.preventDefault();ACT.titleOk()}
   if(e.key==='Enter'&&e.target.id==='meIn'){e.preventDefault();ACT.meOk()}
@@ -1980,6 +2105,9 @@ document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f==='fArea'){ui.fArea=e.target.value;return}
   if(f==='spotQ'){ui.spotQ=e.target.value;return}
   if(f==='q2'){ui.q2=e.target.value;renderStockList();return}
+  if(f==='pay.amt'&&pay){pay.amt=+e.target.value||0;clearTimeout(pay._t);pay._t=setTimeout(payRefresh,500);return}
+  if(f==='pay.t'&&pay){pay.t=e.target.value;return}
+  if(f==='pay.fix'&&pay){(pay.fix=pay.fix||{})[e.target.dataset.id]=+e.target.value||0;clearTimeout(pay._t);pay._t=setTimeout(payRefresh,600);return}
   if(f==='kAll'){ui.kAll=e.target.checked;renderKit();return}
   if(f==='paste'){clearTimeout(pasteT);const v=e.target.value;pasteT=setTimeout(()=>{if(v.trim().length>=2)handlePaste(v)},900);return}
   if(f==='pst.name'&&ui.pst){ui.pst.name=e.target.value;return}
@@ -1995,6 +2123,7 @@ document.addEventListener('change',e=>{const f=e.target.dataset.f,p=P(),d=D();
   else if(f==='end'){d.end=e.target.value||'';save();render()}
   else if(f==='title')renderTabs();
   else if(f==='sort2'){ui.sort2=e.target.value;renderStockList()}
+  else if(f==='pay.w'&&pay){(pay.w=pay.w||{})[e.target.dataset.id]=+e.target.value;refreshSheet()}
   else if((f==='pst.name'||f==='pst.area')&&ui.pst&&ui.pst.locLabel!=='Googleマップの位置'){ui.pst.lat=ui.pst.lng=null;locate(ui.pst)}
 });
 $('#fileImport').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
@@ -2225,7 +2354,7 @@ async function ensureLibs(){
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
 // 予定画面：左右スワイプで日を切り替える
-['plan','prog','stock','map'].forEach(k=>{let sx=0,sy=0,ok=false;const el=$('#pane-'+k);
+['plan','prog','stock','map','money'].forEach(k=>{let sx=0,sy=0,ok=false;const el=$('#pane-'+k);
   el.addEventListener('touchstart',e=>{const t=e.touches[0];
     // 地図は地図そのものの操作と重なるので、下のカード列の外側（日付ボタン付近）でだけ反応させない＝地図では日付ボタンとカードの空き部分のみ
     ok=e.touches.length===1&&!e.target.closest('.hscroll,.gantt,.carousel,#map,[data-handle],input,textarea,select,.sortable-chosen,.sheet');sx=t.clientX;sy=t.clientY},{passive:true});
