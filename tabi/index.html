@@ -878,6 +878,8 @@ async function enrich(r){
       if(x.photo)r.photo=x.photo;
       if(!x.genre)r.genre=(GWORD.find(([re])=>re.test(r.name||''))||[])[1]||r.genre}
   }
+  // エリアが不明なら、位置から市区町村を求める
+  if(!r.area&&hasLL(r)){try{const j=await getJSON(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&accept-language=ja&lat=${r.lat}&lon=${r.lng}`,8000);const a=j.address||{};r.area=a.city_district||a.suburb||a.city||a.town||a.village||a.county||''}catch(_){}}
   return r;
 }
 async function handlePaste(text){
