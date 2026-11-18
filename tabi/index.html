@@ -435,8 +435,8 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 .howto{font-size:12.5px;color:var(--sub);line-height:1.7;text-align:center}
 .howto b{color:var(--ink)}
 /* 日の切り替えアニメーション */
-.pane.slide-l,.carousel.slide-l{animation:slL .28s ease}.pane.slide-r,.carousel.slide-r{animation:slR .28s ease}
-@keyframes slL{from{opacity:.3;transform:translateX(30px)}}@keyframes slR{from{opacity:.3;transform:translateX(-30px)}}
+.pane.slide-l,.carousel.slide-l{animation:slL .22s cubic-bezier(.2,.8,.3,1)}.pane.slide-r,.carousel.slide-r{animation:slR .22s cubic-bezier(.2,.8,.3,1)}
+@keyframes slL{from{opacity:.4;transform:translateX(40px)}}@keyframes slR{from{opacity:.4;transform:translateX(-40px)}}
 /* 終了時刻 */
 .endnote{display:block;font-style:normal;font-size:10px!important;font-weight:800;color:#1F9D74;margin-top:1px}
 .endnote.over{color:#E5484D}
@@ -2379,15 +2379,26 @@ async function ensureLibs(){
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
 // 予定画面：左右スワイプで日を切り替える
-['plan','prog','stock','map','money'].forEach(k=>{let sx=0,sy=0,ok=false;const el=$('#pane-'+k);
+['plan','prog','stock','map','money'].forEach(k=>{let sx=0,sy=0,st=0,ok=false,dir=0;const el=$('#pane-'+k);
+  const tg=()=>k==='map'?$('#carousel'):el;
   el.addEventListener('touchstart',e=>{const t=e.touches[0];
-    // 地図は地図そのものの操作と重なるので、下のカード列の外側（日付ボタン付近）でだけ反応させない＝地図では日付ボタンとカードの空き部分のみ
-    ok=e.touches.length===1&&!e.target.closest('.hscroll,.gantt,.carousel,#map,[data-handle],input,textarea,select,.sortable-chosen,.sheet');sx=t.clientX;sy=t.clientY},{passive:true});
-  el.addEventListener('touchend',e=>{if(!ok)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
-    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;const n=P().days.length,to=ui.day+(dx<0?1:-1);if(n<2)return;
+    ok=e.touches.length===1&&P().days.length>1&&!e.target.closest('.hscroll,.gantt,.carousel,#map,[data-handle],input,textarea,select,.sortable-chosen,.sheet');
+    sx=t.clientX;sy=t.clientY;st=Date.now();dir=0},{passive:true});
+  // 指に少しついてくる動きで、スワイプしていることが分かるように
+  el.addEventListener('touchmove',e=>{if(!ok)return;const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(!dir){if(Math.abs(dx)>8||Math.abs(dy)>8)dir=Math.abs(dx)>Math.abs(dy)?1:2}
+    if(dir===1){const g=tg();g.style.transition='none';g.style.transform=`translateX(${dx*.35}px)`;g.style.opacity=String(1-Math.min(.35,Math.abs(dx)/600))}},{passive:true});
+  el.addEventListener('touchend',e=>{if(!ok)return;const g=tg(),t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy,dt=Date.now()-st;
+    g.style.transition='transform .2s ease,opacity .2s ease';g.style.transform='';g.style.opacity='';
+    // 軽いスワイプでも切り替える：35px以上、またはすばやく20px以上はじいたとき
+    const horiz=dir===1&&Math.abs(dx)>Math.abs(dy)*1.1;
+    if(!horiz||!(Math.abs(dx)>=35||(Math.abs(dx)>=20&&dt<250)))return;
+    const n=P().days.length,to=ui.day+(dx<0?1:-1);
     if(to<0||to>=n){toast(to<0?'DAY 1 です':`DAY ${n} が最後の日です`);return}
     ui.day=to;ui.hl=null;fitKey='';render();
-    const tg=k==='map'?$('#carousel'):el;tg.classList.remove('slide-l','slide-r');void tg.offsetWidth;tg.classList.add(dx<0?'slide-l':'slide-r');
+    setTimeout(()=>{g.style.transition='';},220);
+    g.classList.remove('slide-l','slide-r');void g.offsetWidth;g.classList.add(dx<0?'slide-l':'slide-r');
+    navigator.vibrate&&navigator.vibrate(8);
     if(k!=='plan')toast(`DAY ${to+1}${P().days[to].date?'（'+fmtDate(P().days[to].date)+'）':''} に切り替えました`)},{passive:true});
 });
 let errT=0;
