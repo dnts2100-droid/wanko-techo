@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#F6F5F2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111214" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,7 +29,10 @@
 }}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
-html{background:var(--bg)}
+html{background:var(--bg);overflow-x:hidden;overscroll-behavior-x:none}
+body{overflow-x:hidden;overscroll-behavior-x:none;touch-action:pan-y pinch-zoom}
+.hscroll,.gantt,.carousel{touch-action:pan-x pan-y}
+#pane-map,#map{touch-action:none}
 body{background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif;font-feature-settings:"palt";-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none;padding:0}
@@ -414,6 +417,59 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 .dots{display:flex;gap:6px;justify-content:center;margin:10px 0 2px}
 .dots i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:all .2s}.dots i.on{width:18px;background:var(--ink)}
 
+/* シートの下部ボタンを常に表示 */
+.sheet{display:flex;flex-direction:column;overflow:hidden;padding:8px 0 0}
+.sheet>.grabber{flex:none}
+.sheet .sb{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 18px 18px}
+.sheet>.sticky-foot{position:static;margin:0;flex:none;padding:12px 18px calc(12px + var(--safe));border-top:1px solid var(--line);background:var(--surface)}
+@media (min-width:700px){.sheet>.sticky-foot{border-radius:0 0 26px 26px}}
+.sheet h3{position:sticky;top:0;background:var(--surface);z-index:2;margin:0 -18px 10px;padding:8px 18px 6px}
+/* 追加パネル */
+.src2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.src{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:14px;border-radius:18px;background:var(--bg);text-align:left;transition:transform .12s}
+.src:active{transform:scale(.97)}
+.src .se{font-size:24px}.src b{font-size:15px}.src small{font-size:11.5px;color:var(--sub);font-weight:600}
+.src:first-child{background:color-mix(in srgb,var(--acc) 10%,var(--surface))}
+.howto{font-size:12.5px;color:var(--sub);line-height:1.7;text-align:center}
+.howto b{color:var(--ink)}
+/* 日の切り替えアニメーション */
+#pane-plan.slide-l{animation:slL .28s ease}#pane-plan.slide-r{animation:slR .28s ease}
+@keyframes slL{from{opacity:.3;transform:translateX(30px)}}@keyframes slR{from{opacity:.3;transform:translateX(-30px)}}
+/* 終了時刻 */
+.endnote{display:block;font-style:normal;font-size:10px!important;font-weight:800;color:#1F9D74;margin-top:1px}
+.endnote.over{color:#E5484D}
+.day-set{flex-wrap:wrap}
+/* ペース表示（シンプル） */
+.race-status .sdot{flex:none;width:12px;height:12px;border-radius:50%;background:var(--ink);margin:0 2px}
+.race-status.late .sdot{background:#E5484D}.race-status.warn .sdot{background:#D97706}.race-status.early .sdot{background:#1F9D74}
+.goal{position:absolute;right:-2px;top:52px;width:4px;height:26px;border-radius:2px;background:var(--ink)}
+.pmark{position:absolute;top:44px;width:2px;height:42px;margin-left:-1px;background:var(--faint)}
+.pmark i,.ymark i{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-style:normal;font-size:10px;font-weight:800;white-space:nowrap;color:var(--sub)}
+.ymark{position:absolute;top:56px;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:var(--surface);border:4px solid var(--acc);box-shadow:var(--sh);transition:left 1s cubic-bezier(.3,.9,.3,1)}
+.ymark i{top:24px;color:var(--acc)}
+/* 地図：おおよその位置 */
+.pin.approx{background:var(--surface);border:2.5px dashed var(--acc)}.pin.approx span{color:var(--acc)}
+/* トラベルキット */
+#kitBtn.on{background:var(--ink);color:var(--bg)}
+.kit{margin-bottom:14px}
+.ktl{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:15px;margin-bottom:10px}
+.qgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qa{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:16px;background:var(--bg);text-decoration:none;color:inherit;text-align:center}
+.qa span{font-size:22px}.qa b{font-size:12px}.qa small{font-size:9.5px;color:var(--sub);line-height:1.3}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.shot{position:relative;aspect-ratio:3/4;border-radius:14px;overflow:hidden;background:var(--bg)}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot .lb{position:absolute;left:0;right:0;bottom:0;padding:16px 6px 6px;font-size:11px;font-weight:800;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.7));text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shot .ct{position:absolute;top:6px;left:6px;font-size:9.5px;font-weight:800;background:var(--glass);color:var(--ink);border-radius:999px;padding:1px 6px}
+.shotv{margin:0 -18px;background:#000;display:grid;place-items:center;max-height:60vh;overflow:auto}
+.shotv img{max-width:100%;max-height:60vh;display:block}
+.sos{display:grid;gap:6px}
+.sosr{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--bg);text-decoration:none;color:inherit}
+.sosr .se{font-size:20px}.sosr .sn{flex:1;font-size:13.5px;font-weight:700}.sosr b{font-size:16px;font-weight:900}
+.sosr a{text-decoration:none;color:inherit}
+.sosr.hot{background:color-mix(in srgb,#E5484D 12%,var(--surface))}.sosr.hot b{color:#E5484D}
+.near{padding:10px 0;border-top:1px solid var(--line);display:grid;gap:6px}.near b{font-size:13.5px}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -434,12 +490,14 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
     <div class="plan-sub" id="hSub"></div>
   </button>
   <button class="ibtn" id="geoBtn" data-act="geo" aria-label="おでかけモード（現在地・滞在記録）"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
+  <button class="ibtn" id="kitBtn" data-act="tab" data-tab="kit" aria-label="トラベルキット"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></button>
   <button class="ibtn" data-act="share" aria-label="共有"><svg viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button>
 </header>
 <main class="panes">
   <section class="pane" id="pane-plan"></section>
   <section class="pane" id="pane-stock"></section>
   <section class="pane" id="pane-prog"></section>
+  <section class="pane" id="pane-kit"></section>
 </main>
 <section class="pane" id="pane-map"><div id="map"></div><div class="map-days" id="mapDays"></div><div class="carousel" id="carousel"></div></section>
 <div class="quick" id="quick"></div>
@@ -447,6 +505,7 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 <datalist id="areaList"></datalist>
 <input type="file" id="fileImport" accept=".json,application/json" hidden>
 <input type="file" id="filePhoto" accept="image/*" hidden>
+<input type="file" id="fileShot" accept="image/*" multiple hidden>
 
 <script>
 /* ================= 定数 ================= */
@@ -614,6 +673,17 @@ function calc(d){
   return {rows,end:t,move,km,stay};
 }
 function usedIn(sid){const r=[];P().days.forEach((d,di)=>d.items.forEach((it,i)=>{if(it.spot===sid)r.push({di,i})}));return r}
+// 予定に追加：同じ場所は基本的に1回まで。駅・空港・宿は行き帰りで使うので確認してから追加
+function tryAddToDay(sid,di=ui.day){
+  const d=P().days[di],s=S(sid),at=d.items.findIndex(i=>i.spot===sid);
+  if(at<0){addToDay(sid,di);return true}
+  if(['駅・空港','宿'].includes(s.genre)){dupAsk={sid,di,at};openSheet(dupHTML);return false}
+  toast(`「${s.name}」はすでに DAY ${di+1} の ${at+1}件目に入っています`);return false;
+}
+let dupAsk=null;
+function dupHTML(){const s=S(dupAsk.sid);return `<h3><span>もう一度追加しますか？</span></h3>
+  <p class="meta" style="font-size:14px;line-height:1.8;margin:0">「${esc(s.name)}」はすでに DAY ${dupAsk.di+1} の ${dupAsk.at+1}件目に入っています。<br>行きと帰りなど、同じ場所を2回使う場合は追加してください。</p>
+  <div class="sticky-foot"><button class="btn" data-act="close">やめる</button><button class="btn pri" data-act="dupYes">追加する</button></div>`}
 function addToDay(sid,di=ui.day,silent){
   const d=P().days[di],prev=d.items.length?S(d.items.at(-1).spot):null;
   d.items.push({id:uid(),spot:sid,mode:prev?suggestMode(prev,S(sid)):'walk'});
@@ -622,8 +692,8 @@ function addToDay(sid,di=ui.day,silent){
 
 /* ================= 描画 ================= */
 function render(){
-  renderHeader();renderTabs();renderPlan();renderStock();renderProg();renderQuick();saveUI();
-  ['plan','stock','prog'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
+  renderHeader();renderTabs();renderPlan();renderStock();renderProg();renderKit();$('#kitBtn')?.classList.toggle('on',ui.tab==='kit');renderQuick();saveUI();
+  ['plan','stock','prog','kit'].forEach(k=>$('#pane-'+k).classList.toggle('on',ui.tab===k||(wide.matches&&ui.tab==='map'&&k==='plan')));
   $('#pane-map').classList.toggle('on',ui.tab==='map'||wide.matches);
   document.querySelector('.top').style.display=(ui.tab==='map'&&!wide.matches)?'none':'';
   if(ui.tab==='map'||wide.matches)drawMap();
@@ -647,12 +717,13 @@ function renderPlan(){
   <div class="day-set">
     <label class="pill">${I.cal}<input type="date" data-f="date" value="${d.date||''}" aria-label="日付"></label>
     <label class="pill">${I.clock}出発<input type="time" data-f="start" value="${d.start}" aria-label="出発時刻"></label>
+    <label class="pill">終了<input type="time" data-f="end" value="${d.end||''}" aria-label="終了（到着）時刻"></label>
     ${p.days.length>1?`<button class="ibtn flat" data-act="delDay" aria-label="この日を削除" style="color:var(--sub)">${I.trash}</button>`:''}
   </div>${geoBar()}`;
   if(!c.rows.length){
     h+=`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>まだ予定がありません</b>行きたい場所を候補から追加しましょう。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;
   }else{
-    h+=`<div class="card summary num"><div><small>START</small><b>${fmtT(toMin(d.start))}</b></div><div><small>END</small><b>${fmtT(c.end)}</b></div><div><small>MOVE</small><b>${durS(c.move)}</b></div><div><small>${c.rows.some(r=>r.it.v)?'VISITED':'SPOTS'}</small><b>${c.rows.some(r=>r.it.v)?c.rows.filter(r=>r.it.v).length+'<em>/'+c.rows.length+'</em>':c.rows.length}</b></div></div><div class="tl" id="tl">`;
+    h+=`<div class="card summary num"><div><small>START</small><b>${fmtT(toMin(d.start))}</b></div><div><small>END</small><b>${fmtT(c.end)}</b>${d.end?(()=>{const lim=toMin(d.end)+(toMin(d.end)<toMin(d.start)?1440:0),df=Math.round(lim-c.end);return `<em class="endnote ${df<0?'over':''}">${df<0?dur(-df)+'オーバー':'余裕 '+dur(df)}</em>`})():''}</div><div><small>MOVE</small><b>${durS(c.move)}</b></div><div><small>${c.rows.some(r=>r.it.v)?'VISITED':'SPOTS'}</small><b>${c.rows.some(r=>r.it.v)?c.rows.filter(r=>r.it.v).length+'<em>/'+c.rows.length+'</em>':c.rows.length}</b></div></div><div class="tl" id="tl">`;
     c.rows.forEach(({it,s,i,leg,arr,dep})=>{
       const m=MODES[it.mode];
       h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置未設定</span>'} ›</button></div>`:''}
@@ -722,8 +793,15 @@ function addCardHTML(){
   const pst=ui.pst;
   return `<div class="card search-card">
     <div class="ttl">＋ 候補を追加</div>
-    <div class="seg">${[['food','🍽 お店'],['spot','🏯 観光・スポット']].map(([v,l])=>`<button class="${(ui.addMode||'food')===v?'on':''}" data-act="addMode" data-v="${v}">${l}</button>`).join('')}</div>
-    ${(ui.addMode||'food')==='spot'?spotModeHTML():foodModeHTML()}
+    <div class="field">${I.pin}<input id="fArea" data-f="fArea" placeholder="エリア・駅名（任意）例：新宿" value="${esc(ui.fArea==='現在地'?'':ui.fArea)}" list="areaList" enterkeyhint="done"></div>
+    <div class="src2">
+      <button class="src" data-act="openTabelog"><span class="se">🍽</span><b>食事</b><small>食べログで探す ↗</small></button>
+      <button class="src" data-act="openGmaps"><span class="se">🗺️</span><b>観光・施設</b><small>Googleマップで探す ↗</small></button>
+    </div>
+    <div class="howto">見つけたら <b>「共有」→「Router」</b>で追加。<br>またはリンクを「コピー」して、下に貼り付け</div>
+    <div class="field"><input id="pasteIn" data-f="paste" placeholder="ここに貼り付け（URL・共有テキスト）" value="${esc(ui.pst?.text||'')}"><button class="btn sm pri" data-act="pasteClip">📋 貼り付け</button></div>
+    ${ui.pst?pasteConfirmHTML():''}
+    ${androidTip()}
   </div>`;
 }
 function foodModeHTML(){
@@ -941,7 +1019,7 @@ function addFromPaste(toDay){
   const name=(x.name||'').trim();if(!name){toast('お店の名前を入力してください');document.querySelector('[data-f="pst.name"]')?.focus();return}
   const p=P(),s={id:uid(),name,area:(x.area||'').trim(),genre:x.genre||'その他',stay:gOf(x.genre).stay,url:x.url,memo:'',photo:x.photo||''};
   if(hasLL(x)){s.lat=x.lat;s.lng=x.lng;if(x.approx)s.approx=1}
-  p.spots.push(s);if(toDay)addToDay(s.id,ui.day,1);
+  p.spots.push(s);if(toDay)tryAddToDay(s.id,ui.day);
   ui.pst=null;save();render();autoPhoto(s);
   toast(toDay?`DAY ${ui.day+1} の ${D().items.length}件目に追加しました`:'候補に追加しました');
 }
@@ -1027,8 +1105,8 @@ async function quickAdd(text){
 function openExt(kind){
   const area=(($('#fArea')?.value)||ui.fArea||'').replace('現在地','').trim(),g=ui.fGenre,kw=g==='グルメ'?'':g;
   // 食べログ内の検索URLは条件が引き継がれずトップに戻ることがあるため、食べログのページだけを確実に表示できるGoogle検索を使う
-  const url=kind==='tabelog'?`https://www.google.com/search?q=${encodeURIComponent([area,kw||'グルメ','site:tabelog.com'].filter(Boolean).join(' '))}`
-    :`https://www.google.com/maps/search/${encodeURIComponent((area+' '+g).trim())}`;
+  const url=kind==='tabelog'?`https://www.google.com/search?q=${encodeURIComponent([area,'グルメ','site:tabelog.com'].filter(Boolean).join(' '))}`
+    :`https://www.google.com/maps/search/${encodeURIComponent(area?area+' 観光スポット':'観光スポット')}`;
   ui.lastExt=url;ui.lastKind=kind;saveUI();renderQuick();
   openURL(url);
 }
@@ -1053,7 +1131,7 @@ function extLinks(){const k=(ui.fArea==='現在地'?'':ui.fArea)+' '+ui.fGenre;
 let MAP,LAYER,fitKey='';
 // 地図画像：国土地理院（淡色）→ OpenStreetMap → CARTO の順に、読めなければ自動で切り替え
 const TILES=[
-  {u:'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',o:{maxZoom:18,attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>'}},
+  {u:'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',o:{maxZoom:18,attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>'}},
   {u:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',o:{maxZoom:19,attribution:'© OpenStreetMap'}},
   {u:'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',o:{subdomains:'abcd',maxZoom:20,attribution:'© OpenStreetMap © CARTO'}}
 ];
@@ -1076,11 +1154,11 @@ function drawMap(){
   const p=P(),d=D(),c=calc(d),inDay=new Set(d.items.map(i=>i.spot)),pts=[];
   if(ui.showCands)p.spots.filter(s=>hasLL(s)&&!inDay.has(s.id)).forEach(s=>{
     const el=document.createElement('div');el.innerHTML=`<b>${esc(s.name)}</b><div class="meta">${gOf(s.genre).e} ${esc(s.genre||'')}</div><button class="btn sm pri" style="margin-top:8px">＋ DAY ${ui.day+1} に追加</button>`;
-    el.querySelector('button').onclick=()=>{addToDay(s.id);render()};
+    el.querySelector('button').onclick=()=>{if(tryAddToDay(s.id))render()};
     L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="dot"></div>',iconSize:[14,14]})}).addTo(LAYER).bindPopup(el);pts.push([s.lat,s.lng])});
   const route=[];
   c.rows.forEach(({s,i})=>{if(!hasLL(s))return;route.push([s.lat,s.lng]);
-    L.marker([s.lat,s.lng],{zIndexOffset:1000+i,icon:L.divIcon({className:'',html:`<div class="pin ${d.items[i].v?'done':''}"><span>${d.items[i].v?'✓':i+1}</span></div>`,iconSize:[30,30],iconAnchor:[15,32]})})
+    L.marker([s.lat,s.lng],{zIndexOffset:1000+i,icon:L.divIcon({className:'',html:`<div class="pin ${d.items[i].v?'done':''} ${s.approx?'approx':''}"><span>${d.items[i].v?'✓':i+1}</span></div>`,iconSize:[30,30],iconAnchor:[15,32]})})
      .addTo(LAYER).on('click',()=>hl(i))});
   if(route.length>1){L.polyline(route,{color:'#fff',weight:8,opacity:.9}).addTo(LAYER);L.polyline(route,{color:'#FF5B3A',weight:4,opacity:.95,dashArray:'1 0'}).addTo(LAYER)}
   const key=p.id+'|'+ui.day+'|'+route.length+'|'+pts.length;
@@ -1100,10 +1178,11 @@ const SHEETS=[];
 function openSheet(fn,onClose){
   const bg=document.createElement('div');bg.className='sheet-bg';
   const el=document.createElement('div');el.className='sheet';el.setAttribute('role','dialog');
-  el.innerHTML=`<div class="grabber"></div><div class="sb">${fn()}</div>`;
+  el.innerHTML=`<div class="grabber"></div><div class="sb">${fn()}</div>`;liftFoot(el);
   bg.onclick=closeSheet;document.body.append(bg,el);SHEETS.push({bg,el,fn,onClose});renderQuick();return el;
 }
-function refreshSheet(){const s=SHEETS.at(-1);if(s){const y=s.el.scrollTop;s.el.querySelector('.sb').innerHTML=s.fn();s.el.scrollTop=y}}
+function liftFoot(el){el.querySelector(':scope>.sticky-foot')?.remove();const f=el.querySelector('.sb .sticky-foot');if(f)el.append(f)}
+function refreshSheet(){const s=SHEETS.at(-1);if(s){const sb=s.el.querySelector('.sb'),y=sb.scrollTop;sb.innerHTML=s.fn();liftFoot(s.el);sb.scrollTop=y}}
 function closeSheet(){const s=SHEETS.pop();if(!s)return;s.onClose&&s.onClose();s.bg.classList.add('out');s.el.classList.add('out');setTimeout(()=>{s.bg.remove();s.el.remove();renderQuick()},200)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 let toastT;
@@ -1143,6 +1222,7 @@ function detailHTML(){
       <button class="btn danger" data-act="unplan" data-i="${pos}">予定から外す</button>`
      :`<button class="btn acc" data-act="toDay" data-sid="${s.id}">${I.plus}DAY ${ui.day+1} に追加</button>`}
     <button class="btn" data-act="editSpot" data-sid="${s.id}">${I.edit}編集</button>
+    <button class="btn danger" data-act="delSpotD" data-sid="${s.id}">${I.trash}候補から削除</button>
   </div>
   <div class="sticky-foot"><button class="btn" data-act="dCancel">キャンセル</button><button class="btn pri" data-act="close">OK</button></div>`;
 }
@@ -1162,7 +1242,7 @@ function modeHTML(){
 function planHTML(){
   const p=P();
   return `<h3><span>プラン</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
-  <div class="lbl" style="margin-top:0">プラン名</div><input data-f="title" value="${esc(p.title)}">
+  <div class="lbl" style="margin-top:0">プラン名</div><div class="field"><input data-f="title" id="titleIn" value="${esc(p.title)}" enterkeyhint="done"><button class="btn sm pri" data-act="titleOk">決定</button></div>
   <div class="lbl">マイプラン</div>
   ${db.plans.map(x=>`<button class="plan-item ${x.id===p.id?'on':''}" data-act="switchPlan" data-id="${x.id}"><span class="ic">${esc([...x.title][0]||'旅')}</span><span style="flex:1;min-width:0"><b>${esc(x.title)}</b>${x.gid?' <span class="live-badge">LIVE</span>':''}<div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${x.days.reduce((a,d)=>a+d.items.length,0)}スポット</div></span>${x.id===p.id?'<span class="meta">表示中</span>':''}</button>`).join('')}
   <button class="btn block" style="margin-top:8px" data-act="newPlan">${I.plus}新しいプランを作成</button>
@@ -1358,11 +1438,11 @@ function shareHTML(){
     <div style="font-weight:800;font-size:15px;margin-bottom:4px">⚡ リアルタイム共有 ${p.gid?'<span class="live-badge">LIVE</span>':''}</div>
     ${!(FIREBASE_CONFIG||window.__FB_MOCK)?`<div class="meta" style="line-height:1.7">リアルタイム共有はまだ準備中です（サーバー未設定）。下の「共有リンク」をお使いください。</div>`
     :p.gid?`<div class="meta" style="line-height:1.7">このプランはグループで共有中です。だれかが変更すると、全員の画面に自動で反映されます。</div>
-      <div class="lbl">あなたの表示名</div><input data-f="me" value="${esc(db.me||'')}" placeholder="例：たろう">
+      <div class="lbl">あなたの表示名</div><div class="field"><input data-f="me" id="meIn" value="${esc(db.me||'')}" placeholder="例：たろう" enterkeyhint="done"><button class="btn sm pri" data-act="meOk">決定</button></div>
       <button class="btn acc block" style="margin-top:12px" data-act="liveInvite">${I.link}メンバーを招待する</button>
       <button class="btn sm danger" style="margin-top:8px" data-act="liveLeave">このプランの共有をやめる</button>`
     :`<div class="meta" style="line-height:1.7">招待リンクを送ると、メンバー全員で同じプランを編集できます。だれかが変更すると、全員の画面に自動で反映されます。</div>
-      <div class="lbl">あなたの表示名</div><input data-f="me" value="${esc(db.me||'')}" placeholder="例：たろう">
+      <div class="lbl">あなたの表示名</div><div class="field"><input data-f="me" id="meIn" value="${esc(db.me||'')}" placeholder="例：たろう" enterkeyhint="done"><button class="btn sm pri" data-act="meOk">決定</button></div>
       <button class="btn acc block" style="margin-top:12px" data-act="liveStart">⚡ グループを作って招待する</button>`}
   </div>
   <div class="card" style="box-shadow:none;background:var(--bg)">
@@ -1489,7 +1569,7 @@ function joinHTML(){
   <div class="card" style="box-shadow:none;background:var(--bg)"><div class="dname" style="font-size:19px">${esc(x.title)}</div>
   <div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${cnt}スポット${x._live.name?' · '+esc(x._live.name)+'さんが最後に更新':''}</div></div>
   <div class="note" style="font-size:13px">${mine?'このグループには参加済みです。最新の内容を表示します。':'参加すると、メンバーの変更があなたの画面にも自動で反映されます。'}</div>
-  ${mine?'':`<div class="lbl">あなたの表示名</div><input data-f="me" value="${esc(db.me||'')}" placeholder="例：たろう">`}
+  ${mine?'':`<div class="lbl">あなたの表示名</div><div class="field"><input data-f="me" id="meIn" value="${esc(db.me||'')}" placeholder="例：たろう" enterkeyhint="done"><button class="btn sm pri" data-act="meOk">決定</button></div>`}
   <div class="sticky-foot"><button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="liveJoin">${mine?'開く':'参加する'}</button></div>`;
 }
 function joinNow(){
@@ -1515,8 +1595,98 @@ function introHTML(){
 }
 function openIntro(){ui.introStep=0;openSheet(introHTML)}
 
+/* ================= トラベルキット ================= */
+const QUICK=[
+  ['🚄','えきねっと','JR東日本の予約','https://www.eki-net.com/'],
+  ['🚅','スマートEX','東海道・山陽新幹線','https://smart-ex.jp/'],
+  ['🎫','EX予約','EX予約サービス','https://expy.jp/'],
+  ['🧭','NAVITIME','乗換・ルート検索','https://www.navitime.co.jp/'],
+  ['🚃','乗換案内','Yahoo!乗換案内','https://transit.yahoo.co.jp/'],
+  ['✈️','JAL','日本航空','https://www.jal.co.jp/jp/ja/'],
+  ['✈️','ANA','全日空','https://www.ana.co.jp/ja/jp/'],
+  ['☀️','天気','tenki.jp','https://tenki.jp/']
+];
+const SOS=[
+  ['🚑','救急・火事','119','tel:119'],['🚓','警察（事件・事故）','110','tel:110'],
+  ['🩺','救急相談（病院に行くべきか）','#7119','tel:%237119'],['👶','子どもの急病相談','#8000','tel:%238000'],
+  ['📞','警察相談（緊急でない）','#9110','tel:%239110'],['🚗','JAF ロードサービス','#8139','tel:%238139'],
+  ['🛣️','道路の異常・落下物','#9910','tel:%239910'],['🌊','海の事故','118','tel:118'],
+  ['📮','災害用伝言ダイヤル','171','tel:171']
+];
+const KCAT=['チケット','予約','地図','メモ','その他'];
+let shots=[],shotsLoaded=false,shotView=null;
+async function loadShots(){if(shotsLoaded)return;try{shots=(await IDB.get('shots'))||[]}catch(_){shots=[]}shotsLoaded=true;renderKit()}
+async function saveShots(){try{await IDB.set('shots',shots)}catch(_){toast('保存できませんでした（容量不足の可能性）')}}
+function renderKit(){
+  const el=$('#pane-kit');if(!el)return;if(ui.tab!=='kit'&&!el.innerHTML){}
+  if(!shotsLoaded){loadShots()}
+  const p=P(),mine=shots.filter(x=>x.plan===p.id||ui.kAll),cat=ui.kCat||'';
+  const list=mine.filter(x=>!cat||x.cat===cat).sort((a,b)=>b.at-a.at);
+  // エリアごとの代表地点（緊急時の検索用）
+  const areas={};p.spots.filter(hasLL).forEach(s=>{const k=s.area||'旅先';if(!areas[k])areas[k]=s});
+  const hotels=p.spots.filter(s=>s.genre==='宿');
+  el.innerHTML=`
+  <div class="sec-head" style="margin-top:8px"><h2>トラベルキット</h2></div>
+  <div class="card kit">
+    <div class="ktl">クイックアクセス</div>
+    <div class="qgrid">${QUICK.map(([e,n,d,u])=>`<a class="qa" href="${u}" target="_blank" rel="noopener"><span>${e}</span><b>${n}</b><small>${d}</small></a>`).join('')}</div>
+  </div>
+  <div class="card kit">
+    <div class="ktl"><span>チケット・スクショ</span><button class="btn sm pri" data-act="shotAdd">${I.plus}追加</button></div>
+    <div class="hscroll" style="margin-bottom:10px"><button class="chip ${cat?'':'on'}" data-act="kCat" data-v="">すべて</button>${KCAT.map(c=>`<button class="chip ${cat===c?'on':''}" data-act="kCat" data-v="${c}">${c}<small>${mine.filter(x=>x.cat===c).length||''}</small></button>`).join('')}</div>
+    ${list.length?`<div class="sgrid">${list.map(x=>`<button class="shot" data-act="shotOpen" data-id="${x.id}"><img src="${x.data}" alt=""><span class="lb">${esc(x.label||x.cat)}</span><span class="ct">${x.cat}</span></button>`).join('')}</div>`
+      :`<div class="empty" style="padding:18px">飛行機・新幹線のQRコードや予約画面のスクショを保存して、ラベルですぐに取り出せます。</div>`}
+    <label class="meta" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" data-f="kAll" ${ui.kAll?'checked':''} style="width:auto"> ほかのプランの画像も表示</label>
+  </div>
+  <div class="card kit">
+    <div class="ktl">緊急連絡先</div>
+    <div class="sos">${SOS.map(([e,n,num,tel],i)=>`<a class="sosr ${i<2?'hot':''}" href="${tel}"><span class="se">${e}</span><span class="sn">${n}</span><b>${num}</b></a>`).join('')}</div>
+    <div class="note">#7119 は地域によって使えない場合があります。つながらない場合は、お住まい・滞在先の自治体の救急相談窓口をご利用ください。</div>
+    ${Object.keys(areas).length?`<div class="ktl" style="margin-top:16px">旅先の近くで探す</div>
+      ${Object.entries(areas).map(([a,s])=>`<div class="near"><b>📍 ${esc(a)}</b><div class="row">${[['🏥','病院','救急病院'],['👮','警察','警察署 交番'],['💊','薬局','薬局'],['🏪','コンビニ','コンビニ'],['🏧','ATM','ATM']].map(([e,l,q])=>`<a class="btn sm" href="https://www.google.com/maps/search/${encodeURIComponent(q)}/@${s.lat},${s.lng},15z" target="_blank" rel="noopener">${e} ${l}</a>`).join('')}</div></div>`).join('')}`:'<div class="note">予定に場所を追加すると、旅先の近くの病院・警察・薬局をすぐ探せるようになります。</div>'}
+    ${hotels.length?`<div class="ktl" style="margin-top:16px">宿泊先</div>${hotels.map(h=>`<div class="near"><b>🏨 ${esc(h.name)}</b><div class="row"><a class="btn sm" href="${gsearch(h.name+' 電話番号')}" target="_blank" rel="noopener">📞 電話番号を調べる</a><a class="btn sm" href="${gmaps(h)}" target="_blank" rel="noopener">${I.pin}地図</a></div></div>`).join('')}`:''}
+    <div class="ktl" style="margin-top:16px"><span>自分の連絡先メモ</span><button class="btn sm" data-act="ctAdd">${I.plus}追加</button></div>
+    ${(p.contacts||[]).map((c,i)=>`<div class="sosr"><span class="se">👤</span><span class="sn">${esc(c.name)}</span><a href="tel:${esc(c.tel)}"><b>${esc(c.tel)}</b></a><button class="qx" data-act="ctDel" data-i="${i}" aria-label="削除">${I.x}</button></div>`).join('')||'<div class="note">宿・同行者・保険会社など、旅先で使う番号を登録できます。</div>'}
+  </div>`;
+}
+function shotHTML(){
+  const x=shots.find(y=>y.id===shotView);if(!x)return '';
+  return `<div class="shotv"><img src="${x.data}" alt=""></div>
+  <div class="field" style="margin-top:10px"><input id="shotLabel" value="${esc(x.label||'')}" placeholder="ラベル（例：行きの新幹線）" enterkeyhint="done"><button class="btn sm pri" data-act="shotSave">決定</button></div>
+  <div class="hscroll" style="margin-top:8px">${KCAT.map(c=>`<button class="chip ${x.cat===c?'on':''}" data-act="shotCat" data-v="${c}">${c}</button>`).join('')}</div>
+  <div class="note">QRコードを読み取ってもらうときは、画面の明るさを上げてください。</div>
+  <div class="sticky-foot"><button class="ibtn" data-act="shotDel" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button><button class="btn pri" data-act="close">閉じる</button></div>`;
+}
+let ctDraft=null;
+function ctHTML(){return `<h3><span>連絡先を追加</span></h3>
+  <div class="lbl" style="margin-top:0">名前</div><input id="ctName" placeholder="例：〇〇旅館、同行者の山田さん">
+  <div class="lbl">電話番号</div><input id="ctTel" type="tel" placeholder="例：03-1234-5678">
+  <div class="sticky-foot"><button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="ctSave">追加する</button></div>`}
+$('#fileShot').onchange=async e=>{
+  const files=[...e.target.files];e.target.value='';if(!files.length)return;
+  for(const f of files){try{const url=URL.createObjectURL(f),img=new Image();img.src=url;await img.decode();
+    const k=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);
+    shots.push({id:uid(),plan:P().id,cat:ui.kCat||'チケット',label:f.name.replace(/\.[^.]+$/,'').slice(0,30),data:c.toDataURL('image/jpeg',.9),at:Date.now()})}catch(_){toast('読み込めない画像がありました')}}
+  await saveShots();renderKit();
+  if(files.length===1){shotView=shots.at(-1).id;openSheet(shotHTML);setTimeout(()=>{const i=$('#shotLabel');i&&(i.select(),i.focus())},300)}else toast(`${files.length}枚を保存しました`);
+};
+
 /* ================= 操作 ================= */
 const ACT={
+  kCat:el=>{ui.kCat=el.dataset.v;renderKit()},
+  shotAdd:()=>$('#fileShot').click(),
+  shotOpen:el=>{shotView=el.dataset.id;openSheet(shotHTML)},
+  shotSave:async()=>{const x=shots.find(y=>y.id===shotView);if(!x)return;x.label=($('#shotLabel')?.value||'').trim();await saveShots();renderKit();document.activeElement?.blur();toast('ラベルを保存しました')},
+  shotCat:async el=>{const x=shots.find(y=>y.id===shotView);if(!x)return;x.cat=el.dataset.v;await saveShots();renderKit();refreshSheet()},
+  shotDel:async()=>{const i=shots.findIndex(y=>y.id===shotView);if(i<0)return;const [x]=shots.splice(i,1);await saveShots();closeSheet();renderKit();toast('画像を削除しました',async()=>{shots.push(x);await saveShots();renderKit()})},
+  ctAdd:()=>{openSheet(ctHTML);setTimeout(()=>$('#ctName')?.focus(),300)},
+  ctSave:()=>{const n=($('#ctName')?.value||'').trim(),t=($('#ctTel')?.value||'').trim();if(!n||!t)return toast('名前と電話番号を入力してください');const p=P();(p.contacts=p.contacts||[]).push({name:n,tel:t});save();closeSheet();renderKit();toast('連絡先を追加しました')},
+  ctDel:el=>{const sn=snap(),p=P();p.contacts.splice(+el.dataset.i,1);save();renderKit();toast('連絡先を削除しました',restore(sn))},
+  titleOk:()=>{const v=($('#titleIn')?.value||'').trim();P().title=v||'無題のプラン';save();render();document.activeElement?.blur();toast('プラン名を保存しました');refreshSheet()},
+  meOk:()=>{db.me=($('#meIn')?.value||'').trim().slice(0,20);save(false);document.activeElement?.blur();toast('表示名を保存しました')},
+  delSpotD:el=>{const sn=detail?.snap||snap(),p=P(),id=el.dataset.sid,n=S(id)?.name;p.spots=p.spots.filter(x=>x.id!==id);p.days.forEach(d=>d.items=d.items.filter(i=>i.spot!==id));
+    if(detail)detail.snap=null;save();closeSheet();render();toast(`「${n}」を削除しました`,restore(sn))},
   setGenre:el=>{const s=S(detail.sid);if(!s)return;const prev=gOf(s.genre).stay;s.genre=el.dataset.g;if(+s.stay===prev)s.stay=gOf(s.genre).stay;save();refreshSheet();render()},
   install:async()=>{if(!installEvt)return toast('ブラウザのメニューから「アプリをインストール」を選んでください');installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;renderStock();if(r.outcome==='accepted')toast('インストールしました！共有メニューに Router が出ます')},
   geoHide:()=>{ui.geoHide=1;saveUI();render();toast('右上の📍ボタンからいつでもONにできます')},
@@ -1561,7 +1731,8 @@ const ACT={
   move:el=>{const d=D(),i=d.items.findIndex(x=>x.spot===detail.sid&&(detail.i==null||d.items.indexOf(x)===detail.i)),j=i+ +el.dataset.v;
     if(i<0||j<0||j>=d.items.length)return;[d.items[i],d.items[j]]=[d.items[j],d.items[i]];detail.i=j;save();render();refreshSheet()},
   unplan:el=>{const s=snap(),d=D(),[x]=d.items.splice(+el.dataset.i,1);save();closeSheet();render();toast(`「${S(x.spot).name}」を予定から外しました`,restore(s))},
-  toDay:el=>{addToDay(el.dataset.sid);if(SHEETS.length&&detail)refreshSheet();render()},
+  toDay:el=>{if(tryAddToDay(el.dataset.sid)){if(SHEETS.length&&detail)refreshSheet();render()}},
+  dupYes:()=>{const x=dupAsk;closeSheet();addToDay(x.sid,x.di);render();if(detail)setTimeout(refreshSheet,220)},
   editSpot:el=>{detail&&(detail.snap=null);closeSheet();setTimeout(()=>openForm(S(el.dataset.sid)),210)},
   newSpot:()=>openForm(),
   close:()=>closeSheet(),
@@ -1607,6 +1778,8 @@ const ACT={
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const f=ACT[el.dataset.act];if(f){f(el,e)}});
 document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target.id==='fArea'){e.preventDefault();ui.fArea=e.target.value;(ui.addMode==='spot')?find():openExt('tabelog')}
+  if(e.key==='Enter'&&e.target.id==='titleIn'){e.preventDefault();ACT.titleOk()}
+  if(e.key==='Enter'&&e.target.id==='meIn'){e.preventDefault();ACT.meOk()}
   if(e.key==='Enter'&&e.target.id==='spotQ'){e.preventDefault();ui.spotQ=e.target.value;spotSearch()}
   if(e.key==='Enter'&&e.target.id==='pasteIn'){e.preventDefault();clearTimeout(pasteT);handlePaste(e.target.value)}
   if(e.key==='Enter'&&e.target.id==='locQ'){e.preventDefault();ACT.locSearch()}
@@ -1618,6 +1791,7 @@ document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f==='fArea'){ui.fArea=e.target.value;return}
   if(f==='spotQ'){ui.spotQ=e.target.value;return}
   if(f==='q2'){ui.q2=e.target.value;renderStockList();return}
+  if(f==='kAll'){ui.kAll=e.target.checked;renderKit();return}
   if(f==='paste'){clearTimeout(pasteT);const v=e.target.value;pasteT=setTimeout(()=>{if(v.trim().length>=2)handlePaste(v)},900);return}
   if(f==='pst.name'&&ui.pst){ui.pst.name=e.target.value;return}
   if(f==='pst.area'&&ui.pst){ui.pst.area=e.target.value;return}
@@ -1629,6 +1803,7 @@ document.addEventListener('change',e=>{const f=e.target.dataset.f,p=P(),d=D();
   if(f==='date'){const prev=d.date;d.date=e.target.value;
     p.days.forEach((x,i)=>{if(i>ui.day&&(!x.date||(prev&&x.date===addDays(prev,i-ui.day))))x.date=addDays(d.date,i-ui.day)});save();render()}
   else if(f==='start'){d.start=e.target.value||'09:00';save();render()}
+  else if(f==='end'){d.end=e.target.value||'';save();render()}
   else if(f==='title')renderTabs();
   else if(f==='sort2'){ui.sort2=e.target.value;renderStockList()}
   else if((f==='pst.name'||f==='pst.area')&&ui.pst&&ui.pst.locLabel!=='Googleマップの位置'){ui.pst.lat=ui.pst.lng=null;locate(ui.pst)}
@@ -1657,7 +1832,7 @@ function progress(d){
 function raceHTML(g,d){
   const m=Math.round(g.delay/60e3),am=Math.abs(m),span=Math.max(1,g.end-g.start);
   const pos=t=>Math.max(0,Math.min(100,(t-g.start)/span*100));
-  let cls='ok',emo='👌',big='ほぼ予定どおり',sub='';
+  let cls='ok',emo='',big='ほぼ予定どおり',sub='';
   const fin=new Date(g.end+g.delay);
   if(g.state==='pre'){const w=g.start-g.now;cls='ok';emo='⏳';big=w>864e5?`スタートまで あと${Math.ceil(w/864e5)}日`:`スタートまで あと${dur(w/60e3)}`;sub=`${fmtDate(d.date||TODAY())} ${fmtT(toMin(d.start))} スタート`}
   else if(g.state==='goal'){emo='🏁';big='ゴール！';cls=m>5?'late':m<-5?'early':'ok';sub=am<=5?'ほぼ予定どおりにフィニッシュ':`予定より${am}分${m>0?'おそく':'はやく'}フィニッシュ`}
@@ -1678,13 +1853,13 @@ function raceHTML(g,d){
     if(cand){const cut=Math.min(Math.ceil(m/5)*5,cand.s.stay-15);if(cut>=5)rec=`<button class="btn recover" data-act="recover" data-i="${cand.i}" data-m="${cut}">💡 <span><b>リカバリー案</b><br>「${esc(cand.s.name)}」の滞在を${cut}分短くして遅れを取り戻す</span></button>`}
   }
   return `<div class="card race">
-    <div class="eyebrow">GHOST RACE · DAY ${ui.day+1}</div>
-    <div class="race-status ${cls}"><span class="emo">${emo}</span><div><b class="num">${big}</b><small>${sub}</small></div></div>
+    <div class="eyebrow">PACE · DAY ${ui.day+1}</div>
+    <div class="race-status ${cls}"><span class="sdot"></span><div><b class="num">${big}</b><small>${sub}</small></div></div>
     <div class="track"><div class="rail"></div><div class="fill" style="width:${youP}%"></div>
       ${g.rows.map(r=>`<div class="cp ${r.it.v?'done':''}" role="button" data-act="detail" data-sid="${r.s.id}" data-i="${r.i}" style="left:${pos(r.A)}%;cursor:pointer" title="${esc(r.s.name)}"></div>`).join('')}
-      <div class="flag">🏁</div>
-      ${g.state!=='goal'&&g.state!=='pre'?`<div class="tok ghost" style="left:${ghostP}%"><span class="ic">👻</span><i>予定</i></div>`:''}
-      <div class="tok runner ${g.state==='at'||g.state==='pre'||g.state==='goal'?'stop':''}" style="left:${youP}%"><span class="ic pkw">${pinkun(30,"",false)}</span><i>あなた</i></div>
+      <div class="goal"></div>
+      ${g.state!=='goal'&&g.state!=='pre'?`<div class="pmark" style="left:${ghostP}%"><i>予定</i></div>`:''}
+      <div class="ymark" style="left:${youP}%"><i>現在</i></div>
       ${g.state!=='goal'&&g.state!=='pre'&&am>=5?`<div class="gap-tag" style="left:${(ghostP+youP)/2}%">${m>0?'◀':'▶'} ${am}分</div>`:''}
     </div>
     <div class="race-foot">${next?`<span>次は <b role="button" data-act="detail" data-sid="${next.s.id}" data-i="${next.i}" style="text-decoration:underline;text-underline-offset:3px;cursor:pointer">${esc(next.s.name)}</b></span><span class="num">予定 ${fmtT(next.arr)} 着${g.state!=='pre'?` · ${next.A-g.now>0?'あと'+dur((next.A-g.now)/60e3):dur((g.now-next.A)/60e3)+'超過'}`:''}</span>`:`<span>おつかれさまでした！</span><span>${g.rows.filter(r=>r.it.v).length}/${g.rows.length} スポット訪問</span>`}</div>
@@ -1802,6 +1977,13 @@ async function ensureLibs(){
   }
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
+// 予定画面：左右スワイプで日を切り替える
+(()=>{let sx=0,sy=0,ok=false;const el=$('#pane-plan');
+  el.addEventListener('touchstart',e=>{const t=e.touches[0];ok=!e.target.closest('.hscroll,[data-handle],input,textarea,select,.sortable-chosen');sx=t.clientX;sy=t.clientY},{passive:true});
+  el.addEventListener('touchend',e=>{if(!ok)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;const n=P().days.length,to=ui.day+(dx<0?1:-1);if(to<0||to>=n)return;
+    ui.day=to;ui.hl=null;render();el.classList.remove('slide-l','slide-r');void el.offsetWidth;el.classList.add(dx<0?'slide-l':'slide-r')},{passive:true});
+})();
 let errT=0;
 window.addEventListener('error',e=>{if(Date.now()-errT<8000||!e.message||/Script error|ResizeObserver/.test(e.message))return;errT=Date.now();toast('うまく動かなかった操作があります。もう一度お試しください')});
 window.addEventListener('unhandledrejection',()=>{});
