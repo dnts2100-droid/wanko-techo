@@ -435,7 +435,7 @@ details.more summary::before{content:"＋ "}details.more[open] summary::before{c
 .howto{font-size:12.5px;color:var(--sub);line-height:1.7;text-align:center}
 .howto b{color:var(--ink)}
 /* 日の切り替えアニメーション */
-#pane-plan.slide-l{animation:slL .28s ease}#pane-plan.slide-r{animation:slR .28s ease}
+.pane.slide-l,.carousel.slide-l{animation:slL .28s ease}.pane.slide-r,.carousel.slide-r{animation:slR .28s ease}
 @keyframes slL{from{opacity:.3;transform:translateX(30px)}}@keyframes slR{from{opacity:.3;transform:translateX(-30px)}}
 /* 終了時刻 */
 .endnote{display:block;font-style:normal;font-size:10px!important;font-weight:800;color:#1F9D74;margin-top:1px}
@@ -533,6 +533,8 @@ body.at-home #pane-map{display:none!important}
 .sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
 .sw.on{background:#1F9D74}.sw.on::after{transform:translateX(18px)}
 .here b{font-weight:900}
+
+.daypill{margin-top:12px;font-size:12.5px;color:var(--sub);display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}.daypill b{color:var(--ink)}.daypill span{font-size:11px;margin-left:auto}
 
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
@@ -825,6 +827,7 @@ function renderStock(){
   const open=ui.addOpen??!n;
   let h=open?addCardHTML():`<button class="card add-bar" data-act="addToggle">🍽 <b>お店・スポットを追加</b><span class="meta">食べログ・Googleマップ</span><span class="chev">＋</span></button>`;
   if(open&&n)h=`<div class="add-close"><button class="btn sm" data-act="addToggle">追加パネルを閉じる</button></div>`+h;
+  if(P().days.length>1)h+=`<div class="daypill">＋ の追加先：<b>DAY ${ui.day+1}${D().date?'（'+fmtDate(D().date)+'）':''}</b><span>左右スワイプで切り替え</span></div>`;
   h+=`<div class="sec-head"><h2>候補<span>${n}</span></h2><button class="btn sm" data-act="newSpot">${I.plus}手入力</button></div>`;
   if(!n){$('#pane-stock').innerHTML=h+`<div class="card empty">${pinkun(88)}<b>候補はまだありません</b>上の手順で気になるお店をストックしましょう。</div>`;return}
   const areas=[...new Set(p.spots.map(s=>s.area||'エリア未設定'))],genres=[...new Set(p.spots.map(s=>s.genre||'その他'))];
@@ -2222,12 +2225,17 @@ async function ensureLibs(){
   if(!window.Sortable)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js');
 }
 // 予定画面：左右スワイプで日を切り替える
-(()=>{let sx=0,sy=0,ok=false;const el=$('#pane-plan');
-  el.addEventListener('touchstart',e=>{const t=e.touches[0];ok=!e.target.closest('.hscroll,[data-handle],input,textarea,select,.sortable-chosen');sx=t.clientX;sy=t.clientY},{passive:true});
+['plan','prog','stock','map'].forEach(k=>{let sx=0,sy=0,ok=false;const el=$('#pane-'+k);
+  el.addEventListener('touchstart',e=>{const t=e.touches[0];
+    // 地図は地図そのものの操作と重なるので、下のカード列の外側（日付ボタン付近）でだけ反応させない＝地図では日付ボタンとカードの空き部分のみ
+    ok=e.touches.length===1&&!e.target.closest('.hscroll,.gantt,.carousel,#map,[data-handle],input,textarea,select,.sortable-chosen,.sheet');sx=t.clientX;sy=t.clientY},{passive:true});
   el.addEventListener('touchend',e=>{if(!ok)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
-    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;const n=P().days.length,to=ui.day+(dx<0?1:-1);if(to<0||to>=n)return;
-    ui.day=to;ui.hl=null;render();el.classList.remove('slide-l','slide-r');void el.offsetWidth;el.classList.add(dx<0?'slide-l':'slide-r')},{passive:true});
-})();
+    if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.6)return;const n=P().days.length,to=ui.day+(dx<0?1:-1);if(n<2)return;
+    if(to<0||to>=n){toast(to<0?'DAY 1 です':`DAY ${n} が最後の日です`);return}
+    ui.day=to;ui.hl=null;fitKey='';render();
+    const tg=k==='map'?$('#carousel'):el;tg.classList.remove('slide-l','slide-r');void tg.offsetWidth;tg.classList.add(dx<0?'slide-l':'slide-r');
+    if(k!=='plan')toast(`DAY ${to+1}${P().days[to].date?'（'+fmtDate(P().days[to].date)+'）':''} に切り替えました`)},{passive:true});
+});
 let errT=0;
 window.addEventListener('error',e=>{if(Date.now()-errT<8000||!e.message||/Script error|ResizeObserver/.test(e.message))return;errT=Date.now();toast('うまく動かなかった操作があります。もう一度お試しください')});
 window.addEventListener('unhandledrejection',()=>{});
