@@ -1992,8 +1992,17 @@ function renderMoney(){
   ${Object.keys(byDay).sort().map(di=>`<div class="sec-head" style="margin:20px 0 8px"><h2 style="font-size:16px">${p.days.length>1?`DAY ${+di+1}`:'支払い'}</h2></div>
     <div class="card slist">${byDay[di].map(it=>`<div class="srow" role="button" data-act="payEdit" data-id="${it.id}">${it.sid&&S(it.sid)?ph(S(it.sid),'sth'):`<div class="ph sth" style="--h:30"><span>💴</span></div>`}
       <div class="info"><div class="name">${esc(itemLabel(it))}</div><div class="meta">${esc(memName(it.payer))}が支払い · ${modeText(it)}</div></div><b class="num">${yen(it.amt)}</b></div>`).join('')}</div>`).join('')}
+  ${m.items.length?`<button class="btn block danger" data-act="payClearAsk" style="margin-top:16px">${I.trash}支払いをまとめて削除</button>`:''}
   <div style="height:20px"></div>`;
 }
+function payClearHTML(){const m=M(),p=P(),n=m.items.length,nd=m.items.filter(x=>(x.day??0)===ui.day).length,total=m.items.reduce((a,x)=>a+x.amt,0);
+  return `<h3><span>支払いをまとめて削除</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
+  <p class="meta" style="font-size:13.5px;line-height:1.8;margin-top:0">記録した支払いと精算の結果を削除します。メンバーは残ります。${p.gid?'<br>共有中のプランでは、<b>メンバー全員の画面からも削除</b>されます。':''}</p>
+  <div class="dpl">
+    ${p.days.length>1&&nd?`<button class="dp" data-act="payClear" data-v="day"><span><b>DAY ${ui.day+1} の支払いだけ</b><small>${nd}件 · ${yen(m.items.filter(x=>(x.day??0)===ui.day).reduce((a,x)=>a+x.amt,0))}</small></span><em style="color:#E5484D">${I.trash}削除</em></button>`:''}
+    <button class="dp" data-act="payClear" data-v="all"><span><b>すべての支払い</b><small>${n}件 · ${yen(total)}</small></span><em style="color:#E5484D">${I.trash}削除</em></button>
+  </div>
+  <div class="sticky-foot"><button class="btn" data-act="close">キャンセル</button></div>`}
 let pay=null;
 function payHTML(){
   const m=M(),x=pay,d=P().days[ui.day],spots=d.items.map((i,k)=>({sid:i.spot,k,s:S(i.spot)})).filter(o=>o.s);
@@ -2033,6 +2042,10 @@ function moneyText(){const p=P(),m=M(),tr=settle(),total=m.items.reduce((a,x)=>a
 
 /* ================= 操作 ================= */
 const ACT={
+  payClearAsk:()=>openSheet(payClearHTML),
+  payClear:el=>{const sn=snap(),m=M(),v=el.dataset.v,before=m.items.length;
+    m.items=v==='day'?m.items.filter(x=>(x.day??0)!==ui.day):[];m.done={};save();closeSheet();render();
+    toast(`${before-m.items.length}件の支払いを削除しました`,restore(sn))},
   epPick:el=>{epKey=el.dataset.k;ui.epQ='';openSheet(epHTML)},
   epSet:el=>{const id=el.dataset.id||null,p=P(),d=D(),i=ui.day,k=epKey;const msg=[];
     if(k==='hotel'){d.hotel=id;if(id){if(!d.to){d.to=id;msg.push('この日の終着地点')}const nx=p.days[i+1];if(nx&&!nx.from){nx.from=id;msg.push(`DAY ${i+2} の出発地点`)}}}
