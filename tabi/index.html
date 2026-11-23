@@ -743,7 +743,7 @@ const PROFILE={walk:'foot',bike:'bike',car:'car',taxi:'car',bus:'car'};
 let RT={};try{RT=JSON.parse(localStorage.getItem('router-rt'))||{}}catch(_){}
 const rtKey=(a,b,pf)=>`${pf}|${(+a.lat).toFixed(5)},${(+a.lng).toFixed(5)}|${(+b.lat).toFixed(5)},${(+b.lng).toFixed(5)}`;
 function routeOf(a,b,mode){const pf=PROFILE[mode];if(!pf||!hasLL(a)||!hasLL(b))return null;return RT[rtKey(a,b,pf)]||null}
-function legInfo(a,b,mode){if(!hasLL(a)||!hasLL(b))return null;const m=MODES[mode]||MODES.walk;
+function legInfo(a,b,mode){if(!hasLL(a)||!hasLL(b)||a.approx||b.approx)return null;const m=MODES[mode]||MODES.walk;
   const r=routeOf(a,b,mode);
   if(r&&r.km!=null){const base=mode==='walk'?r.km/4.5*60:mode==='bike'?r.km/13*60:r.min*(mode==='bus'?1.35:1);return {km:r.km,min:Math.round(base+(r.km>.05?m.w:0)),road:true}}
   const km=dist(a,b)*m.f;return {km,min:Math.round(km/m.v*60+(km>0.05?m.w:0))}}
@@ -752,7 +752,7 @@ function legsOf(d){const c=[],F=d.from?S(d.from):null,T=d.to?S(d.to):null,its=d.
   if(F&&its[0])c.push([F,its[0].s,d.fromMode||suggestMode(F,its[0].s)]);
   its.forEach((x,i)=>{if(i>0)c.push([its[i-1].s,x.s,x.m])});
   const last=its.length?its.at(-1).s:F;if(T&&last&&last!==T)c.push([last,T,d.toMode||suggestMode(last,T)]);
-  return c.filter(([a,b])=>hasLL(a)&&hasLL(b));}
+  return c.filter(([a,b])=>hasLL(a)&&hasLL(b)&&!a.approx&&!b.approx);}
 function queueRoutes(d){
   legsOf(d).forEach(([a,b,m])=>{const pf=PROFILE[m];if(!pf)return;const k=rtKey(a,b,pf);if(!RT[k]&&!rtQ.some(x=>x.k===k))rtQ.push({k,a,b,pf})});
   if(!rtBusy&&rtQ.length)runRoutes();
@@ -855,7 +855,7 @@ const EPL={from:['🏁','出発地点'],to:['🏁','終着地点'],hotel:['🏨'
 function epRow(k,c,d){
   const sp=k==='from'?c.F:c.T,[e,l]=EPL[k],t=k==='from'?toMin(d.start):c.end;
   if(!sp)return `<button class="ep-add" data-act="epPick" data-k="${k}">${I.plus}${l}を設定</button>`;
-  const legBtn=(mode,leg)=>`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${k}">${MODES[mode].e} ${MODES[mode].n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置未設定</span>'} ›</button></div>`;
+  const legBtn=(mode,leg)=>`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${k}">${MODES[mode].e} ${MODES[mode].n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置が未確定</span>'} ›</button></div>`;
   const row=`<div class="stop ep"><div class="time num"><b>${fmtT(t)}</b><span>${k==='from'?'出発':'到着'}</span></div>
     <button class="ep-card" data-act="epPick" data-k="${k}"><span class="ep-ic">${sp.id===d.hotel||sp.id===P().days[P().days.indexOf(d)-1]?.hotel||sp.genre==='宿'?'🏨':e}</span><span class="ep-tx"><small>${l}${sp.id===d.hotel?'（宿泊先）':sp.id===P().days[P().days.indexOf(d)-1]?.hotel?'（前日の宿泊先）':''}</small><b>${esc(sp.name)}</b></span><span class="chev">›</span></button></div>`;
   if(k==='from')return row+(c.rows.length?legBtn(c.fromMode,c.fromLeg):'');
@@ -931,7 +931,7 @@ function renderPlan(){
     h+=epRow('from',c,d);
     c.rows.forEach(({it,s,i,leg,arr,dep})=>{
       const m=MODES[it.mode];
-      h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${leg.road?'':'約'}${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km${leg.road?' <span class="road">道のり</span>':''}`:' · <span class="warn">位置未設定</span>'} ›</button></div>`:''}
+      h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${leg.road?'':'約'}${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km${leg.road?' <span class="road">道のり</span>':''}`:' · <span class="warn">位置が未確定</span>'} ›</button></div>`:''}
       <div class="stop"><div class="time num"><b>${fmtT(arr)}</b><span>${fmtT(dep)}</span></div>
         <div class="stop-card ${it.v?'done':''} ${GEO.justDone===it.id?'pop':''}" role="button" tabindex="0" data-act="detail" data-sid="${s.id}" data-i="${i}">
           <div class="thumb-wrap">${ph(s,'th',it.v?`<div class="done-ov">${I.check}</div>`:'')}<span class="idx ${it.v?'done':''}">${it.v?'✓':i+1}</span></div>${it.v?'<span class="stamp">VISITED</span>':''}
@@ -1075,12 +1075,16 @@ const FOODWORD=[
   [/カラオケ/,'カラオケ']
 ];
 const foodGenre=t=>t?((FOODWORD.find(([re])=>re.test(t))||[])[1]||''):'';
-const GWORD=[[/居酒屋|焼鳥|焼き鳥|やきとり|串焼|大衆酒場|酒場/,'居酒屋'],[/焼肉|ホルモン/,'焼肉'],[/寿司|鮨|すし/,'寿司'],[/ラーメン|らーめん|つけ麺|中華そば/,'ラーメン'],[/カフェ|喫茶|珈琲|コーヒー/,'カフェ'],[/スイーツ|ケーキ|パン|甘味|和菓子|パフェ/,'スイーツ'],[/バー|BAR|Bar|ワイン|ビール/,'バー'],[/カラオケ/,'カラオケ'],[/温泉|銭湯|スパ|サウナ/,'温泉'],[/ホテル|旅館|民宿|宿泊|ゲストハウス|^宿/,'宿'],[/神社|寺|大社/,'寺社'],[/公園/,'公園'],[/駅|空港/,'駅・空港'],[/美術館|博物館|水族館|動物園|城|タワー|ツリー|展望|スカイ|遊園地|テーマパーク|記念館|庭園|植物園/,'観光']];
+const GWORD=[[/居酒屋|焼鳥|焼き鳥|やきとり|串焼|大衆酒場|酒場/,'居酒屋'],[/焼肉|ホルモン/,'焼肉'],[/寿司|鮨|すし/,'寿司'],[/ラーメン|らーめん|つけ麺|中華そば/,'ラーメン'],[/カフェ|喫茶|珈琲|コーヒー/,'カフェ'],[/スイーツ|ケーキ|パン|甘味|和菓子|パフェ/,'スイーツ'],[/バー|BAR|Bar|ワイン|ビール/,'バー'],[/カラオケ/,'カラオケ'],[/ホテル|旅館|民宿|宿泊|ゲストハウス|^宿/,'宿'],[/温泉|銭湯|スパ|サウナ/,'温泉'],[/神社|寺|大社/,'寺社'],[/食堂|料理|おばんざい|レストラン|食事処|割烹|料亭|定食|ダイニング|ビストロ|トラットリア/,'グルメ'],[/公園/,'公園'],[/駅|空港/,'駅・空港'],[/美術館|博物館|水族館|動物園|城|タワー|ツリー|展望|スカイ|遊園地|テーマパーク|記念館|庭園|植物園/,'観光']];
+// 住所の抜き出し：〒番号や「〇〇県〇〇市…番地」の部分を住所、それ以外を名前として扱う
+const ADDR_RE=/(?:〒\s*)?(?:\d{3}[-－]\d{4}\s*)?((?:東京都|北海道|大阪府|京都府|[^\s　、,]{2,3}県)[^\s　、,]*?[市区町村郡][^\s　、,]*?[0-9０-９]+(?:[-－−‐ー丁目番地号の][0-9０-９]*)*(?:番地|号)?)(?:\s*(?:[BＢ]?[0-9０-９]+(?:階|[FＦ])))?/;
+function splitAddr(t){const m=String(t||'').match(ADDR_RE);if(!m)return {addr:'',rest:t};return {addr:m[1],rest:t.replace(m[0],' ')}}
 function parsePaste(text){
   const t=String(text||'').trim();if(!t)return null;
   const url=(t.match(/https?:\/\/[^\s「」<>"]+/)||[''])[0];
-  let rest=t.replace(url,' ').replace(/【[^】]*食べログ[^】]*】|食べログ|Tabelog|Googleマップ|Google マップ/g,' ').replace(/\s+-\s*$/,'');
-  const r={url,name:'',area:'',genre:'',lat:null,lng:null};
+  const sa=splitAddr(t.replace(url,' '));
+  let rest=sa.rest.replace(/【[^】]*食べログ[^】]*】|食べログ|Tabelog|Googleマップ|Google マップ/g,' ').replace(/\s+-\s*$/,'');
+  const r={url,name:'',area:'',genre:'',lat:null,lng:null,addr:sa.addr};
   const sub=rest.match(/[（(\[［]\s*([^/／（）()\[\]［］]+?)\s*[/／]\s*([^（）()\[\]［］]+?)\s*[）)\]］]/);
   if(sub){r.area=sub[1].trim().replace(/駅$/,'');rest=rest.replace(sub[0],' ');r.genreText=sub[2]}
   else{const dash=rest.match(/\s[-–ー]\s*([^/／\s\[\]【】]+?)\s*[/／]\s*([^\s\[\]【】]+)/);
@@ -1097,6 +1101,7 @@ function parsePaste(text){
   const isFoodSite=/tabelog|hotpepper|retty|gnavi|食べログ/.test(url+' '+t);
   const fg=isFoodSite?foodGenre(r.genreText)||foodGenre(r.name)||'グルメ':null;
   r.genre=fg||(r.genreText&&(foodGenre(r.genreText)||(GWORD.find(([re])=>re.test(r.genreText))||[])[1]))||(GWORD.find(([re])=>re.test(r.name))||[])[1]||(/tabelog/.test(url)?'グルメ':/google|goo\.gl/.test(url)?(ui.addMode==='spot'||ui.lastKind==='gmaps'?'観光':'その他'):(FOODK.includes(ui.fGenre)||!url?ui.fGenre:'その他'));
+  if(!r.area&&r.addr)r.area=areaFromAddr(r.addr);
   if(!r.area&&ui.fArea&&ui.fArea!=='現在地')r.area=ui.fArea;
   return r;
 }
@@ -1126,7 +1131,9 @@ async function resolveMaps(url){
     if(og)Object.assign(r,fromTitle(og[1].replace(/&amp;/g,'&')));if(r.name)return r}catch(_){}
   return null;
 }
-const areaFromAddr=a=>{const m=(a||'').replace(/〒?\s*[\d０-９-－−]+/g,' ').match(/(?:東京都|北海道|大阪府|京都府|\S{2,3}県)\s*(\S+?[市区町村])/)||(a||'').match(/([^\s\d０-９〒]{1,6}?[市区町村])/);return m?m[1].replace(/^.*?[都道府県]/,''):''};
+const areaFromAddr=a=>{a=String(a||'').replace(/〒?\s*[0-9０-９]{3}[-－][0-9０-９]{4}/,'').trim();
+  const m=a.match(/^(?:東京都|北海道|大阪府|京都府|[^\s　]{2,3}?県)?\s*([^\s　]+?[市郡])?([^\s　0-9０-９]+?[区町村])?/);if(!m)return '';
+  const city=m[1]||'',w=m[2]||'';return city&&/区$/.test(w)?w:(city||w)}
 // 公開ページの情報（名前・住所・位置・写真）を読み取る。複数の中継サービスを同時に試し、最初に成功したものを使う
 // ▼ 自前の中継サーバー（Cloudflare Workers）のURL。設定すると最優先で使い、確実に読み取れる
 const PROXY_URL='https://router-proxy.dnts2100.workers.dev';
@@ -1175,7 +1182,13 @@ async function pageInfo(url){
   return info;
 }
 async function areaOf(lat,lng){try{const j=await getJSON(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&accept-language=ja&lat=${lat}&lon=${lng}`,8000);const a=j.address||{};return a.city_district||a.suburb||a.city||a.town||a.village||a.county||''}catch(_){return ''}}
+async function geocodeAddr(addr){
+  try{const j=await getJSON('https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(addr.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248))),8000);
+    if(j.length){const [lng,lat]=j[0].geometry.coordinates;return {lat,lng,label:j[0].properties.title}}}catch(_){}
+  return null;
+}
 async function enrich(r){
+  if(r.addr&&!hasLL(r)){const g=await geocodeAddr(r.addr);if(g){r.lat=g.lat;r.lng=g.lng;r.approx=false;r.locLabel=r.addr}}
   const isPage=r.url&&(isShortMaps(r.url)||/google\.[^/]+\/maps/.test(r.url));
   if(isPage&&(!r.name||!hasLL(r)||!r.photo)){
     if(!r.name)toast('ページから名前と場所を読み取り中…');
@@ -1303,14 +1316,14 @@ async function quickAdd(text){
   let noname=false;if(!r.name){r.name=isShortMaps(r.url)||/google/.test(r.url)?'Googleマップの場所':'名称未設定の場所';noname=true}
   const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||x.name===r.name);
   if(dup)return toast(`「${dup.name}」は追加済みです`);
-  const sn=snap(),sp={id:uid(),name:r.name,area:r.area||'',genre:r.genre||'その他',stay:gOf(r.genre).stay,url:r.url,memo:'',photo:r.photo||''};
+  const sn=snap(),sp={id:uid(),name:r.name,area:r.area||'',genre:r.genre||'その他',stay:gOf(r.genre).stay,url:r.url,memo:r.addr?'住所 '+r.addr:'',addr:r.addr||'',photo:r.photo||''};
   if(hasLL(r)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1}
   p.spots.push(sp);save();render();
   navigator.vibrate&&navigator.vibrate(30);
   toast(noname?'追加しました（名前を読み取れなかったので、候補から編集してください）':`「${sp.name}」を候補に追加しました`,restore(sn));
   // ここから先はバックグラウンドで：Googleマップの正確な位置 → 店名での位置検索 → 写真
   (async()=>{
-    if(!hasLL(sp)&&r.url&&!/tabelog/.test(r.url)){const x=await enrich(r);if(hasLL(x)&&P().spots.includes(sp)){sp.lat=x.lat;sp.lng=x.lng;if(!sp.area&&x.area)sp.area=x.area;if(!sp.photo&&x.photo)sp.photo=x.photo;save(false);render()}}
+    if(!hasLL(sp)&&(r.addr||r.url&&!/tabelog/.test(r.url))){const x=await enrich(r);if(hasLL(x)&&P().spots.includes(sp)){sp.lat=x.lat;sp.lng=x.lng;if(!sp.area&&x.area)sp.area=x.area;if(!sp.photo&&x.photo)sp.photo=x.photo;save(false);render()}}
     if(!hasLL(sp)){await locate(r);if(hasLL(r)&&P().spots.includes(sp)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1;save(false);render()}}
     if(!sp.area&&hasLL(sp)&&!sp.approx){const a=await areaOf(sp.lat,sp.lng);if(a&&P().spots.includes(sp)){sp.area=a;save(false);render()}}
     autoPhoto(sp);
@@ -1564,9 +1577,9 @@ async function autoPhoto(s,force){
   try{if(url)throw 'done';
     if(s.wiki&&s.wiki.includes(':'))url=await wikiThumb(s.wiki.split(':')[0],s.wiki.split(':').slice(1).join(':'));
     if(!url&&!FOOD.has(s.genre))url=await wikiThumb('ja',s.name);
-    if(!url&&!FOOD.has(s.genre)&&hasLL(s)){
+    if(!url&&!FOOD.has(s.genre)&&s.genre!=='宿'&&hasLL(s)&&!s.approx){
       const j=await getJSON(`https://ja.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=geosearch&gscoord=${s.lat}|${s.lng}&gsradius=400&gslimit=15`,10000);
-      const n=norm(s.name),hit=(j.query?.geosearch||[]).find(g=>{const t=norm(g.title);return t.length>1&&(t.includes(n)||n.includes(t))});
+      const n=norm(s.name),hit=(j.query?.geosearch||[]).find(g=>{const t=norm(g.title);return t.length>=2&&n.length<=20&&(t===n||t.includes(n)||(n.includes(t)&&t.length>=n.length*.6))});
       if(hit)url=await wikiThumb('ja',hit.title);
     }
   }catch(_){}
@@ -1575,6 +1588,14 @@ async function autoPhoto(s,force){
 }
 // 以前に追加した食べログ由来の候補で、エリアから大きく離れた位置になっているものを自動で見直す
 async function recheckSpots(){
+  for(const sp of P().spots){
+    if(sp.achk)continue;sp.achk=1;
+    const sa=splitAddr(sp.name);
+    if(sa.addr){const nm=sa.rest.replace(/\s+/g,' ').trim();if(nm)sp.name=nm;sp.addr=sa.addr;if(!sp.memo)sp.memo='住所 '+sa.addr;
+      if(/サウナ|カプセル|ホテル|旅館/.test(sp.name)&&sp.genre==='温泉')sp.genre='宿';
+      const g=await geocodeAddr(sa.addr);if(g){sp.lat=g.lat;sp.lng=g.lng;delete sp.approx;if(!sp.area||Object.values(PREF).includes(sp.area)||sp.area==='京都')sp.area=areaFromAddr(sa.addr)||sp.area;delete sp.pt;if(/清水寺|wikimedia/.test(sp.photo||'')&&sp.genre==='宿')sp.photo=''}
+      save(false);render()}
+  }
   P().spots.forEach(sp=>{if(sp.url&&/tabelog/.test(sp.url)&&!sp.gchk){sp.gchk=1;if(!FOODK.includes(sp.genre))sp.genre=foodGenre(sp.name)||'グルメ'}});
   for(const sp of P().spots.filter(x=>x.url&&/tabelog/.test(x.url)&&x.area&&!x.chk)){
     sp.chk=1;let c=null;try{c=await geocode(sp.area)}catch(_){}
