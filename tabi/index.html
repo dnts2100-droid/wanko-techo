@@ -41,6 +41,8 @@ input,textarea,select{background:var(--bg);border:1px solid transparent;border-r
 input:focus,textarea:focus,select:focus{border-color:var(--ink)}
 a{color:inherit}
 svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.leaflet-container svg{width:auto;height:auto;fill:initial;stroke:initial;stroke-width:initial;flex:initial}
+.leaflet-control svg,.leaflet-marker-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8}
 .num{font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 
 /* ---------- header ---------- */
@@ -580,6 +582,11 @@ body.at-home #pane-map{display:none!important}
 .epwrap .ep-add,.epwrap .hotel{margin-left:0;width:auto}.epwrap .hotel{width:100%}
 .epin{width:30px;height:30px;border-radius:50%;background:var(--surface);border:2.5px solid var(--ink);display:grid;place-items:center;font-size:15px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 
+.road{font-size:9.5px;font-weight:800;color:#1F9D74;border:1px solid currentColor;border-radius:999px;padding:0 5px;margin-left:2px}
+
+.fixbox{margin-top:8px;padding:10px 12px;border-radius:14px;background:var(--bg);font-size:12.5px}
+.fixbox ol{margin:4px 0 8px;padding-left:18px;color:var(--sub);line-height:1.7}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -731,7 +738,39 @@ const addDays=(s,n)=>{if(!s)return '';const d=new Date(s+'T00:00');d.setDate(d.g
 function dist(a,b){const R=6371,t=x=>x*Math.PI/180,dl=t(b.lat-a.lat),dg=t(b.lng-a.lng);
   const h=Math.sin(dl/2)**2+Math.cos(t(a.lat))*Math.cos(t(b.lat))*Math.sin(dg/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 const hasLL=s=>s&&s.lat!=null&&s.lng!=null;
-function legInfo(a,b,mode){if(!hasLL(a)||!hasLL(b))return null;const m=MODES[mode]||MODES.walk,km=dist(a,b)*m.f;return {km,min:Math.round(km/m.v*60+(km>0.05?m.w:0))}}
+// 道のりの取得：徒歩・自転車・車（タクシー・バスは車の道のり）は、実際の道に沿ったルートと所要時間を使う。電車・新幹線・飛行機は直線距離から推定
+const PROFILE={walk:'foot',bike:'bike',car:'car',taxi:'car',bus:'car'};
+let RT={};try{RT=JSON.parse(localStorage.getItem('router-rt'))||{}}catch(_){}
+const rtKey=(a,b,pf)=>`${pf}|${(+a.lat).toFixed(5)},${(+a.lng).toFixed(5)}|${(+b.lat).toFixed(5)},${(+b.lng).toFixed(5)}`;
+function routeOf(a,b,mode){const pf=PROFILE[mode];if(!pf||!hasLL(a)||!hasLL(b))return null;return RT[rtKey(a,b,pf)]||null}
+function legInfo(a,b,mode){if(!hasLL(a)||!hasLL(b))return null;const m=MODES[mode]||MODES.walk;
+  const r=routeOf(a,b,mode);
+  if(r&&r.km!=null){const base=mode==='walk'?r.km/4.5*60:mode==='bike'?r.km/13*60:r.min*(mode==='bus'?1.35:1);return {km:r.km,min:Math.round(base+(r.km>.05?m.w:0)),road:true}}
+  const km=dist(a,b)*m.f;return {km,min:Math.round(km/m.v*60+(km>0.05?m.w:0))}}
+let rtBusy=false,rtQ=[];
+function legsOf(d){const c=[],F=d.from?S(d.from):null,T=d.to?S(d.to):null,its=d.items.map(i=>({s:S(i.spot),m:i.mode}));
+  if(F&&its[0])c.push([F,its[0].s,d.fromMode||suggestMode(F,its[0].s)]);
+  its.forEach((x,i)=>{if(i>0)c.push([its[i-1].s,x.s,x.m])});
+  const last=its.length?its.at(-1).s:F;if(T&&last&&last!==T)c.push([last,T,d.toMode||suggestMode(last,T)]);
+  return c.filter(([a,b])=>hasLL(a)&&hasLL(b));}
+function queueRoutes(d){
+  legsOf(d).forEach(([a,b,m])=>{const pf=PROFILE[m];if(!pf)return;const k=rtKey(a,b,pf);if(!RT[k]&&!rtQ.some(x=>x.k===k))rtQ.push({k,a,b,pf})});
+  if(!rtBusy&&rtQ.length)runRoutes();
+}
+async function runRoutes(){
+  rtBusy=true;let got=0;
+  while(rtQ.length){const {k,a,b,pf}=rtQ.shift();if(RT[k])continue;
+    if(dist(a,b)>300){RT[k]={none:1};continue}
+    try{const j=await getJSON(`https://routing.openstreetmap.de/routed-${pf}/route/v1/driving/${a.lng},${a.lat};${b.lng},${b.lat}?overview=simplified&geometries=geojson`,12000);
+      const r=j.routes?.[0];if(r){const g=r.geometry.coordinates,step=Math.max(1,Math.ceil(g.length/150));
+        RT[k]={km:r.distance/1000,min:r.duration/60,geo:g.filter((_,i)=>i%step===0||i===g.length-1).map(([x,y])=>[+y.toFixed(5),+x.toFixed(5)])};got++}
+      else RT[k]={none:1}}
+    catch(_){/* 通信できないときは推定のまま */}
+    await new Promise(r=>setTimeout(r,250));
+  }
+  rtBusy=false;
+  if(got){const ks=Object.keys(RT);if(ks.length>400)ks.slice(0,ks.length-400).forEach(x=>delete RT[x]);try{localStorage.setItem('router-rt',JSON.stringify(RT))}catch(_){}render()}
+}
 function suggestMode(a,b){if(!hasLL(a)||!hasLL(b))return 'walk';const k=dist(a,b);return k<1.2?'walk':k<80?'train':k<500?'shinkansen':'plane'}
 const gmaps=s=>hasLL(s)?`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+' '+(s.area||''))}`;
 const gdir=(a,b,m)=>`https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=${MODES[m].g}`;
@@ -785,7 +824,7 @@ try{Object.assign(ui,JSON.parse(localStorage.getItem(UIKEY))||{})}catch(_){}
 // 起動時：外部サイトでお店を探している途中（30分以内）なら元の画面、それ以外はプラン一覧から
 if(!(ui.awayAt&&Date.now()-ui.awayAt<30*60e3&&ui.tab==='stock')&&!location.hash&&!location.search.includes('st=')&&!location.search.includes('su='))ui.tab='home';
 ui.awayAt=0;
-function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({awayAt:ui.away||ui.awayAt||0,tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,geoHide:ui.geoHide,extTipShown:ui.extTipShown,hideShots:ui.hideShots}))}catch(_){}}
+function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({awayAt:ui.away||ui.awayAt||0,tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,fixSid:ui.fixSid,geoHide:ui.geoHide,extTipShown:ui.extTipShown,hideShots:ui.hideShots}))}catch(_){}}
 const wide=matchMedia('(min-width:1000px)');
 const P=()=>db.plans.find(p=>p.id===db.cur)||db.plans[0];
 const S=id=>P().spots.find(s=>s.id===id);
@@ -892,7 +931,7 @@ function renderPlan(){
     h+=epRow('from',c,d);
     c.rows.forEach(({it,s,i,leg,arr,dep})=>{
       const m=MODES[it.mode];
-      h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置未設定</span>'} ›</button></div>`:''}
+      h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${leg.road?'':'約'}${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km${leg.road?' <span class="road">道のり</span>':''}`:' · <span class="warn">位置未設定</span>'} ›</button></div>`:''}
       <div class="stop"><div class="time num"><b>${fmtT(arr)}</b><span>${fmtT(dep)}</span></div>
         <div class="stop-card ${it.v?'done':''} ${GEO.justDone===it.id?'pop':''}" role="button" tabindex="0" data-act="detail" data-sid="${s.id}" data-i="${i}">
           <div class="thumb-wrap">${ph(s,'th',it.v?`<div class="done-ov">${I.check}</div>`:'')}<span class="idx ${it.v?'done':''}">${it.v?'✓':i+1}</span></div>${it.v?'<span class="stamp">VISITED</span>':''}
@@ -902,9 +941,9 @@ function renderPlan(){
     });
     h+=`</div>${epRow('to',c,d)}<div class="end-mark num"><b>${fmtT(c.end)}</b><span>${c.T?'到着':'終了'} · 滞在 ${dur(c.stay)} / 移動 ${c.km.toFixed(1)}km</span></div>${hotelRow(d)}
     <button class="add-row" data-act="goStock">${I.plus}スポットを追加</button>
-    <div class="note" style="margin-left:60px">移動時間は距離からの目安です。区間をタップすると移動手段の変更やGoogleマップでの経路確認ができます。</div>`;
+    <div class="note" style="margin-left:60px">徒歩・自転車・車は実際の道のりから、電車などは距離から計算した目安です。区間をタップすると移動手段の変更やGoogleマップでの経路確認ができます。</div>`;
   }
-  $('#pane-plan').innerHTML=h;loadWeather(d);
+  $('#pane-plan').innerHTML=h;loadWeather(d);queueRoutes(d);
   const tl=$('#tl');
   if(tl&&window.Sortable)Sortable.create(tl,{handle:'[data-handle]',draggable:'.row-wrap',animation:180,ghostClass:'ghost',onEnd(e){
     const o=e.oldDraggableIndex,n=e.newDraggableIndex;if(o===n)return;const it=D().items;const [m]=it.splice(o,1);it.splice(n,0,m);save();render()}});
@@ -923,7 +962,7 @@ function renderStock(){
   h+=`<div class="filters">
     <div class="field">${I.search}<input id="q2" data-f="q2" placeholder="名前・メモで絞り込み" value="${esc(ui.q2||'')}"></div>
     <div class="row" style="flex-wrap:nowrap">
-      <div class="seg" style="flex:1">${[['','すべて'],['todo','未計画'],['done','予定に入れた']].map(([v,l])=>`<button class="${(ui.st2||'')===v?'on':''}" data-act="f2" data-k="st2" data-v="${v}">${l}</button>`).join('')}</div>
+      <div class="seg" style="flex:1">${[['','すべて'],['todo','未計画'],['done','予定済'],...(P().spots.some(x=>x.approx||!hasLL(x))?[['fix','⚠️要確認']]:[])].map(([v,l])=>`<button class="${(ui.st2||'')===v?'on':''}" data-act="f2" data-k="st2" data-v="${v}">${l}</button>`).join('')}</div>
       <select data-f="sort2" aria-label="並び順" class="sort">${[['new','新しい順'],['area','エリア順'],['genre','ジャンル順'],['name','名前順']].map(([v,l])=>`<option value="${v}" ${(ui.sort2||'new')===v?'selected':''}>${l}</option>`).join('')}</select>
     </div>
     ${areas.length>1?`<div class="hscroll"><button class="chip ${ui.fArea2?'':'on'}" data-act="f2" data-k="fArea2" data-v="">📍 全エリア</button>${areas.map(a=>`<button class="chip ${ui.fArea2===a?'on':''}" data-act="f2" data-k="fArea2" data-v="${esc(a)}">${esc(a)}<small>${cnt('a',a)}</small></button>`).join('')}</div>`:''}
@@ -937,7 +976,7 @@ function renderStockList(){
   const p=P(),q=(ui.q2||'').trim().toLowerCase();
   let list=p.spots.map((s,idx)=>({s,idx,u:usedIn(s.id)})).filter(({s,u})=>
     (!ui.fArea2||(s.area||'エリア未設定')===ui.fArea2)&&(!ui.fGenre2||(s.genre||'その他')===ui.fGenre2)&&
-    (!ui.st2||(ui.st2==='todo'?!u.length:!!u.length))&&(!q||(s.name+' '+(s.memo||'')+' '+(s.area||'')).toLowerCase().includes(q)));
+    (!ui.st2||(ui.st2==='fix'?(s.approx||!hasLL(s)):ui.st2==='todo'?!u.length:!!u.length))&&(!q||(s.name+' '+(s.memo||'')+' '+(s.area||'')).toLowerCase().includes(q)));
   const sort=ui.sort2||'new',key=x=>sort==='area'?(x.s.area||'￿'):sort==='genre'?(x.s.genre||'￿'):x.s.name;
   if(sort==='new')list.reverse();else list.sort((a,b)=>key(a).localeCompare(key(b),'ja')||a.s.name.localeCompare(b.s.name,'ja'));
   let h=`<div class="meta" style="margin:4px 2px 8px">${list.length}件を表示${list.length<p.spots.length?`（全${p.spots.length}件） <button class="linkbtn" data-act="f2clear">条件をクリア</button>`:''}</div>`;
@@ -1234,7 +1273,8 @@ function welcome(){
   if(!SET.welcome)return;
   document.querySelector('.welcome')?.remove();
   const w=document.createElement('div');w.className='welcome';
-  w.innerHTML=`<div class="wl-in">${pinkun(54)}<div><b>おかえりなさい！</b><span>コピーした場所を追加しますか？</span></div></div><div class="row"><button class="btn" data-act="wlClose">あとで</button><button class="btn acc" data-act="quickPaste" style="flex:1">📋 貼り付けて追加</button></div>`;
+  const fx=ui.fixSid&&S(ui.fixSid);
+  w.innerHTML=`<div class="wl-in">${pinkun(54)}<div><b>おかえりなさい！</b><span>${fx?`コピーした場所で「${esc(fx.name)}」の位置を直しますか？`:'コピーした場所を追加しますか？'}</span></div></div><div class="row"><button class="btn" data-act="wlClose">あとで</button><button class="btn acc" data-act="${fx?'locFixPaste':'quickPaste'}" style="flex:1">📋 貼り付けて追加</button></div>`;
   document.body.append(w);setTimeout(()=>w.remove(),12000);
 }
 document.addEventListener('click',e=>{const a=e.target.closest('a[target=_blank]');if(!a)return;e.preventDefault();openURL(a.href)},true);
@@ -1331,7 +1371,11 @@ function drawMap(){
     L.marker([s.lat,s.lng],{zIndexOffset:1000+i,icon:L.divIcon({className:'',html:`<div class="pin ${d.items[i].v?'done':''} ${s.approx?'approx':''}"><span>${d.items[i].v?'✓':i+1}</span></div>`,iconSize:[30,30],iconAnchor:[15,32]})})
      .addTo(LAYER).on('click',()=>hl(i))});
   if(c.T&&hasLL(c.T)){if(c.T!==c.F)epMk(c.T,c.T.id===d.hotel?'🏨':'🏁');route.push([c.T.lat,c.T.lng])}
-  if(route.length>1){L.polyline(route,{color:'#fff',weight:8,opacity:.9}).addTo(LAYER);L.polyline(route,{color:'#FF5B3A',weight:4,opacity:.95,dashArray:'1 0'}).addTo(LAYER)}
+  legsOf(d).forEach(([a,b,m])=>{const r=routeOf(a,b,m),rail=['train','shinkansen','plane'].includes(m);
+    const pts=r&&r.geo?r.geo:[[a.lat,a.lng],[b.lat,b.lng]];
+    L.polyline(pts,{color:'#fff',weight:8,opacity:.9,interactive:false}).addTo(LAYER);
+    L.polyline(pts,{color:rail?'#5B6CFF':'#FF5B3A',weight:rail?4:5,opacity:.95,dashArray:rail?'2 9':(r&&r.geo?null:'8 8'),lineCap:'round',interactive:false}).addTo(LAYER)});
+  queueRoutes(d);
   const key=p.id+'|'+ui.day+'|'+route.length+'|'+pts.length;
   if(key!==fitKey){fitKey=key;const b=route.length?route:pts;
     if(b.length)MAP.fitBounds(b.length>1?b:[b[0],b[0]],{padding:[70,40],paddingBottomRight:[40,170],maxZoom:16})}
@@ -1381,7 +1425,9 @@ function detailHTML(){
     <div class="stepper"><button data-act="stay" data-v="-15" aria-label="15分減らす">−</button><b class="num">${dur(+s.stay||0)}</b><button data-act="stay" data-v="15" aria-label="15分増やす">＋</button></div></div>
   ${(u=>u.length&&P().days.length>1?`<div class="lbl">予定</div><div class="ubs" style="max-width:none;justify-content:flex-start">${u.map(x=>`<span class="ubadge ${x.di===ui.day?'cur':''}">DAY ${x.di+1}${P().days[x.di].date?' '+fmtDate(P().days[x.di].date):''} · ${x.i+1}件目</span>`).join('')}</div>`:'')(usedIn(s.id))}
   <div class="lbl">場所</div>
-  <div class="locrow ${s.approx||!hasLL(s)?'warn':''}"><span>${!hasLL(s)?'📍 位置が未設定です':s.approx?'⚠️ おおよその位置です。正しい場所に直してください':'📍 位置は設定済み'}</span><button class="btn sm" data-act="editSpot" data-sid="${s.id}">地図で直す</button></div>
+  <div class="locrow ${s.approx||!hasLL(s)?'warn':''}"><span>${!hasLL(s)?'📍 位置が未設定です':s.approx?'⚠️ おおよその位置です（エリアの中心）。正しい場所に直してください':'📍 位置は設定済み'}</span><button class="btn sm" data-act="editSpot" data-sid="${s.id}">地図で直す</button></div>
+  ${s.approx||!hasLL(s)?`<div class="fixbox"><b>かんたんに直す</b><ol><li>Googleマップでお店を開く</li><li>「共有」→「コピー」</li><li>Routerに戻って「貼り付けて直す」</li></ol>
+    <div class="row"><button class="btn sm" data-act="locFind" data-sid="${s.id}">🗺 Googleマップで探す ↗</button><button class="btn sm pri" data-act="locFixPaste" data-sid="${s.id}">📋 貼り付けて直す</button></div></div>`:''}
   <div class="lbl">情報</div>
   <div class="row">${s.url?`<a class="btn sm" href="${esc(s.url)}" target="_blank" rel="noopener">${I.link}公式・情報</a>`:''}
     <a class="btn sm" href="${gsearch(s.name+' '+(s.area||''))}" target="_blank" rel="noopener">${I.search}ネットで調べる</a>
@@ -1795,6 +1841,13 @@ let memEdit=null;
 function memHTML(){const x=memEdit?M().mem.find(y=>y.id===memEdit):null;return `<h3><span>${x?'メンバーを編集':'メンバーを追加'}</span></h3>
   <div class="lbl" style="margin-top:0">名前</div><input id="memName" value="${esc(x?.n||'')}" placeholder="例：たろう" enterkeyhint="done">
   <div class="sticky-foot">${x?`<button class="ibtn" data-act="memDel" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button>`:''}<button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="memSave">決定</button></div>`}
+async function fixLoc(sid,text){
+  const sp=S(sid);if(!sp)return;let r=parsePaste(text);if(!r||!r.url&&!r.name)return toast('Googleマップのリンクが見つかりません');
+  toast('位置を読み取っています…');r=await enrich(r);
+  if(!hasLL(r)||r.approx)return toast('このリンクから位置を読み取れませんでした。「地図で直す」で地図をタップして指定してください');
+  sp.lat=r.lat;sp.lng=r.lng;delete sp.approx;if(!sp.area&&r.area)sp.area=r.area;ui.fixSid=null;saveUI();fitKey='';save();render();if(detail?.sid===sid)refreshSheet();
+  toast(`「${sp.name}」の位置を直しました`);
+}
 let liveState='';
 function members(p){const m=Object.entries(p.members||{}).sort((a,b)=>(a[1].t||0)-(b[1].t||0));const me=live.fb?.uid;
   return m.map(([k,v])=>({name:v.n||'メンバー',me:k===me}))}
@@ -2042,6 +2095,9 @@ function moneyText(){const p=P(),m=M(),tr=settle(),total=m.items.reduce((a,x)=>a
 
 /* ================= 操作 ================= */
 const ACT={
+  locFind:el=>{const s=S(el.dataset.sid);ui.fixSid=s.id;saveUI();openURL(`https://www.google.com/maps/search/${encodeURIComponent((s.name+' '+(s.area||'')).trim())}`)},
+  locFixPaste:async el=>{const sid=el?.dataset?.sid||ui.fixSid;document.querySelector('.welcome')?.remove();
+    try{const t=await navigator.clipboard.readText();if(!t)throw 0;fixLoc(sid,t)}catch(_){toast('コピーした内容を読み取れませんでした。もう一度「コピー」してからお試しください')}},
   payClearAsk:()=>openSheet(payClearHTML),
   payClear:el=>{const sn=snap(),m=M(),v=el.dataset.v,before=m.items.length;
     m.items=v==='day'?m.items.filter(x=>(x.day??0)!==ui.day):[];m.done={};save();closeSheet();render();
@@ -2108,7 +2164,7 @@ const ACT={
   addToggle:()=>{ui.addOpen=!(ui.addOpen??!P().spots.length);renderStock()},
   f2clear:()=>{ui.fArea2=ui.fGenre2=ui.st2=ui.q2='';renderStock()},
   extAgain:()=>openURL(ui.lastExt),
-  quickPaste:async()=>{document.querySelector('.welcome')?.remove();try{const t=await navigator.clipboard.readText();if(!t)throw 0;lastClip=t;quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
+  quickPaste:async()=>{document.querySelector('.welcome')?.remove();try{const t=await navigator.clipboard.readText();if(!t)throw 0;lastClip=t;if(ui.fixSid&&S(ui.fixSid)&&/google|goo\.gl/.test(t)){fixLoc(ui.fixSid,t);return}quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
   quickClose:()=>{ui.lastExt='';saveUI();renderQuick()},
   openTabelog:()=>openExt('tabelog'),
   openGmaps:()=>openExt('gmaps'),
