@@ -595,6 +595,9 @@ body.gmode #gmap{display:block}body.gmode #map{display:none}
 @media (min-width:1000px){.gbar{bottom:110px}}
 .groute{margin:16px 0 0 60px;width:calc(100% - 60px)}
 
+.hotelgo{margin:12px 0 0 60px}.epwrap .hotelgo{margin-left:0}
+.tohotel{background:color-mix(in srgb,#5B6CFF 14%,var(--surface));box-shadow:none;color:var(--ink)}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -879,8 +882,12 @@ function epRow(k,c,d){
   if(k==='from')return row+(c.rows.length?legBtn(c.fromMode,c.fromLeg):'');
   return (c.rows.length||c.F?legBtn(c.toMode||'walk',c.toLeg):'')+row;
 }
+// 宿までの経路：現在地から宿へ（出発地を指定しないと、Googleマップが現在地から案内する）
+const hotelOf=d=>d.hotel?S(d.hotel):(P().days[P().days.indexOf(d)-1]?.hotel?S(P().days[P().days.indexOf(d)-1].hotel):null);
+const toHotelURL=(h,mode='transit')=>`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(gq(h))}&travelmode=${mode}`;
+function hotelBtn(d,cls='btn sm'){const h=hotelOf(d);return h?`<a class="${cls} tohotel" href="${toHotelURL(h)}" target="_blank" rel="noopener">🏨 宿までの経路 ↗</a>`:''}
 function hotelRow(d){const h=d.hotel?S(d.hotel):null,i=P().days.indexOf(d);
-  return `<button class="hotel ${h?'on':''}" data-act="epPick" data-k="hotel"><span>🏨</span><span class="ep-tx"><small>${P().days.length>1?`DAY ${i+1} の夜の`:''}宿泊先</small><b>${h?esc(h.name):'宿泊先を設定'}</b></span><span class="chev">${h?'›':'＋'}</span></button>`}
+  return (hotelOf(d)?`<div class="hotelgo">${hotelBtn(d,'btn block')}</div>`:'')+`<button class="hotel ${h?'on':''}" data-act="epPick" data-k="hotel"><span>🏨</span><span class="ep-tx"><small>${P().days.length>1?`DAY ${i+1} の夜の`:''}宿泊先</small><b>${h?esc(h.name):'宿泊先を設定'}</b></span><span class="chev">${h?'›':'＋'}</span></button>`}
 function epHTML(){
   const p=P(),d=D(),k=epKey,[e,l]=EPL[k],i=ui.day,prev=p.days[i-1],cur=k==='hotel'?d.hotel:d[k];
   const quick=[];
@@ -1428,7 +1435,7 @@ function drawGMap(){
   else if(src!==gmapSrc){gmapSrc=src;el.innerHTML=`<iframe src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Googleマップ" allowfullscreen></iframe>`}
   renderMapUI();
   const bar=document.createElement('div');bar.className='gbar';
-  bar.innerHTML=st.length?`<a class="btn acc" href="${gRoute(d)}" target="_blank" rel="noopener">${I.route}Googleマップで${st.length>1?'ルート':'場所'}を開く ↗</a><button class="btn" data-act="mapApp">アプリ内の地図</button>`:'';
+  bar.innerHTML=st.length?`<a class="btn acc" href="${gRoute(d)}" target="_blank" rel="noopener">${I.route}${st.length>1?'ルート':'場所'}を開く ↗</a>${hotelBtn(d,'btn')}<button class="btn" data-act="mapApp">アプリ内の地図</button>`:'';
   if(st.length)$('#carousel').before(bar);
 }
 function renderMapUI(){
@@ -1997,7 +2004,7 @@ function renderKit(){
     <div class="note">#7119 は地域によって使えない場合があります。つながらない場合は、お住まい・滞在先の自治体の救急相談窓口をご利用ください。</div>
     ${Object.keys(areas).length?`<div class="ktl" style="margin-top:16px">旅先の近くで探す</div>
       ${Object.entries(areas).map(([a,s])=>`<div class="near"><b>📍 ${esc(a)}</b><div class="row">${[['🏥','病院','救急病院'],['👮','警察','警察署 交番'],['💊','薬局','薬局'],['🏪','コンビニ','コンビニ'],['🏧','ATM','ATM']].map(([e,l,q])=>`<a class="btn sm" href="https://www.google.com/maps/search/${encodeURIComponent(q)}/@${s.lat},${s.lng},15z" target="_blank" rel="noopener">${e} ${l}</a>`).join('')}</div></div>`).join('')}`:'<div class="note">予定に場所を追加すると、旅先の近くの病院・警察・薬局をすぐ探せるようになります。</div>'}
-    ${hotels.length?`<div class="ktl" style="margin-top:16px">宿泊先</div>${hotels.map(h=>`<div class="near"><b>🏨 ${esc(h.name)}</b><div class="row"><a class="btn sm" href="${gsearch(h.name+' 電話番号')}" target="_blank" rel="noopener">📞 電話番号を調べる</a><a class="btn sm" href="${gmaps(h)}" target="_blank" rel="noopener">${I.pin}地図</a></div></div>`).join('')}`:''}
+    ${hotels.length?`<div class="ktl" style="margin-top:16px">宿泊先</div>${hotels.map(h=>`<div class="near"><b>🏨 ${esc(h.name)}</b><div class="row"><a class="btn sm" href="${toHotelURL(h)}" target="_blank" rel="noopener">🧭 ここまでの経路</a><a class="btn sm" href="${gsearch(h.name+' 電話番号')}" target="_blank" rel="noopener">📞 電話番号を調べる</a><a class="btn sm" href="${gmaps(h)}" target="_blank" rel="noopener">${I.pin}地図</a></div></div>`).join('')}`:''}
     <div class="ktl" style="margin-top:16px"><span>自分の連絡先メモ</span><button class="btn sm" data-act="ctAdd">${I.plus}追加</button></div>
     ${(p.contacts||[]).map((c,i)=>`<div class="sosr"><span class="se">👤</span><span class="sn">${esc(c.name)}</span><a href="tel:${esc(c.tel)}"><b>${esc(c.tel)}</b></a><button class="qx" data-act="ctDel" data-i="${i}" aria-label="削除">${I.x}</button></div>`).join('')||'<div class="note">宿・同行者・保険会社など、旅先で使う番号を登録できます。</div>'}
   </div>`;
@@ -2429,7 +2436,7 @@ function renderProg(){
   let h=p.days.length>1?`<div class="hscroll days-row">${p.days.map((x,i)=>`<button class="day-chip ${i===ui.day?'on':''}" data-act="day" data-i="${i}"><small>DAY ${i+1}</small><b>${x.date?fmtDate(x.date):x.items.length+'件'}</b></button>`).join('')}</div>`:'';
   if(!g){el.innerHTML=h+`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>予定を作るとレースが始まります</b>スケジュールにスポットを追加すると、予定と実際の進み具合を比べられます。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;return}
   if(!d.date)h+=`<div class="geo-bar" style="margin-top:12px">📅<span>日付が未設定のため<b>今日</b>として表示しています。</span><button class="btn sm" data-act="progDate">今日に設定</button></div>`;
-  h+=ringHTML(g,d)+nextHTML(g,d)+raceHTML(g,d)+stampHTML(g)+ganttHTML(g)+`<button class="btn block" data-act="recap" style="margin-top:14px">📝 今日のふりかえりを送る</button>`;
+  h+=ringHTML(g,d)+(hotelOf(d)?`<div class="hotelgo" style="margin:12px 0 0">${hotelBtn(d,'btn block')}</div>`:'')+nextHTML(g,d)+raceHTML(g,d)+stampHTML(g)+ganttHTML(g)+`<button class="btn block" data-act="recap" style="margin-top:14px">📝 今日のふりかえりを送る</button>`;
   loadWeather(d);
   if(GEO.watch==null&&SET.geoTip)h+=`<div class="geo-bar">📍<span>おでかけモードをONにすると、到着・出発と滞在時間が自動で記録され、進捗に反映されます。</span><button class="btn sm" data-act="geo">ON</button></div>`;
   h+=`<div class="note">進捗は訪問記録（自動・手動の✓）をもとに計算しています。</div>`;
