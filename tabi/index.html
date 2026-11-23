@@ -587,6 +587,14 @@ body.at-home #pane-map{display:none!important}
 .fixbox{margin-top:8px;padding:10px 12px;border-radius:14px;background:var(--bg);font-size:12.5px}
 .fixbox ol{margin:4px 0 8px;padding-left:18px;color:var(--sub);line-height:1.7}
 
+#gmap{position:absolute;inset:0;display:none;background:var(--line)}
+body.gmode #gmap{display:block}body.gmode #map{display:none}
+#gmap iframe{width:100%;height:100%;border:0}
+.gbar{position:absolute;left:12px;right:12px;bottom:calc(178px + var(--safe));z-index:401;display:flex;gap:8px}
+.gbar .btn{box-shadow:var(--sh2)}.gbar .btn.acc{flex:1}
+@media (min-width:1000px){.gbar{bottom:110px}}
+.groute{margin:16px 0 0 60px;width:calc(100% - 60px)}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -619,7 +627,7 @@ body.at-home #pane-map{display:none!important}
   <section class="pane" id="pane-home"></section>
   <section class="pane" id="pane-money"></section>
 </main>
-<section class="pane" id="pane-map"><div id="map"></div><div class="map-days" id="mapDays"></div><div class="carousel" id="carousel"></div></section>
+<section class="pane" id="pane-map"><div id="map"></div><div id="gmap"></div><div class="map-days" id="mapDays"></div><div class="carousel" id="carousel"></div></section>
 <div class="quick" id="quick"></div>
 <nav class="tabbar" id="tabbar"></nav>
 <datalist id="areaList"></datalist>
@@ -716,7 +724,7 @@ function celebrate(name){
 }
 
 /* ================= 設定（この端末だけ） ================= */
-const SET_DEF={autoGeo:false,arriveMin:1,radius:0,celebrate:true,nudge:true,weather:true,autoPhoto:true,welcome:true,geoTip:true,theme:'auto'};
+const SET_DEF={mapKind:'google',autoGeo:false,arriveMin:1,radius:0,celebrate:true,nudge:true,weather:true,autoPhoto:true,welcome:true,geoTip:true,theme:'auto'};
 let SET={...SET_DEF};try{Object.assign(SET,JSON.parse(localStorage.getItem('router-settings'))||{})}catch(_){}
 function saveSet(){try{localStorage.setItem('router-settings',JSON.stringify(SET))}catch(_){}applyTheme()}
 function applyTheme(){if(SET.theme==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',SET.theme)}
@@ -772,8 +780,18 @@ async function runRoutes(){
   if(got){const ks=Object.keys(RT);if(ks.length>400)ks.slice(0,ks.length-400).forEach(x=>delete RT[x]);try{localStorage.setItem('router-rt',JSON.stringify(RT))}catch(_){}render()}
 }
 function suggestMode(a,b){if(!hasLL(a)||!hasLL(b))return 'walk';const k=dist(a,b);return k<1.2?'walk':k<80?'train':k<500?'shinkansen':'plane'}
-const gmaps=s=>hasLL(s)?`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+' '+(s.area||''))}`;
-const gdir=(a,b,m)=>`https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=${MODES[m].g}`;
+const gq=s=>s?(hasLL(s)&&!s.approx?`${s.lat},${s.lng}`:[s.name,s.addr||s.area||''].filter(Boolean).join(' ')):'';
+const gmaps=s=>hasLL(s)&&!s.approx?`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}`:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name+' '+(s.area||''))}`;
+const gdir=(a,b,m)=>`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(gq(a))}&destination=${encodeURIComponent(gq(b))}&travelmode=${MODES[m].g}`;
+// その日のルート全体（出発地点→各スポット→終着地点）
+function dayStops(d){const c=calc(d);return [c.F,...c.rows.map(r=>r.s),c.T].filter((x,i,a)=>x&&(i===0||x!==a[i-1]))}
+function dayMode(d){const ms=d.items.slice(1).map(i=>i.mode);if(ms.some(m=>['train','shinkansen','plane','bus'].includes(m)))return 'transit';if(ms.length&&ms.every(m=>m==='walk'))return 'walking';if(ms.some(m=>m==='bike'))return 'bicycling';return ms.length?'driving':'walking'}
+function gRoute(d){const st=dayStops(d);if(!st.length)return '';if(st.length===1)return gmaps(st[0]);
+  const o=st[0],de=st.at(-1),w=st.slice(1,-1).slice(0,9);
+  return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(gq(o))}&destination=${encodeURIComponent(gq(de))}${w.length?'&waypoints='+encodeURIComponent(w.map(gq).join('|')):''}&travelmode=${dayMode(d)}`}
+function gEmbed(d){const st=dayStops(d);if(!st.length)return '';
+  if(st.length===1)return `https://maps.google.com/maps?q=${encodeURIComponent(gq(st[0]))}&hl=ja&z=15&output=embed`;
+  return `https://maps.google.com/maps?saddr=${encodeURIComponent(gq(st[0]))}&daddr=${encodeURIComponent(st.slice(1).map(gq).join(' to:'))}&hl=ja&output=embed${dayMode(d)==='walking'?'&dirflg=w':dayMode(d)==='transit'?'&dirflg=r':''}`}
 const gsearch=q=>'https://www.google.com/search?q='+encodeURIComponent(q);
 const ICONS=[[/神社|宮|稲荷|大社/,'⛩️'],[/寺|院|観音|大仏/,'🛕'],[/城/,'🏯'],[/タワー|ツリー/,'🗼'],[/空港/,'✈️'],[/駅/,'🚉'],[/港|フェリー/,'⛴️'],
  [/動物園|サファリ/,'🦁'],[/水族館/,'🐠'],[/美術館|ギャラリー/,'🖼️'],[/博物館|資料館|記念館/,'🏛️'],[/遊園地|花やしき|ランド|パーク/,'🎡'],[/植物園|庭園|ガーデン/,'🌸'],
@@ -940,6 +958,7 @@ function renderPlan(){
         </div></div></div>`;
     });
     h+=`</div>${epRow('to',c,d)}<div class="end-mark num"><b>${fmtT(c.end)}</b><span>${c.T?'到着':'終了'} · 滞在 ${dur(c.stay)} / 移動 ${c.km.toFixed(1)}km</span></div>${hotelRow(d)}
+    <a class="btn block groute" href="${gRoute(d)}" target="_blank" rel="noopener">${I.route}この日のルートをGoogleマップで開く ↗</a>
     <button class="add-row" data-act="goStock">${I.plus}スポットを追加</button>
     <div class="note" style="margin-left:60px">徒歩・自転車・車は実際の道のりから、電車などは距離から計算した目安です。区間をタップすると移動手段の変更やGoogleマップでの経路確認ができます。</div>`;
   }
@@ -1370,6 +1389,8 @@ function addTiles(map,i=tileIdx){
     if(TILES[i+1])addTiles(map,i+1);else map.getContainer().insertAdjacentHTML('beforeend','<div class="map-msg" style="pointer-events:none">地図の画像を読み込めませんでした。<br>通信環境をご確認ください。</div>')});
 }
 function drawMap(){
+  const g=SET.mapKind!=='app';document.body.classList.toggle('gmode',g);document.querySelectorAll('#pane-map .gbar').forEach(b=>b.remove());
+  if(g){drawGMap();return}
   if(!window.L){$('#map').innerHTML='<div class="map-msg">地図を読み込めませんでした。<br>通信環境をご確認ください。</div>';renderMapUI();return}
   if(!MAP){MAP=L.map('map',{zoomControl:false,attributionControl:true});L.control.zoom({position:'topright'}).addTo(MAP);
     const Loc=L.Control.extend({onAdd(){const d=L.DomUtil.create('div','leaflet-bar');d.innerHTML=`<a href="#" class="loc-btn" role="button" aria-label="現在地">${I.loc}</a>`;L.DomEvent.disableClickPropagation(d);d.querySelector('a').addEventListener('click',e=>{e.preventDefault();ACT.locate()});return d}});
@@ -1400,9 +1421,19 @@ function drawMap(){
     if(b.length)MAP.fitBounds(b.length>1?b:[b[0],b[0]],{padding:[70,40],paddingBottomRight:[40,170],maxZoom:16})}
   renderMapUI();drawMe();
 }
+let gmapSrc='';
+function drawGMap(){
+  const d=D(),src=gEmbed(d),el=$('#gmap'),st=dayStops(d);
+  if(!src){el.innerHTML=`<div class="map-msg">予定にスポットを追加すると、ここにGoogleマップでルートが表示されます。</div>`;gmapSrc=''}
+  else if(src!==gmapSrc){gmapSrc=src;el.innerHTML=`<iframe src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Googleマップ" allowfullscreen></iframe>`}
+  renderMapUI();
+  const bar=document.createElement('div');bar.className='gbar';
+  bar.innerHTML=st.length?`<a class="btn acc" href="${gRoute(d)}" target="_blank" rel="noopener">${I.route}Googleマップで${st.length>1?'ルート':'場所'}を開く ↗</a><button class="btn" data-act="mapApp">アプリ内の地図</button>`:'';
+  if(st.length)$('#carousel').before(bar);
+}
 function renderMapUI(){
   const p=P(),c=calc(D());
-  $('#mapDays').innerHTML=`${p.days.length>1?p.days.map((x,i)=>`<button class="chip ${i===ui.day?'on':''}" data-act="day" data-i="${i}">DAY ${i+1}</button>`).join(''):''}<button class="chip ${ui.showCands?'on':''}" data-act="cands">候補も表示</button>`;
+  $('#mapDays').innerHTML=`${SET.mapKind==='app'?'<button class="chip" data-act="mapGoogle">Googleマップ</button>':''}${p.days.length>1?p.days.map((x,i)=>`<button class="chip ${i===ui.day?'on':''}" data-act="day" data-i="${i}">DAY ${i+1}</button>`).join(''):''}${SET.mapKind==='app'?`<button class="chip ${ui.showCands?'on':''}" data-act="cands">候補も表示</button>`:''}`;
   const d0=D();$('#carousel').innerHTML=c.rows.map(({s,i,arr})=>`<button class="cc ${ui.hl===i?'hl':''}" data-act="fly" data-i="${i}">${ph(s,'')}<div class="info"><div class="kicker num">${i+1}件目 · ${fmtT(arr)}${d0.items[i].v?' · ✓訪問済':''}</div><div class="name">${esc(s.name)}</div><div class="meta">滞在 ${dur(+s.stay||0)}</div></div></button>`).join('');
 }
 function hl(i){ui.hl=i;renderMapUI();const el=$(`#carousel [data-i="${i}"]`);el&&el.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'})}
@@ -1859,6 +1890,7 @@ function setHTML(){
     ${tg('autoPhoto','写真を自動で取得','Wikipediaなどから場所の写真を探します')}
     ${tg('welcome','外部アプリから戻ったときの案内','「おかえりなさい」「✕で戻れます」の表示')}
     ${tg('geoTip','おでかけモードの案内を表示')}
+    ${sg('mapKind','地図',[['google','Googleマップ'],['app','アプリ内の地図']])}
     ${sg('theme','画面の明るさ',[['auto','自動'],['light','ライト'],['dark','ダーク']])}</div>
   <div class="lbl">データ</div>
   <div class="row"><button class="btn sm" data-act="export">書き出し（バックアップ）</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm" data-act="help">❓ 使い方</button></div>
@@ -2122,6 +2154,8 @@ function moneyText(){const p=P(),m=M(),tr=settle(),total=m.items.reduce((a,x)=>a
 
 /* ================= 操作 ================= */
 const ACT={
+  mapApp:()=>{SET.mapKind='app';saveSet();gmapSrc='';render();toast('アプリ内の地図に切り替えました（設定でGoogleマップに戻せます）')},
+  mapGoogle:()=>{SET.mapKind='google';saveSet();render()},
   locFind:el=>{const s=S(el.dataset.sid);ui.fixSid=s.id;saveUI();openURL(`https://www.google.com/maps/search/${encodeURIComponent((s.name+' '+(s.area||'')).trim())}`)},
   locFixPaste:async el=>{const sid=el?.dataset?.sid||ui.fixSid;document.querySelector('.welcome')?.remove();
     try{const t=await navigator.clipboard.readText();if(!t)throw 0;fixLoc(sid,t)}catch(_){toast('コピーした内容を読み取れませんでした。もう一度「コピー」してからお試しください')}},
@@ -2249,7 +2283,7 @@ const ACT={
   resAll:()=>{ui.fRes.forEach(addRes);save();render();toast(`${ui.fRes.length}件をストックしました`)},
   f2:el=>{ui[el.dataset.k]=el.dataset.v;renderStock()},
   cands:()=>{ui.showCands=!ui.showCands;fitKey='';drawMap()},
-  fly:el=>{const i=+el.dataset.i,r=calc(D()).rows[i];ui.hl=i;renderMapUI();if(MAP&&hasLL(r.s))MAP.flyTo([r.s.lat,r.s.lng],Math.max(MAP.getZoom(),15),{duration:.6});
+  fly:el=>{if(SET.mapKind!=='app'){const r=calc(D()).rows[+el.dataset.i];if(r)openURL(gmaps(r.s));return}const i=+el.dataset.i,r=calc(D()).rows[i];ui.hl=i;renderMapUI();if(MAP&&hasLL(r.s))MAP.flyTo([r.s.lat,r.s.lng],Math.max(MAP.getZoom(),15),{duration:.6});
     if(el.classList.contains('hl')&&ui.hl===i&&el.dataset.tap){openDetail(r.s.id,i)}el.dataset.tap=1},
   photo:el=>{photoTarget=el.dataset.draft?{draft:1}:{sid:el.dataset.sid};photoRes=null;openSheet(photoHTML)},
   upload:()=>$('#filePhoto').click(),
