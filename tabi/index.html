@@ -568,6 +568,18 @@ body.at-home #pane-map{display:none!important}
 .ring .rg-n{top:calc(50% + 4px)}
 .dl{font-size:11px;color:var(--sub);font-weight:700;margin-left:8px}
 
+.ep .ep-card{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:var(--r);background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line)}
+.ep-ic{font-size:22px}.ep-tx{flex:1;min-width:0}.ep-tx small{display:block;font-size:10.5px;font-weight:800;color:var(--sub);letter-spacing:.04em}.ep-tx b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ep .time span{font-size:10.5px}
+.chev{color:var(--sub);font-weight:800}
+.ep-add{display:flex;align-items:center;gap:6px;margin:6px 0 6px 60px;font-size:12.5px;font-weight:700;color:var(--sub);padding:6px 10px;border-radius:999px;border:1.5px dashed var(--line)}
+.ep-add svg{width:14px;height:14px}
+.hotel{display:flex;align-items:center;gap:10px;width:calc(100% - 60px);margin:12px 0 0 60px;padding:10px 12px;border-radius:var(--r);background:var(--bg);box-shadow:inset 0 0 0 1.5px dashed var(--line);border:1.5px dashed var(--faint);text-align:left}
+.hotel.on{border:none;background:color-mix(in srgb,#5B6CFF 10%,var(--surface))}
+.hotel>span:first-child{font-size:22px}
+.epwrap .ep-add,.epwrap .hotel{margin-left:0;width:auto}.epwrap .hotel{width:100%}
+.epin{width:30px;height:30px;border-radius:50%;background:var(--surface);border:2.5px solid var(--ink);display:grid;place-items:center;font-size:15px;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -780,10 +792,16 @@ const S=id=>P().spots.find(s=>s.id===id);
 const D=()=>{const p=P();if(ui.day>=p.days.length)ui.day=p.days.length-1;return p.days[ui.day]};
 function calc(d){
   let t=toMin(d.start),move=0,km=0,stay=0;
+  const F=d.from?S(d.from):null,T=d.to?S(d.to):null;
+  const fm=()=>d.fromMode||suggestMode(F,S(d.items[0]?.spot)),tm=a=>d.toMode||suggestMode(a,T);
+  let fromLeg=null,toLeg=null;
   const rows=d.items.map((it,i)=>{const s=S(it.spot);let leg=null;
     if(i>0){leg=legInfo(S(d.items[i-1].spot),s,it.mode);if(leg){t+=leg.min;move+=leg.min;km+=leg.km}}
+    else if(F){fromLeg=legInfo(F,s,fm());if(fromLeg){t+=fromLeg.min;move+=fromLeg.min;km+=fromLeg.km}}
     const arr=t,st=+s.stay||0;t+=st;stay+=st;return {it,s,i,leg,arr,dep:t}});
-  return {rows,end:t,move,km,stay};
+  const last=rows.length?rows.at(-1).s:F;
+  if(T&&last&&last!==T){toLeg=legInfo(last,T,tm(last));if(toLeg){t+=toLeg.min;move+=toLeg.min;km+=toLeg.km}}
+  return {rows,end:t,move,km,stay,F,T,fromLeg,toLeg,fromMode:F?fm():null,toMode:T&&last?tm(last):null};
 }
 function usedIn(sid){const r=[];P().days.forEach((d,di)=>d.items.forEach((it,i)=>{if(it.spot===sid)r.push({di,i})}));return r}
 // 予定に追加：同じ場所は基本的に1回まで。駅・空港・宿は行き帰りで使うので確認してから追加
@@ -793,7 +811,37 @@ function tryAddToDay(sid,di=ui.day){
   if(['駅・空港','宿'].includes(s.genre)){dupAsk={sid,di,at};openSheet(dupHTML);return false}
   toast(`「${s.name}」はすでに DAY ${di+1} の ${at+1}件目に入っています`);return false;
 }
-let dupAsk=null,dayPick=null;
+let dupAsk=null,dayPick=null,epKey=null;
+const EPL={from:['🏁','出発地点'],to:['🏁','終着地点'],hotel:['🏨','宿泊先']};
+function epRow(k,c,d){
+  const sp=k==='from'?c.F:c.T,[e,l]=EPL[k],t=k==='from'?toMin(d.start):c.end;
+  if(!sp)return `<button class="ep-add" data-act="epPick" data-k="${k}">${I.plus}${l}を設定</button>`;
+  const legBtn=(mode,leg)=>`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${k}">${MODES[mode].e} ${MODES[mode].n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置未設定</span>'} ›</button></div>`;
+  const row=`<div class="stop ep"><div class="time num"><b>${fmtT(t)}</b><span>${k==='from'?'出発':'到着'}</span></div>
+    <button class="ep-card" data-act="epPick" data-k="${k}"><span class="ep-ic">${sp.id===d.hotel||sp.id===P().days[P().days.indexOf(d)-1]?.hotel||sp.genre==='宿'?'🏨':e}</span><span class="ep-tx"><small>${l}${sp.id===d.hotel?'（宿泊先）':sp.id===P().days[P().days.indexOf(d)-1]?.hotel?'（前日の宿泊先）':''}</small><b>${esc(sp.name)}</b></span><span class="chev">›</span></button></div>`;
+  if(k==='from')return row+(c.rows.length?legBtn(c.fromMode,c.fromLeg):'');
+  return (c.rows.length||c.F?legBtn(c.toMode||'walk',c.toLeg):'')+row;
+}
+function hotelRow(d){const h=d.hotel?S(d.hotel):null,i=P().days.indexOf(d);
+  return `<button class="hotel ${h?'on':''}" data-act="epPick" data-k="hotel"><span>🏨</span><span class="ep-tx"><small>${P().days.length>1?`DAY ${i+1} の夜の`:''}宿泊先</small><b>${h?esc(h.name):'宿泊先を設定'}</b></span><span class="chev">${h?'›':'＋'}</span></button>`}
+function epHTML(){
+  const p=P(),d=D(),k=epKey,[e,l]=EPL[k],i=ui.day,prev=p.days[i-1],cur=k==='hotel'?d.hotel:d[k];
+  const quick=[];
+  if(k==='from'&&prev?.hotel)quick.push(['前日の宿泊先',prev.hotel]);
+  if(k!=='hotel'&&d.hotel)quick.push(['この日の宿泊先',d.hotel]);
+  if(k==='to'&&d.from)quick.push(['出発地点と同じ',d.from]);
+  if(k==='from'&&prev?.to)quick.push(['前日の終着地点',prev.to]);
+  if(k==='hotel'&&prev?.hotel)quick.push(['前日と同じ宿',prev.hotel]);
+  const q=(ui.epQ||'').trim().toLowerCase(),rank=s=>k==='hotel'?(s.genre==='宿'?0:2):(['宿','駅・空港'].includes(s.genre)?0:1);
+  const list=p.spots.filter(s=>!q||(s.name+(s.area||'')).toLowerCase().includes(q)).sort((a,b)=>rank(a)-rank(b));
+  return `<h3><span>${e} ${l}${p.days.length>1?`（DAY ${i+1}）`:''}</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
+  ${quick.length?`<div class="lbl" style="margin-top:0">すぐに選ぶ</div><div class="gchips">${[...new Map(quick.map(x=>[x[1],x])).values()].map(([t,id])=>`<button class="chip ${cur===id?'on':''}" data-act="epSet" data-id="${id}">${t}：${esc(S(id)?.name||'')}</button>`).join('')}</div>`:''}
+  <div class="lbl">候補から選ぶ</div>
+  <div class="field">${I.search}<input id="epQ" data-f="epQ" value="${esc(ui.epQ||'')}" placeholder="名前で絞り込み"></div>
+  <div class="slist card" style="margin-top:8px;box-shadow:none;background:var(--bg)">${list.map(s=>`<div class="srow" role="button" data-act="epSet" data-id="${s.id}">${ph(s,'sth')}<div class="info"><div class="name">${esc(s.name)}</div><div class="meta">${gOf(s.genre).e} ${esc(s.genre||'')}${s.area?' · '+esc(s.area):''}</div></div>${cur===s.id?'<b style="color:#1F9D74">✓ 選択中</b>':''}</div>`).join('')||'<div class="empty" style="padding:14px">候補がありません</div>'}</div>
+  <div class="note">${k==='hotel'?'ホテル・旅館などは、候補タブから食べログ・Googleマップと同じ方法で追加できます。':'駅・空港・宿などは、候補タブから追加できます。'}</div>
+  <div class="sticky-foot">${cur?'<button class="btn danger" data-act="epSet" data-id="">設定を外す</button>':''}<button class="btn" data-act="epNew">${I.plus}手入力で追加</button></div>`;
+}
 function dayPickHTML(){const s=S(dayPick);return `<h3><span>どの日に追加しますか？</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
   <div class="meta" style="margin:-6px 0 12px">${esc(s?.name||'')}</div>
   <div class="dpl">${P().days.map((d,i)=>{const k=d.items.findIndex(x=>x.spot===dayPick);return `<button class="dp ${i===ui.day?'cur':''}" data-act="pickDay" data-i="${i}"><span><b>DAY ${i+1}</b><small>${d.date?fmtDate(d.date):'日付未定'} · ${d.items.length}件</small></span>${k>=0?`<em class="in">${k+1}件目に追加済み</em>`:`<em>${I.plus}追加</em>`}</button>`}).join('')}</div>`}
@@ -837,9 +885,11 @@ function renderPlan(){
     ${p.days.length>1?`<button class="ibtn flat" data-act="delDay" aria-label="この日を削除" style="color:var(--sub)">${I.trash}</button>`:''}
   </div>${geoBar()}`;
   if(!c.rows.length){
+    h+=`<div class="epwrap" style="margin-top:14px">${epRow('from',c,d)}${epRow('to',c,d)}${hotelRow(d)}</div>`;
     h+=`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>まだ予定がありません</b>行きたい場所を候補から追加しましょう。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;
   }else{
     h+=`<div class="card summary num"><div><small>出発</small><b>${fmtT(toMin(d.start))}</b></div><div><small>終了予定</small><b>${fmtT(c.end)}</b>${d.end?(()=>{const lim=toMin(d.end)+(toMin(d.end)<toMin(d.start)?1440:0),df=Math.round(lim-c.end);return `<em class="endnote ${df<0?'over':''}">${df<0?dur(-df)+'オーバー':'余裕 '+dur(df)}</em>`})():''}</div><div><small>移動時間</small><b>${durS(c.move)}</b></div><div><small>${c.rows.some(r=>r.it.v)?'訪問':'スポット'}</small><b>${c.rows.some(r=>r.it.v)?c.rows.filter(r=>r.it.v).length+'<em>/'+c.rows.length+'</em>':c.rows.length}</b></div></div><div class="tl" id="tl">`;
+    h+=epRow('from',c,d);
     c.rows.forEach(({it,s,i,leg,arr,dep})=>{
       const m=MODES[it.mode];
       h+=`<div class="row-wrap" data-iid="${it.id}">${i>0?`<div class="leg"><div class="leg-line"></div><button class="leg-pill" data-act="mode" data-i="${i}">${m.e} ${m.n}${leg?` · <b class="num">${dur(leg.min)}</b> · ${leg.km.toFixed(1)}km`:' · <span class="warn">位置未設定</span>'} ›</button></div>`:''}
@@ -850,14 +900,14 @@ function renderPlan(){
           <div class="handle" data-handle aria-label="並べ替え">${I.grip}</div>
         </div></div></div>`;
     });
-    h+=`</div><div class="end-mark num"><b>${fmtT(c.end)}</b><span>終了 · 滞在 ${dur(c.stay)} / 移動 ${c.km.toFixed(1)}km</span></div>
+    h+=`</div>${epRow('to',c,d)}<div class="end-mark num"><b>${fmtT(c.end)}</b><span>${c.T?'到着':'終了'} · 滞在 ${dur(c.stay)} / 移動 ${c.km.toFixed(1)}km</span></div>${hotelRow(d)}
     <button class="add-row" data-act="goStock">${I.plus}スポットを追加</button>
     <div class="note" style="margin-left:60px">移動時間は距離からの目安です。区間をタップすると移動手段の変更やGoogleマップでの経路確認ができます。</div>`;
   }
   $('#pane-plan').innerHTML=h;loadWeather(d);
   const tl=$('#tl');
-  if(tl&&window.Sortable)Sortable.create(tl,{handle:'[data-handle]',animation:180,ghostClass:'ghost',onEnd(e){
-    if(e.oldIndex===e.newIndex)return;const it=D().items;const [m]=it.splice(e.oldIndex,1);it.splice(e.newIndex,0,m);save();render()}});
+  if(tl&&window.Sortable)Sortable.create(tl,{handle:'[data-handle]',draggable:'.row-wrap',animation:180,ghostClass:'ghost',onEnd(e){
+    const o=e.oldDraggableIndex,n=e.newDraggableIndex;if(o===n)return;const it=D().items;const [m]=it.splice(o,1);it.splice(n,0,m);save();render()}});
 }
 function renderStock(){
   const p=P(),n=p.spots.length;
@@ -1275,9 +1325,12 @@ function drawMap(){
     el.querySelector('button').onclick=()=>{if(tryAddToDay(s.id))render()};
     L.marker([s.lat,s.lng],{icon:L.divIcon({className:'',html:'<div class="dot"></div>',iconSize:[14,14]})}).addTo(LAYER).bindPopup(el);pts.push([s.lat,s.lng])});
   const route=[];
+  const epMk=(sp,ic)=>{if(!hasLL(sp))return;L.marker([sp.lat,sp.lng],{zIndexOffset:900,icon:L.divIcon({className:'',html:`<div class="epin">${ic}</div>`,iconSize:[30,30],iconAnchor:[15,15]})}).addTo(LAYER).bindPopup(`<b>${esc(sp.name)}</b>`)};
+  if(c.F){epMk(c.F,c.F.id===d.hotel||P().days[ui.day-1]?.hotel===c.F.id?'🏨':'🏁');if(hasLL(c.F))route.push([c.F.lat,c.F.lng])}
   c.rows.forEach(({s,i})=>{if(!hasLL(s))return;route.push([s.lat,s.lng]);
     L.marker([s.lat,s.lng],{zIndexOffset:1000+i,icon:L.divIcon({className:'',html:`<div class="pin ${d.items[i].v?'done':''} ${s.approx?'approx':''}"><span>${d.items[i].v?'✓':i+1}</span></div>`,iconSize:[30,30],iconAnchor:[15,32]})})
      .addTo(LAYER).on('click',()=>hl(i))});
+  if(c.T&&hasLL(c.T)){if(c.T!==c.F)epMk(c.T,c.T.id===d.hotel?'🏨':'🏁');route.push([c.T.lat,c.T.lng])}
   if(route.length>1){L.polyline(route,{color:'#fff',weight:8,opacity:.9}).addTo(LAYER);L.polyline(route,{color:'#FF5B3A',weight:4,opacity:.95,dashArray:'1 0'}).addTo(LAYER)}
   const key=p.id+'|'+ui.day+'|'+route.length+'|'+pts.length;
   if(key!==fitKey){fitKey=key;const b=route.length?route:pts;
@@ -1351,7 +1404,10 @@ function openDetail(sid,i){detail={sid,i,snap:snap()};openSheet(detailHTML,()=>d
 /* --- 移動手段 --- */
 let modeIdx=0;
 function modeHTML(){
-  const d=D(),it=d.items[modeIdx],a=S(d.items[modeIdx-1].spot),b=S(it.spot);
+  const d=D(),c=calc(d);let a,b,it;
+  if(modeIdx==='from'){a=c.F;b=S(d.items[0].spot);it={mode:c.fromMode}}
+  else if(modeIdx==='to'){a=c.rows.length?c.rows.at(-1).s:c.F;b=c.T;it={mode:c.toMode||'walk'}}
+  else{it=d.items[modeIdx];a=S(d.items[modeIdx-1].spot);b=S(it.spot)}
   return `<h3><span>移動手段</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
   <div class="meta" style="margin:-8px 0 14px">${esc(a.name)} → ${esc(b.name)}</div>
   ${(()=>{const km=hasLL(a)&&hasLL(b)?dist(a,b):null,rec=suggestMode(a,b);
@@ -1527,12 +1583,12 @@ async function searchPlaces(q){
 function shareText(){
   const p=P();let t=`【${p.title}】\n`;
   p.days.forEach((d,di)=>{const c=calc(d);if(!c.rows.length)return;
-    t+=`\n■ DAY ${di+1}${d.date?' '+fmtDate(d.date):''}\n`;
+    t+=`\n■ DAY ${di+1}${d.date?' '+fmtDate(d.date):''}\n`;if(c.F)t+=`${fmtT(toMin(d.start))} 出発：${c.F.name}\n`;
     c.rows.forEach(({s,i,leg,arr,dep,it})=>{if(i>0)t+=`　↓ ${MODES[it.mode].e}${MODES[it.mode].n}${leg?' 約'+dur(leg.min):''}\n`;
       t+=`${fmtT(arr)}〜${fmtT(dep)} ${i+1}件目 ${s.name}\n`;
       if(s.url&&!/google|goo\.gl/.test(s.url))t+=`　🔗 ${/tabelog/.test(s.url)?'食べログ':'お店の情報'}：${s.url}\n`;
       if(hasLL(s)&&!s.approx)t+=`　📍 地図：${gmaps(s)}\n`;else if(s.url&&/google|goo\.gl/.test(s.url))t+=`　📍 地図：${s.url}\n`;else t+=`　📍 地図：${gmaps({name:s.name,area:s.area})}\n`});
-    t+=`${fmtT(c.end)} 解散\n`});
+    t+=c.T?`${fmtT(c.end)} 到着：${c.T.name}\n`:`${fmtT(c.end)} 解散\n`;if(d.hotel)t+=`🏨 宿泊：${S(d.hotel)?.name||''}\n`});
   return t;
 }
 async function doShare(){
@@ -1809,7 +1865,7 @@ function renderKit(){
   const list=mine.filter(x=>!cat||x.cat===cat).sort((a,b)=>b.at-a.at);
   // エリアごとの代表地点（緊急時の検索用）
   const areas={};p.spots.filter(hasLL).forEach(s=>{const k=s.area||'旅先';if(!areas[k])areas[k]=s});
-  const hotels=p.spots.filter(s=>s.genre==='宿');
+  const hotels=[...new Set([...p.days.map(d=>d.hotel).filter(Boolean).map(S),...p.spots.filter(s=>s.genre==='宿')])].filter(Boolean);
   el.innerHTML=`
   <div class="sec-head" style="margin-top:8px"><h2>トラベルキット</h2></div>
   <div class="card kit">
@@ -1977,6 +2033,12 @@ function moneyText(){const p=P(),m=M(),tr=settle(),total=m.items.reduce((a,x)=>a
 
 /* ================= 操作 ================= */
 const ACT={
+  epPick:el=>{epKey=el.dataset.k;ui.epQ='';openSheet(epHTML)},
+  epSet:el=>{const id=el.dataset.id||null,p=P(),d=D(),i=ui.day,k=epKey;const msg=[];
+    if(k==='hotel'){d.hotel=id;if(id){if(!d.to){d.to=id;msg.push('この日の終着地点')}const nx=p.days[i+1];if(nx&&!nx.from){nx.from=id;msg.push(`DAY ${i+2} の出発地点`)}}}
+    else{d[k]=id;delete d[k+'Mode']}
+    save();closeSheet();render();toast(id?(msg.length?`${S(id).name} を宿泊先にし、${msg.join('と')}にも設定しました`:`${EPL[k][1]}を設定しました`):'設定を外しました')},
+  epNew:()=>{closeSheet();setTimeout(()=>openForm(),220)},
   payAdd:()=>openPay(),
   payFromSpot:el=>{closeSheet();ui.tab='money';render();setTimeout(()=>openPay(null,el.dataset.sid),220)},
   payEdit:el=>openPay(M().items.find(x=>x.id===el.dataset.id)),
@@ -2017,7 +2079,7 @@ const ACT={
   ctDel:el=>{const sn=snap(),p=P();p.contacts.splice(+el.dataset.i,1);save();renderKit();toast('連絡先を削除しました',restore(sn))},
   titleOk:()=>{const v=($('#titleIn')?.value||'').trim();P().title=v||'無題のプラン';save();render();document.activeElement?.blur();toast('プラン名を保存しました');refreshSheet()},
   meOk:()=>{db.me=($('#meIn')?.value||'').trim().slice(0,20);save(false);db.plans.filter(x=>x.gid).forEach(x=>live.me(x));document.activeElement?.blur();toast('表示名を保存しました')},
-  delSpotD:el=>{const sn=detail?.snap||snap(),p=P(),id=el.dataset.sid,n=S(id)?.name;p.spots=p.spots.filter(x=>x.id!==id);p.days.forEach(d=>d.items=d.items.filter(i=>i.spot!==id));
+  delSpotD:el=>{const sn=detail?.snap||snap(),p=P(),id=el.dataset.sid,n=S(id)?.name;p.spots=p.spots.filter(x=>x.id!==id);p.days.forEach(d=>{d.items=d.items.filter(i=>i.spot!==id);['from','to','hotel'].forEach(k=>{if(d[k]===id)d[k]=null})});
     if(detail)detail.snap=null;save();closeSheet();render();toast(`「${n}」を削除しました`,restore(sn))},
   setGenre:el=>{const s=S(detail.sid);if(!s)return;const prev=gOf(s.genre).stay;s.genre=el.dataset.g;if(+s.stay===prev)s.stay=gOf(s.genre).stay;save();refreshSheet();render()},
   install:async()=>{if(!installEvt)return toast('ブラウザのメニューから「アプリをインストール」を選んでください');installEvt.prompt();const r=await installEvt.userChoice;installEvt=null;renderStock();if(r.outcome==='accepted')toast('インストールしました！共有メニューに Router が出ます')},
@@ -2055,8 +2117,8 @@ const ACT={
   addDay:()=>{const p=P(),l=p.days.at(-1);p.days.push({date:addDays(l.date,1),start:l.start||'09:00',items:[]});ui.day=p.days.length-1;save();render();toast(`DAY ${p.days.length} を追加しました`)},
   delDay:()=>{const p=P(),s=snap(),n=ui.day+1;p.days.splice(ui.day,1);ui.day=Math.max(0,ui.day-1);save();render();toast(`DAY ${n} を削除しました`,restore(s))},
   goStock:()=>{ui.tab='stock';render();scrollTo({top:0})},
-  mode:el=>{modeIdx=+el.dataset.i;openSheet(modeHTML)},
-  setMode:el=>{D().items[modeIdx].mode=el.dataset.m;save();render();closeSheet()},
+  mode:el=>{const v=el.dataset.i;modeIdx=isNaN(+v)?v:+v;openSheet(modeHTML)},
+  setMode:el=>{const d=D();if(modeIdx==='from')d.fromMode=el.dataset.m;else if(modeIdx==='to')d.toMode=el.dataset.m;else d.items[modeIdx].mode=el.dataset.m;save();render();closeSheet()},
   detail:(el,e)=>{if(e.target.closest('[data-handle]'))return;openDetail(el.dataset.sid,el.dataset.i!=null?+el.dataset.i:null)},
   dCancel:()=>{if(detail?.snap){restore(detail.snap)();save();render()}closeSheet()},
   stay:el=>{const s=S(detail.sid);s.stay=Math.max(0,(+s.stay||0)+ +el.dataset.v);save();refreshSheet();render()},
@@ -2128,6 +2190,7 @@ document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f==='fArea'){ui.fArea=e.target.value;return}
   if(f==='spotQ'){ui.spotQ=e.target.value;return}
   if(f==='q2'){ui.q2=e.target.value;renderStockList();return}
+  if(f==='epQ'){ui.epQ=e.target.value;const y=e.target.selectionStart;refreshSheet();const i=$('#epQ');if(i){i.focus();i.setSelectionRange(y,y)}return}
   if(f==='pay.amt'&&pay){const n=e.target.value.replace(/[^0-9０-９]/g,'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248));pay.amt=+n||0;payUpdate();return}
   if(f==='pay.t'&&pay){pay.t=e.target.value;return}
   if(f==='pay.fix'&&pay){(pay.fix=pay.fix||{})[e.target.dataset.id]=+e.target.value.replace(/[^0-9]/g,'')||0;payUpdate();return}
