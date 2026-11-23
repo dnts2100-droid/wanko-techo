@@ -1131,7 +1131,7 @@ const areaFromAddr=a=>{const m=(a||'').replace(/〒?\s*[\d０-９-－−]+/g,' '
 // ▼ 自前の中継サーバー（Cloudflare Workers）のURL。設定すると最優先で使い、確実に読み取れる
 const PROXY_URL='https://router-proxy.dnts2100.workers.dev';
 async function fetchHTML(url){
-  if(PROXY_URL){try{const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url));if(r.ok){const t=await r.text();const fin=r.headers.get('X-Final-URL')||'';if(fin&&/google\.[^/]+\/maps|maps\.google\./.test(fin))return `<!--final:${fin}-->`;if(t.length>=400&&!/アクセスが集中/.test(t))return fin?`<!--final:${fin}-->`+t:t}}catch(_){}}
+  if(PROXY_URL){try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url),{signal:ac.signal});if(r.ok){const t=await r.text();const fin=r.headers.get('X-Final-URL')||'';if(fin&&/google\.[^/]+\/maps|maps\.google\./.test(fin))return `<!--final:${fin}-->`;if(t.length>=400&&!/アクセスが集中/.test(t))return fin?`<!--final:${fin}-->`+t:t}}catch(_){}}
   const tm=(pr,ms)=>Promise.race([pr,new Promise((_,j)=>setTimeout(()=>j(0),ms))]);
   const tries=[
     ()=>fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)),
@@ -1139,7 +1139,8 @@ async function fetchHTML(url){
     ()=>fetch('https://api.codetabs.com/v1/proxy/?quest='+encodeURIComponent(url)),
     ()=>fetch('https://r.jina.ai/'+url,{headers:{'X-Return-Format':'html'}})
   ];
-  return Promise.any(tries.map(async f=>{const r=await tm(f(),14000);if(!r.ok)throw 0;const t=await r.text();if(t.length<400)throw 0;return t}));
+  if(PROXY_URL)throw new Error('proxy failed');
+  return Promise.any(tries.map(async f=>{const r=await tm(f(),6000);if(!r.ok)throw 0;const t=await r.text();if(t.length<400)throw 0;return t}));
 }
 function parseMeta(html){
   const meta=k=>{const m=html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${k}["'][^>]*content=["']([^"']+)`,'i'))||html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]*(?:property|name)=["']${k}["']`,'i'));return m?m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"'):''};
@@ -1173,8 +1174,9 @@ async function pageInfo(url){
   if(info)pageCache[url]=info;
   return info;
 }
+async function areaOf(lat,lng){try{const j=await getJSON(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&accept-language=ja&lat=${lat}&lon=${lng}`,8000);const a=j.address||{};return a.city_district||a.suburb||a.city||a.town||a.village||a.county||''}catch(_){return ''}}
 async function enrich(r){
-  const isPage=r.url&&(isShortMaps(r.url)||/google\.[^/]+\/maps|tabelog\.com/.test(r.url));
+  const isPage=r.url&&(isShortMaps(r.url)||/google\.[^/]+\/maps/.test(r.url));
   if(isPage&&(!r.name||!hasLL(r)||!r.photo)){
     if(!r.name)toast('ページから名前と場所を読み取り中…');
     const x=await pageInfo(r.url);
@@ -1185,7 +1187,6 @@ async function enrich(r){
       if(!x.genre)r.genre=(GWORD.find(([re])=>re.test(r.name||''))||[])[1]||r.genre}
   }
   // エリアが不明なら、位置から市区町村を求める
-  if(!r.area&&hasLL(r)){try{const j=await getJSON(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&accept-language=ja&lat=${r.lat}&lon=${r.lng}`,8000);const a=j.address||{};r.area=a.city_district||a.suburb||a.city||a.town||a.village||a.county||''}catch(_){}}
   return r;
 }
 async function handlePaste(text){
@@ -1298,7 +1299,7 @@ function renderQuick(){
 }
 async function quickAdd(text){
   let r=parsePaste(text);if(!r)return toast('コピーした内容が見つかりません');
-  r=await enrich(r);
+  if(!r.name){toast('場所の名前を読み取っています…');r=await enrich(r)}
   let noname=false;if(!r.name){r.name=isShortMaps(r.url)||/google/.test(r.url)?'Googleマップの場所':'名称未設定の場所';noname=true}
   const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||x.name===r.name);
   if(dup)return toast(`「${dup.name}」は追加済みです`);
@@ -1307,8 +1308,13 @@ async function quickAdd(text){
   p.spots.push(sp);save();render();
   navigator.vibrate&&navigator.vibrate(30);
   toast(noname?'追加しました（名前を読み取れなかったので、候補から編集してください）':`「${sp.name}」を候補に追加しました`,restore(sn));
-  autoPhoto(sp);
-  if(!hasLL(sp)){await locate(r);if(hasLL(r)&&P().spots.includes(sp)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1;save(false);render()}}
+  // ここから先はバックグラウンドで：Googleマップの正確な位置 → 店名での位置検索 → 写真
+  (async()=>{
+    if(!hasLL(sp)&&r.url&&!/tabelog/.test(r.url)){const x=await enrich(r);if(hasLL(x)&&P().spots.includes(sp)){sp.lat=x.lat;sp.lng=x.lng;if(!sp.area&&x.area)sp.area=x.area;if(!sp.photo&&x.photo)sp.photo=x.photo;save(false);render()}}
+    if(!hasLL(sp)){await locate(r);if(hasLL(r)&&P().spots.includes(sp)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1;save(false);render()}}
+    if(!sp.area&&hasLL(sp)&&!sp.approx){const a=await areaOf(sp.lat,sp.lng);if(a&&P().spots.includes(sp)){sp.area=a;save(false);render()}}
+    autoPhoto(sp);
+  })();
 }
 function openExt(kind){
   const area=(($('#fArea')?.value)||ui.fArea||'').replace('現在地','').trim(),g=ui.fGenre,kw=g==='グルメ'?'':g;
@@ -1553,7 +1559,7 @@ async function autoPhoto(s,force){
   if(!SET.autoPhoto)return;
   if(s.photo||(s.pt&&!force))return;s.pt=1;
   let url='';
-  if(s.url&&/tabelog\.com|google\.[^/]+\/maps|goo\.gl/.test(s.url)){const x=await pageInfo(s.url);if(x?.photo)url=x.photo;
+  if(s.url&&/google\.[^/]+\/maps|goo\.gl/.test(s.url)){const x=await pageInfo(s.url);if(x?.photo)url=x.photo;
     if(x&&x.lat!=null&&(s.approx||!hasLL(s))){s.lat=x.lat;s.lng=x.lng;delete s.approx}}
   try{if(url)throw 'done';
     if(s.wiki&&s.wiki.includes(':'))url=await wikiThumb(s.wiki.split(':')[0],s.wiki.split(':').slice(1).join(':'));
