@@ -598,6 +598,8 @@ body.gmode #gmap{display:block}body.gmode #map{display:none}
 .hotelgo{margin:12px 0 0 60px}.epwrap .hotelgo{margin-left:0}
 .tohotel{background:color-mix(in srgb,#5B6CFF 14%,var(--surface));box-shadow:none;color:var(--ink)}
 
+.diag{white-space:pre-wrap;word-break:break-all;font:11px/1.6 ui-monospace,Menlo,monospace;background:var(--bg);border-radius:12px;padding:10px;max-height:50vh;overflow:auto}
+
 /* LIVE */
 .live-badge{display:inline-flex;align-items:center;gap:4px;font-size:9.5px;font-weight:900;letter-spacing:.1em;color:#fff;background:#1F9D74;border-radius:999px;padding:1px 7px 1px 6px;vertical-align:1px}
 .live-badge::before{content:"";width:5px;height:5px;border-radius:50%;background:#fff;animation:blink 1.2s infinite}
@@ -620,7 +622,7 @@ body.gmode #gmap{display:block}body.gmode #map{display:none}
   <button class="ibtn" id="geoBtn" data-act="geo" aria-label="おでかけモード（現在地・滞在記録）"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
   <button class="ibtn" data-act="planMenu" aria-label="プランの設定"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
   <button class="ibtn" id="kitBtn" data-act="tab" data-tab="kit" aria-label="トラベルキット"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></svg></button>
-  <button class="ibtn" data-act="share" aria-label="共有"><svg viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button>
+
 </header>
 <main class="panes">
   <section class="pane" id="pane-plan"></section>
@@ -727,11 +729,15 @@ function celebrate(name){
 }
 
 /* ================= 設定（この端末だけ） ================= */
-const SET_DEF={mapKind:'google',autoGeo:false,arriveMin:1,radius:0,celebrate:true,nudge:true,weather:true,autoPhoto:true,welcome:true,geoTip:true,theme:'auto'};
+const SET_DEF={mapKind:'google',autoGeo:false,arriveMin:1,radius:0,celebrate:true,nudge:true,weather:true,autoPhoto:true,welcome:true,geoTip:false,theme:'auto'};
 let SET={...SET_DEF};try{Object.assign(SET,JSON.parse(localStorage.getItem('router-settings'))||{})}catch(_){}
 function saveSet(){try{localStorage.setItem('router-settings',JSON.stringify(SET))}catch(_){}applyTheme()}
 function applyTheme(){if(SET.theme==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',SET.theme)}
 applyTheme();
+
+/* ================= 読み取りの記録（貼り付け・共有の結果を残し、原因を確認できるように） ================= */
+let DIAG=[];try{DIAG=JSON.parse(localStorage.getItem('router-diag'))||[]}catch(_){}
+function diag(...a){const t=new Date().toTimeString().slice(0,8),m=a.map(x=>typeof x==='string'?x:JSON.stringify(x)).join(' ').slice(0,400);DIAG.push(t+' '+m);DIAG=DIAG.slice(-60);try{localStorage.setItem('router-diag',JSON.stringify(DIAG))}catch(_){}}
 
 /* ================= ユーティリティ ================= */
 const $=s=>document.querySelector(s);
@@ -950,7 +956,7 @@ function renderPlan(){
   </div>${geoBar()}`;
   if(!c.rows.length){
     h+=`<div class="epwrap" style="margin-top:14px">${epRow('from',c,d)}${epRow('to',c,d)}${hotelRow(d)}</div>`;
-    h+=`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>まだ予定がありません</b>行きたい場所を候補から追加しましょう。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;
+    h+=`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>まだ予定がありません</b>行きたい場所を候補から追加しましょう。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.plus}候補を追加</button></div></div>`;
   }else{
     h+=`<div class="card summary num"><div><small>出発</small><b>${fmtT(toMin(d.start))}</b></div><div><small>終了予定</small><b>${fmtT(c.end)}</b>${d.end?(()=>{const lim=toMin(d.end)+(toMin(d.end)<toMin(d.start)?1440:0),df=Math.round(lim-c.end);return `<em class="endnote ${df<0?'over':''}">${df<0?dur(-df)+'オーバー':'余裕 '+dur(df)}</em>`})():''}</div><div><small>移動時間</small><b>${durS(c.move)}</b></div><div><small>${c.rows.some(r=>r.it.v)?'訪問':'スポット'}</small><b>${c.rows.some(r=>r.it.v)?c.rows.filter(r=>r.it.v).length+'<em>/'+c.rows.length+'</em>':c.rows.length}</b></div></div><div class="tl" id="tl">`;
     h+=epRow('from',c,d);
@@ -986,7 +992,7 @@ function renderStock(){
   if(ui.fArea2&&!areas.includes(ui.fArea2))ui.fArea2='';if(ui.fGenre2&&!genres.includes(ui.fGenre2))ui.fGenre2='';
   const cnt=(k,v)=>p.spots.filter(s=>(k==='a'?(s.area||'エリア未設定'):(s.genre||'その他'))===v).length;
   h+=`<div class="filters">
-    <div class="field">${I.search}<input id="q2" data-f="q2" placeholder="名前・メモで絞り込み" value="${esc(ui.q2||'')}"></div>
+    <div class="field">${I.list}<input id="q2" data-f="q2" placeholder="候補を名前で絞り込み" value="${esc(ui.q2||'')}"></div>
     <div class="row" style="flex-wrap:nowrap">
       <div class="seg" style="flex:1">${[['','すべて'],['todo','未計画'],['done','予定済'],...(P().spots.some(x=>x.approx||!hasLL(x))?[['fix','⚠️要確認']]:[])].map(([v,l])=>`<button class="${(ui.st2||'')===v?'on':''}" data-act="f2" data-k="st2" data-v="${v}">${l}</button>`).join('')}</div>
       <select data-f="sort2" aria-label="並び順" class="sort">${[['new','新しい順'],['area','エリア順'],['genre','ジャンル順'],['name','名前順']].map(([v,l])=>`<option value="${v}" ${(ui.sort2||'new')===v?'selected':''}>${l}</option>`).join('')}</select>
@@ -1025,12 +1031,11 @@ function addCardHTML(){
   const pst=ui.pst;
   return `<div class="card search-card">
     <div class="ttl">＋ 候補を追加</div>
-    <div class="field">${I.pin}<input id="fArea" data-f="fArea" placeholder="エリア・駅名（任意）例：新宿" value="${esc(ui.fArea==='現在地'?'':ui.fArea)}" list="areaList" enterkeyhint="done"></div>
     <div class="src2">
-      <button class="src" data-act="openTabelog"><span class="se">🍽</span><b>食事</b><small>食べログで探す ↗</small></button>
-      <button class="src" data-act="openGmaps"><span class="se">🗺️</span><b>観光・施設</b><small>Googleマップで探す ↗</small></button>
+      <button class="src" data-act="openTabelog"><span class="se">🍽</span><b>食べログ</b><small>お店を選ぶ ↗</small></button>
+      <button class="src" data-act="openGmaps"><span class="se">🗺️</span><b>Googleマップ</b><small>観光地・施設を選ぶ ↗</small></button>
     </div>
-    <div class="howto">見つけたら <b>「共有」→「Router」</b>で追加。<br>またはリンクを「コピー」して、下に貼り付け</div>
+    <div class="howto">選んだら <b>「共有」→「Router」</b><br>または「コピー」して下に貼り付け</div>
     <div class="field"><input id="pasteIn" data-f="paste" placeholder="ここに貼り付け（URL・共有テキスト）" value="${esc(ui.pst?.text||'')}"><button class="btn sm pri" data-act="pasteClip">📋 貼り付け</button></div>
     ${ui.pst?pasteConfirmHTML():''}
     ${androidTip()}
@@ -1164,7 +1169,8 @@ const areaFromAddr=a=>{a=String(a||'').replace(/〒?\s*[0-9０-９]{3}[-－][0-9
 // ▼ 自前の中継サーバー（Cloudflare Workers）のURL。設定すると最優先で使い、確実に読み取れる
 const PROXY_URL='https://router-proxy.dnts2100.workers.dev';
 async function fetchHTML(url){
-  if(PROXY_URL){try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url),{signal:ac.signal});if(r.ok){const t=await r.text();const fin=r.headers.get('X-Final-URL')||'';if(fin&&/google\.[^/]+\/maps|maps\.google\./.test(fin))return `<!--final:${fin}-->`;if(t.length>=400&&!/アクセスが集中/.test(t))return fin?`<!--final:${fin}-->`+t:t}}catch(_){}}
+  diag('読込',url.slice(0,90));
+  if(PROXY_URL){try{const ac=new AbortController();setTimeout(()=>ac.abort(),8000);const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url),{signal:ac.signal});diag('中継',r.status,(r.headers.get('X-Final-URL')||'').slice(0,160));if(r.ok){const t=await r.text();const fin=r.headers.get('X-Final-URL')||'';if(fin&&/google\.[^/]+\/maps|maps\.google\./.test(fin))return `<!--final:${fin}-->`;if(t.length>=400&&!/アクセスが集中/.test(t))return fin?`<!--final:${fin}-->`+t:t}}catch(e){diag('中継エラー',String(e&&e.name||e))}}
   const tm=(pr,ms)=>Promise.race([pr,new Promise((_,j)=>setTimeout(()=>j(0),ms))]);
   const tries=[
     ()=>fetch('https://api.allorigins.win/raw?url='+encodeURIComponent(url)),
@@ -1204,11 +1210,14 @@ async function pageInfo(url){
     info={name,area:area||areaFromAddr(m.addr),genre,lat:m.lat,lng:m.lng,addr:m.addr,photo:img||''};
   }catch(_){}
   if(!info&&isShortMaps(url)){const x=await resolveMaps(url);if(x)info={name:x.name,lat:x.lat,lng:x.lng,area:areaFromAddr(x.addr),addr:x.addr}}
+  if(info&&info.lat==null&&info.addr){const g=await geocodeAddr(info.addr);if(g){info.lat=g.lat;info.lng=g.lng}}
+  diag('ページ情報',info?{n:info.name,lat:info.lat,a:info.addr}:'なし');
   if(info)pageCache[url]=info;
   return info;
 }
 async function areaOf(lat,lng){try{const j=await getJSON(`https://nominatim.openstreetmap.org/reverse?format=json&zoom=14&accept-language=ja&lat=${lat}&lon=${lng}`,8000);const a=j.address||{};return a.city_district||a.suburb||a.city||a.town||a.village||a.county||''}catch(_){return ''}}
 async function geocodeAddr(addr){
+  diag('住所検索',addr);
   try{const j=await getJSON('https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(addr.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248))),8000);
     if(j.length){const [lng,lat]=j[0].geometry.coordinates;return {lat,lng,label:j[0].properties.title}}}catch(_){}
   return null;
@@ -1337,7 +1346,9 @@ function renderQuick(){
   el.classList.toggle('on',!!show);
 }
 async function quickAdd(text){
+  diag('貼り付け',String(text).replace(/\s+/g,' ').slice(0,200));
   let r=parsePaste(text);if(!r)return toast('コピーした内容が見つかりません');
+  diag('読み取り',{n:r.name,addr:r.addr,url:(r.url||'').slice(0,60),area:r.area});
   if(!r.name){toast('場所の名前を読み取っています…');r=await enrich(r)}
   let noname=false;if(!r.name){r.name=isShortMaps(r.url)||/google/.test(r.url)?'Googleマップの場所':'名称未設定の場所';noname=true}
   const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||x.name===r.name);
@@ -1349,13 +1360,17 @@ async function quickAdd(text){
   toast(noname?'追加しました（名前を読み取れなかったので、候補から編集してください）':`「${sp.name}」を候補に追加しました`,restore(sn));
   // ここから先はバックグラウンドで：Googleマップの正確な位置 → 店名での位置検索 → 写真
   (async()=>{
-    if(!hasLL(sp)&&(r.addr||r.url&&!/tabelog/.test(r.url))){const x=await enrich(r);if(hasLL(x)&&P().spots.includes(sp)){sp.lat=x.lat;sp.lng=x.lng;if(!sp.area&&x.area)sp.area=x.area;if(!sp.photo&&x.photo)sp.photo=x.photo;save(false);render()}}
+    const fromG=r.url&&/google|goo\.gl/.test(r.url);
+    if(!hasLL(sp)&&(r.addr||r.url&&!/tabelog/.test(r.url))){const x=await enrich(r);if(hasLL(x)&&!x.approx&&P().spots.includes(sp)){sp.lat=x.lat;sp.lng=x.lng;delete sp.approx;if(!sp.area&&x.area)sp.area=x.area;if(!sp.photo&&x.photo)sp.photo=x.photo;save(false);render()}}
+    if(fromG||r.addr){if(hasLL(sp)&&!sp.approx){diag('位置OK',sp.name,sp.lat,sp.lng);toast(`📍「${sp.name}」の位置を設定しました`)}
+      else{diag('位置NG',sp.name);toast(`「${sp.name}」の位置を読み取れませんでした`,()=>openSheet(diagHTML),'理由を見る')}}
     if(!hasLL(sp)){await locate(r);if(hasLL(r)&&P().spots.includes(sp)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1;save(false);render()}}
     if(!sp.area&&hasLL(sp)&&!sp.approx){const a=await areaOf(sp.lat,sp.lng);if(a&&P().spots.includes(sp)){sp.area=a;save(false);render()}}
     autoPhoto(sp);
   })();
 }
 function openExt(kind){
+  const url0=kind==='tabelog'?'https://tabelog.com/':'https://www.google.com/maps';ui.lastExt=url0;ui.lastKind=kind;saveUI();renderQuick();openURL(url0);return;
   const area=(($('#fArea')?.value)||ui.fArea||'').replace('現在地','').trim(),g=ui.fGenre,kw=g==='グルメ'?'':g;
   // 食べログ内の検索URLは条件が引き継がれずトップに戻ることがあるため、食べログのページだけを確実に表示できるGoogle検索を使う
   const url=kind==='tabelog'?`https://www.google.com/search?q=${encodeURIComponent([area,'グルメ','site:tabelog.com'].filter(Boolean).join(' '))}`
@@ -1458,10 +1473,10 @@ function refreshSheet(){const s=SHEETS.at(-1);if(s){const sb=s.el.querySelector(
 function closeSheet(){const s=SHEETS.pop();if(!s)return;s.onClose&&s.onClose();s.bg.classList.add('out');s.el.classList.add('out');setTimeout(()=>{s.bg.remove();s.el.remove();renderQuick()},200)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
 let toastT;
-function toast(msg,undo){
+function toast(msg,undo,label){
   document.querySelector('.toast')?.remove();clearTimeout(toastT);
-  const t=document.createElement('div');t.className='toast'+(undo?'':' nob');t.innerHTML=`<span>${esc(msg)}</span>${undo?'<button>元に戻す</button>':''}`;
-  if(undo)t.querySelector('button').onclick=()=>{undo();t.remove();save();render()};
+  const t=document.createElement('div');t.className='toast'+(undo?'':' nob');t.innerHTML=`<span>${esc(msg)}</span>${undo?`<button>${label||'元に戻す'}</button>`:''}`;
+  if(undo)t.querySelector('button').onclick=()=>{undo();t.remove();if(!label){save();render()}};
   document.body.append(t);toastT=setTimeout(()=>t.remove(),undo?5000:2400);
 }
 const snap=()=>JSON.stringify(P());
@@ -1523,6 +1538,7 @@ function planHTML(){
   const p=P();
   return `<h3><span>プラン</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
   <div class="lbl" style="margin-top:0">プラン名</div><div class="field"><input data-f="title" id="titleIn" value="${esc(p.title)}" enterkeyhint="done"><button class="btn sm pri" data-act="titleOk">決定</button></div>
+  <button class="btn acc block" style="margin-top:12px" data-act="shareFromMenu">👥 友だちと共有・予定を送る</button>
   <div class="lbl">マイプラン</div>
   ${db.plans.map(x=>`<button class="plan-item ${x.id===p.id?'on':''}" data-act="switchPlan" data-id="${x.id}"><span class="ic">${esc([...x.title][0]||'旅')}</span><span style="flex:1;min-width:0"><b>${esc(x.title)}</b>${x.gid?' <span class="live-badge">LIVE</span>':''}<div class="meta">${x.days[0].date?fmtDate(x.days[0].date)+' · ':''}${x.days.length}日 · ${x.days.reduce((a,d)=>a+d.items.length,0)}スポット</div></span>${x.id===p.id?'<span class="meta">表示中</span>':''}</button>`).join('')}
   <button class="btn block" style="margin-top:8px" data-act="newPlan">${I.plus}新しいプランを作成</button>
@@ -1543,10 +1559,9 @@ function formHTML(){
   <div class="row" style="justify-content:space-between;margin-top:16px"><span class="meta" style="font-weight:700">滞在予測</span>
     <div class="stepper"><button data-act="dStay" data-v="-15">−</button><b class="num" id="dStay">${dur(+s.stay||0)}</b><button data-act="dStay" data-v="15">＋</button></div></div>
   <div class="lbl">場所</div>
-  <div class="field">${I.search}<input id="locQ" placeholder="施設名・住所で検索" enterkeyhint="search"><button class="btn sm pri" data-act="locSearch">検索</button></div>
-  <div class="loc-res" id="locRes"></div>
+  <div class="row"><button class="btn sm" data-act="formLocOpen">🗺 Googleマップで開く ↗</button><button class="btn sm pri" data-act="formLocPaste">📋 リンクを貼って位置を設定</button></div>
   <div id="pickmap"></div>
-  <div class="note" id="llNote">${hasLL(s)?'📍 位置設定済み。地図をタップで修正できます。':'検索するか、地図をタップして位置を指定してください。'}</div>
+  <div class="note" id="llNote">${hasLL(s)?'📍 位置設定済み。地図をタップで修正できます。':'Googleマップのリンクを貼るか、地図をタップして位置を指定してください。'}</div>
   <div class="lbl">情報URL（公式サイト・食べログなど）</div><input data-f="d.url" type="url" value="${esc(s.url||'')}" placeholder="https://">
   <div class="lbl">メモ</div><textarea data-f="d.memo" rows="2">${esc(s.memo||'')}</textarea>
   <div class="sticky-foot">${s._new?'':`<button class="ibtn" data-act="delSpot" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button>`}<button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="saveSpot">OK</button></div>`;
@@ -1900,7 +1915,7 @@ function setHTML(){
     ${sg('mapKind','地図',[['google','Googleマップ'],['app','アプリ内の地図']])}
     ${sg('theme','画面の明るさ',[['auto','自動'],['light','ライト'],['dark','ダーク']])}</div>
   <div class="lbl">データ</div>
-  <div class="row"><button class="btn sm" data-act="export">書き出し（バックアップ）</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm" data-act="help">❓ 使い方</button></div>
+  <div class="row"><button class="btn sm" data-act="diag">🔎 読み取りの記録</button><button class="btn sm" data-act="export">書き出し（バックアップ）</button><button class="btn sm" data-act="import">読み込み</button><button class="btn sm" data-act="help">❓ 使い方</button></div>
   <div class="note">設定はこの端末だけに保存されます。共有メンバーの設定には影響しません。</div>`;
 }
 let memEdit=null;
@@ -1914,6 +1929,10 @@ async function fixLoc(sid,text){
   sp.lat=r.lat;sp.lng=r.lng;delete sp.approx;if(!sp.area&&r.area)sp.area=r.area;ui.fixSid=null;saveUI();fitKey='';save();render();if(detail?.sid===sid)refreshSheet();
   toast(`「${sp.name}」の位置を直しました`);
 }
+function diagHTML(){return `<h3><span>読み取りの記録</span><button class="ibtn flat" data-act="close">${I.x}</button></h3>
+  <p class="meta" style="margin-top:0;line-height:1.7">貼り付けや共有で、何を読み取れたかの記録です。うまくいかないときは「コピー」して開発者に送ってください。</p>
+  <pre class="diag">${esc(DIAG.slice(-40).join('\n'))||'まだ記録はありません'}</pre>
+  <div class="sticky-foot"><button class="btn" data-act="diagClear">消去</button><button class="btn pri" data-act="diagCopy">コピー</button></div>`}
 let liveState='';
 function members(p){const m=Object.entries(p.members||{}).sort((a,b)=>(a[1].t||0)-(b[1].t||0));const me=live.fb?.uid;
   return m.map(([k,v])=>({name:v.n||'メンバー',me:k===me}))}
@@ -2161,6 +2180,15 @@ function moneyText(){const p=P(),m=M(),tr=settle(),total=m.items.reduce((a,x)=>a
 
 /* ================= 操作 ================= */
 const ACT={
+  shareFromMenu:()=>{closeSheet();setTimeout(()=>openSheet(shareHTML),220)},
+  formLocOpen:()=>openURL(`https://www.google.com/maps/search/${encodeURIComponent(((document.querySelector('[data-f="d.name"]')?.value||draft.name||'')+' '+(draft.area||'')).trim())}`),
+  formLocPaste:async()=>{let t='';try{t=await navigator.clipboard.readText()}catch(_){}if(!t)return toast('Googleマップで「共有」→「コピー」してから押してください');
+    let r=parsePaste(t);if(!r)return;toast('位置を読み取っています…');r=await enrich(r);
+    if(hasLL(r)&&!r.approx){setLL(r.lat,r.lng);pickMap&&pickMap.setView([r.lat,r.lng],16);if(!draft.name&&r.name){draft.name=r.name;const n=document.querySelector('[data-f="d.name"]');if(n)n.value=r.name}toast('位置を設定しました')}
+    else toast('このリンクから位置を読み取れませんでした',()=>openSheet(diagHTML),'理由を見る')},
+  diag:()=>openSheet(diagHTML),
+  diagCopy:async()=>{try{await navigator.clipboard.writeText(DIAG.join('\n'));toast('記録をコピーしました')}catch(_){toast('コピーできませんでした')}},
+  diagClear:()=>{DIAG=[];try{localStorage.removeItem('router-diag')}catch(_){}refreshSheet()},
   mapApp:()=>{SET.mapKind='app';saveSet();gmapSrc='';render();toast('アプリ内の地図に切り替えました（設定でGoogleマップに戻せます）')},
   mapGoogle:()=>{SET.mapKind='google';saveSet();render()},
   locFind:el=>{const s=S(el.dataset.sid);ui.fixSid=s.id;saveUI();openURL(`https://www.google.com/maps/search/${encodeURIComponent((s.name+' '+(s.area||'')).trim())}`)},
@@ -2434,7 +2462,7 @@ function renderProg(){
   const el=$('#pane-prog');if(!el)return;
   const p=P(),d=D(),g=progress(d);
   let h=p.days.length>1?`<div class="hscroll days-row">${p.days.map((x,i)=>`<button class="day-chip ${i===ui.day?'on':''}" data-act="day" data-i="${i}"><small>DAY ${i+1}</small><b>${x.date?fmtDate(x.date):x.items.length+'件'}</b></button>`).join('')}</div>`:'';
-  if(!g){el.innerHTML=h+`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>予定を作るとレースが始まります</b>スケジュールにスポットを追加すると、予定と実際の進み具合を比べられます。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.search}スポットを探す</button></div></div>`;return}
+  if(!g){el.innerHTML=h+`<div class="card empty" style="margin-top:16px">${pinkun(88)}<b>予定を作るとレースが始まります</b>スケジュールにスポットを追加すると、予定と実際の進み具合を比べられます。<div style="margin-top:16px"><button class="btn pri" data-act="goStock">${I.plus}候補を追加</button></div></div>`;return}
   if(!d.date)h+=`<div class="geo-bar" style="margin-top:12px">📅<span>日付が未設定のため<b>今日</b>として表示しています。</span><button class="btn sm" data-act="progDate">今日に設定</button></div>`;
   h+=ringHTML(g,d)+(hotelOf(d)?`<div class="hotelgo" style="margin:12px 0 0">${hotelBtn(d,'btn block')}</div>`:'')+nextHTML(g,d)+raceHTML(g,d)+stampHTML(g)+ganttHTML(g)+`<button class="btn block" data-act="recap" style="margin-top:14px">📝 今日のふりかえりを送る</button>`;
   loadWeather(d);
