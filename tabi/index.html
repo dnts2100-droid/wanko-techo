@@ -851,7 +851,7 @@ try{Object.assign(ui,JSON.parse(localStorage.getItem(UIKEY))||{})}catch(_){}
 // 起動時：外部サイトでお店を探している途中（30分以内）なら元の画面、それ以外はプラン一覧から
 if(!(ui.awayAt&&Date.now()-ui.awayAt<30*60e3&&ui.tab==='stock')&&!location.hash&&!location.search.includes('st=')&&!location.search.includes('su='))ui.tab='home';
 ui.awayAt=0;
-function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({awayAt:ui.away||ui.awayAt||0,tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,fixSid:ui.fixSid,geoHide:ui.geoHide,extTipShown:ui.extTipShown,hideShots:ui.hideShots}))}catch(_){}}
+function saveUI(){try{localStorage.setItem(UIKEY,JSON.stringify({awayAt:ui.away||ui.awayAt||0,tab:ui.tab,day:ui.day,fArea:ui.fArea,fGenre:ui.fGenre,lastExt:ui.lastExt,lastKind:ui.lastKind,fixSid:ui.fixSid,fixAt:ui.fixAt,geoHide:ui.geoHide,extTipShown:ui.extTipShown,hideShots:ui.hideShots}))}catch(_){}}
 const wide=matchMedia('(min-width:1000px)');
 const P=()=>db.plans.find(p=>p.id===db.cur)||db.plans[0];
 const S=id=>P().spots.find(s=>s.id===id);
@@ -1138,13 +1138,13 @@ function parsePaste(text){
 }
 let pasteT;
 // Googleマップの共有リンク（maps.app.goo.gl など）から、名前と位置を取り出す
-const isShortMaps=u=>/(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs)/.test(u||'');
+const isShortMaps=u=>/(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs|share\.google)/.test(u||'');
 function parsePlaceURL(u){
   const r={};if(!u)return r;
   const m=u.match(/\/maps\/place\/([^/@?]+)/);if(m)r.name=decodeURIComponent(m[1].replace(/\+/g,' '));
   const c=u.match(/!3d(-?[\d.]+)!4d(-?[\d.]+)/)||u.match(/@(-?[\d.]+),(-?[\d.]+)/)||u.match(/[?&](?:q|ll|query)=(-?[\d.]+),(-?[\d.]+)/);
   if(c){r.lat=+c[1];r.lng=+c[2]}
-  const q=u.match(/[?&]q=([^&]+)/);if(!r.name&&q){const v=decodeURIComponent(q[1].replace(/\+/g,' '));if(!/^-?[\d.]+,/.test(v)){const [n,...rest]=v.split(/\s*[,，、]\s*/);r.name=n.trim();r.addr=rest.join(' ')}}
+  try{u=decodeURI(u)}catch(_){}const q=u.match(/[?&](?:q|query|daddr)=([^&]+)/);if(!r.name&&q){let v=q[1].replace(/\+/g,' ');try{v=decodeURIComponent(v)}catch(_){}if(!/^-?[\d.]+,/.test(v)){const [n,...rest]=v.split(/\s*[,，、]\s*/);r.name=n.trim();r.addr=rest.join(' ')}}
   return r;
 }
 async function getText(url,ms=12000){const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),ms);
@@ -1199,8 +1199,28 @@ function parseMeta(html){
   return r;
 }
 const pageCache={};
+// Googleマップのリンク専用：中継サーバーで転送先URLと（座標が無い形式なら）ページの中身を読み、名前・住所・座標を返す
+async function gInfo(url){
+  if(pageCache[url])return pageCache[url];
+  let x={};
+  for(let i=0;i<2&&!x.final;i++){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),12000);
+    const r=await fetch(PROXY_URL+'/?url='+encodeURIComponent(url),{signal:ac.signal});clearTimeout(tm);
+    const fin=r.headers.get('X-Final-URL')||'';diag('中継',r.status,fin.slice(0,160));
+    if(r.headers.get('X-Place')){try{x=await r.json()}catch(_){x={}}}
+    else if(r.ok){const t=await r.text();x={final:fin};if(t.length>400){const m=parseMeta(t);x.name=m.title?.split(/\s*·\s*/)[0];x.addr=m.addr;x.lat=m.lat;x.lng=m.lng}}
+    x.final=x.final||fin}catch(e){diag('中継エラー',String(e&&e.name||e))}}
+  const u=parsePlaceURL(x.final||url);
+  const info={name:x.name&&!/^Google/.test(x.name)?x.name:(u.name||''),addr:x.addr||u.addr||'',lat:x.lat??u.lat,lng:x.lng??u.lng,photo:x.image&&!/staticmap|maps\.google|logo/.test(x.image)?x.image:''};
+  if(info.lat==null&&info.addr){const g=await geocodeAddr(info.addr);if(g){info.lat=g.lat;info.lng=g.lng}}
+  if(info.lat==null&&info.name){const g=await geocodeAddr(info.name);if(g&&g.exact){info.lat=g.lat;info.lng=g.lng}}
+  info.area=areaFromAddr(info.addr);
+  diag('Google読取',{n:info.name,a:info.addr,lat:info.lat,lng:info.lng,st:x.status});
+  if(info.name||info.lat!=null)pageCache[url]=info;
+  return info;
+}
 async function pageInfo(url){
   if(pageCache[url])return pageCache[url];
+  if(isShortMaps(url)||/google\.[^/]+\/maps|maps\.google\./.test(url))return gInfo(url);
   let info=null;
   try{const m=parseMeta(await fetchHTML(url));
     let name='',area='',genre='';
@@ -1219,12 +1239,12 @@ async function areaOf(lat,lng){try{const j=await getJSON(`https://nominatim.open
 async function geocodeAddr(addr){
   diag('住所検索',addr);
   try{const j=await getJSON('https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(addr.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248))),8000);
-    if(j.length){const [lng,lat]=j[0].geometry.coordinates;return {lat,lng,label:j[0].properties.title}}}catch(_){}
+    if(j.length){const [lng,lat]=j[0].geometry.coordinates,t=j[0].properties.title;return {lat,lng,label:t,exact:t===addr}}}catch(_){}
   return null;
 }
 async function enrich(r){
   if(r.addr&&!hasLL(r)){const g=await geocodeAddr(r.addr);if(g){r.lat=g.lat;r.lng=g.lng;r.approx=false;r.locLabel=r.addr}}
-  const isPage=r.url&&(isShortMaps(r.url)||/google\.[^/]+\/maps/.test(r.url));
+  const isPage=r.url&&(isShortMaps(r.url)||/google\.[^/]+\/maps|maps\.google\./.test(r.url));
   if(isPage&&(!r.name||!hasLL(r)||!r.photo)){
     if(!r.name)toast('ページから名前と場所を読み取り中…');
     const x=await pageInfo(r.url);
@@ -1322,7 +1342,7 @@ function welcome(){
   if(!SET.welcome)return;
   document.querySelector('.welcome')?.remove();
   const w=document.createElement('div');w.className='welcome';
-  const fx=ui.fixSid&&S(ui.fixSid);
+  const fx=ui.fixSid&&Date.now()-(ui.fixAt||0)<6e5&&S(ui.fixSid);if(!fx)ui.fixSid=null;
   w.innerHTML=`<div class="wl-in">${pinkun(54)}<div><b>おかえりなさい！</b><span>${fx?`コピーした場所で「${esc(fx.name)}」の位置を直しますか？`:'コピーした場所を追加しますか？'}</span></div></div><div class="row"><button class="btn" data-act="wlClose">あとで</button><button class="btn acc" data-act="${fx?'locFixPaste':'quickPaste'}" style="flex:1">📋 貼り付けて追加</button></div>`;
   document.body.append(w);setTimeout(()=>w.remove(),12000);
 }
@@ -1371,7 +1391,7 @@ async function quickAdd0(text){
   })();
 }
 function openExt(kind){
-  const url0=kind==='tabelog'?'https://tabelog.com/':'https://www.google.com/maps';ui.lastExt=url0;ui.lastKind=kind;saveUI();renderQuick();openURL(url0);return;
+  const url0=kind==='tabelog'?'https://tabelog.com/':'https://www.google.com/maps';ui.fixSid=null;ui.lastExt=url0;ui.lastKind=kind;saveUI();renderQuick();openURL(url0);return;
   const area=(($('#fArea')?.value)||ui.fArea||'').replace('現在地','').trim(),g=ui.fGenre,kw=g==='グルメ'?'':g;
   // 食べログ内の検索URLは条件が引き継がれずトップに戻ることがあるため、食べログのページだけを確実に表示できるGoogle検索を使う
   const url=kind==='tabelog'?`https://www.google.com/search?q=${encodeURIComponent([area,'グルメ','site:tabelog.com'].filter(Boolean).join(' '))}`
@@ -1931,7 +1951,7 @@ function memHTML(){const x=memEdit?M().mem.find(y=>y.id===memEdit):null;return `
   <div class="lbl" style="margin-top:0">名前</div><input id="memName" value="${esc(x?.n||'')}" placeholder="例：たろう" enterkeyhint="done">
   <div class="sticky-foot">${x?`<button class="ibtn" data-act="memDel" aria-label="削除" style="color:#E5484D;box-shadow:inset 0 0 0 1px var(--line)">${I.trash}</button>`:''}<button class="btn" data-act="close">キャンセル</button><button class="btn pri" data-act="memSave">決定</button></div>`}
 async function fixLoc(sid,text){
-  const sp=S(sid);if(!sp)return;let r=parsePaste(text);if(!r||!r.url&&!r.name)return toast('Googleマップのリンクが見つかりません');
+  ui.fixSid=null;saveUI();const sp=S(sid);if(!sp)return;let r=parsePaste(text);if(!r||!r.url&&!r.name)return toast('Googleマップのリンクが見つかりません');
   toast('位置を読み取っています…');r=await enrich(r);
   if(!hasLL(r)||r.approx)return toast('このリンクから位置を読み取れませんでした。「地図で直す」で地図をタップして指定してください');
   sp.lat=r.lat;sp.lng=r.lng;delete sp.approx;if(!sp.area&&r.area)sp.area=r.area;ui.fixSid=null;saveUI();fitKey='';save();render();if(detail?.sid===sid)refreshSheet();
@@ -2199,7 +2219,7 @@ const ACT={
   diagClear:()=>{DIAG=[];try{localStorage.removeItem('router-diag')}catch(_){}refreshSheet()},
   mapApp:()=>{SET.mapKind='app';saveSet();gmapSrc='';render();toast('アプリ内の地図に切り替えました（設定でGoogleマップに戻せます）')},
   mapGoogle:()=>{SET.mapKind='google';saveSet();render()},
-  locFind:el=>{const s=S(el.dataset.sid);ui.fixSid=s.id;saveUI();openURL(`https://www.google.com/maps/search/${encodeURIComponent((s.name+' '+(s.area||'')).trim())}`)},
+  locFind:el=>{const s=S(el.dataset.sid);ui.fixSid=s.id;ui.fixAt=Date.now();saveUI();openURL(`https://www.google.com/maps/search/${encodeURIComponent((s.name+' '+(s.area||'')).trim())}`)},
   locFixPaste:async el=>{const sid=el?.dataset?.sid||ui.fixSid;document.querySelector('.welcome')?.remove();
     try{const t=await navigator.clipboard.readText();if(!t)throw 0;fixLoc(sid,t)}catch(_){toast('コピーした内容を読み取れませんでした。もう一度「コピー」してからお試しください')}},
   payClearAsk:()=>openSheet(payClearHTML),
@@ -2268,7 +2288,7 @@ const ACT={
   addToggle:()=>{ui.addOpen=!(ui.addOpen??!P().spots.length);renderStock()},
   f2clear:()=>{ui.fArea2=ui.fGenre2=ui.st2=ui.q2='';renderStock()},
   extAgain:()=>openURL(ui.lastExt),
-  quickPaste:async()=>{document.querySelector('.welcome')?.remove();try{const t=await navigator.clipboard.readText();if(!t)throw 0;lastClip=t;if(ui.fixSid&&S(ui.fixSid)&&/google|goo\.gl/.test(t)){fixLoc(ui.fixSid,t);return}quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
+  quickPaste:async()=>{document.querySelector('.welcome')?.remove();try{const t=await navigator.clipboard.readText();if(!t)throw 0;lastClip=t;ui.fixSid=null;saveUI();quickAdd(t)}catch(_){ui.tab='stock';render();toast('下の入力欄を長押しして「ペースト」してください');setTimeout(()=>{$('#pasteIn')?.scrollIntoView({block:'center'});$('#pasteIn')?.focus()},100)}},
   quickClose:()=>{ui.lastExt='';saveUI();renderQuick()},
   openTabelog:()=>openExt('tabelog'),
   openGmaps:()=>openExt('gmaps'),
