@@ -1279,11 +1279,14 @@ async function searchNear(name,center,km){
   return out.map(x=>({...x,d:center?dist(center,x):0,match:norm(x.nm||x.name.split(',')[0]).includes(n)}))
     .filter(x=>!center||x.d<=km).sort((a,b)=>(b.match-a.match)||(a.d-b.d));
 }
+// Googleマップで店名を検索し、その位置を返す（中継サーバー経由）
+async function gQuery(q){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),12000);const r=await fetch(PROXY_URL+'/?q='+encodeURIComponent(q.trim()),{signal:ac.signal});clearTimeout(tm);const j=await r.json();diag('G検索',q,j.lat,j.lng,j.st);return j.lat!=null?j:null}catch(e){diag('G検索エラー',q);return null}}
 async function locate(r){
   r.loc='busy';const el=$('#pstLoc');if(el)el.innerHTML=locLine(r);
   let center=null;
   if(r.area)try{center=await geocode(r.area)}catch(_){}
   let hit=null;
+  if(r.name&&PROXY_URL){const g=await gQuery(r.name+' '+(r.addr||r.area||''));if(g&&(!center||dist(center,g)<40)){r.lat=g.lat;r.lng=g.lng;r.approx=false;r.locLabel='Googleマップの位置';if(!r.addr&&g.addr)r.addr=g.addr;r.loc='';if(ui.pst===r){const e2=$('#pstLoc');if(e2)e2.innerHTML=locLine(r)}return}}
   if(r.name){const res=await searchNear(r.name,center,8);hit=res.find(x=>x.match)||(center?null:res[0])}
   if(hit){r.lat=hit.lat;r.lng=hit.lng;r.approx=!center;r.locLabel=hit.name.split(',').slice(0,3).join(',')+(center?'':'（要確認）')}
   else if(center){r.lat=center.lat;r.lng=center.lng;r.approx=true;r.locLabel=`おおよその位置（${r.area}周辺）`}
@@ -1668,6 +1671,11 @@ async function recheckSpots(){
     let ch=false;if(r.name&&sp.name==='Googleマップの場所'){sp.name=r.name;ch=true;if(sp.genre==='その他'||sp.genre==='観光')sp.genre=(GWORD.find(([re])=>re.test(r.name))||[])[1]||sp.genre}
     if(hasLL(r)&&!r.approx){sp.lat=r.lat;sp.lng=r.lng;delete sp.approx;ch=true}
     if(ch){diag('再読込OK',sp.name);save(false);render()}
+  }
+  // おおよその位置のままの候補は、Googleマップで店名を検索して正確な位置に直す（1回だけ）
+  for(const sp of P().spots.filter(x=>!x.gchk&&x.name&&x.name!=='Googleマップの場所'&&(!hasLL(x)||x.approx))){
+    sp.gchk=1;const g=await gQuery(sp.name+' '+(sp.addr||sp.area||''));
+    if(g&&(!hasLL(sp)||dist(sp,g)<40)&&P().spots.includes(sp)){sp.lat=g.lat;sp.lng=g.lng;delete sp.approx;if(!sp.addr&&g.addr)sp.addr=g.addr;diag('位置補正',sp.name);save(false);render()}
   }
   for(const sp of P().spots){
     if(sp.achk)continue;sp.achk=1;
