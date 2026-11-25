@@ -1,5 +1,5 @@
 /* Router service worker：アプリ本体と地図ライブラリを保存し、電波が弱くても素早く起動する */
-const V='router-v4';
+const V='router-v5';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css','https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js'];

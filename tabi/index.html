@@ -937,7 +937,7 @@ function renderHeader(){
   const p=P(),f=p.days[0].date,l=p.days.at(-1).date,n=p.days.length;
   $('#hTitle').textContent=p.title;
   $('#geoBtn').classList.toggle('live',GEO.watch!=null);
-  $('#hSub').innerHTML=(p.gid?`<span class="live-badge ${liveState==='err'?'off':''}">${liveState==='err'?'OFFLINE':'LIVE'}</span> <b class="mline">👥 ${esc(memberLine(p))}</b> · `:'')+esc([f?fmtDate(f)+(n>1&&l?' – '+fmtDate(l):''):'日付未設定',n>1?`${n}日間`:'日帰り',`${p.days.reduce((a,d)=>a+d.items.length,0)}スポット`].join(' · '));
+  $('#hSub').innerHTML=(p.gid?`<span class="live-badge ${liveState==='err'||liveState==='wait'?'off':''}">${liveState==='err'||liveState==='wait'?'未同期':liveState==='sync'?'同期中':'LIVE'}</span> <b class="mline">👥 ${esc(memberLine(p))}</b> · `:'')+esc([f?fmtDate(f)+(n>1&&l?' – '+fmtDate(l):''):'日付未設定',n>1?`${n}日間`:'日帰り',`${p.days.reduce((a,d)=>a+d.items.length,0)}スポット`].join(' · '));
 }
 function renderTabs(){
   const n=P().spots.length;
@@ -1841,6 +1841,32 @@ const FIREBASE_CONFIG={
 const FIREBASE_CONFIG={apiKey:"AIza...",authDomain:"xxxx.firebaseapp.com",projectId:"xxxx",storageBucket:"xxxx.appspot.com",messagingSenderId:"000",appId:"1:000:web:xxx"};
 */
 const FBV='10.12.2';
+// 3者マージ：基準(b)・自分(m)・相手(t)。id付きの配列は要素ごと、オブジェクトはキーごとに合わせる。両方が同じ所を変えたら自分を優先
+function merge3(b,m,t){
+  const J=JSON.stringify,isO=v=>v&&typeof v==='object'&&!Array.isArray(v);
+  if(J(m)===J(t))return m;if(b!==undefined&&J(m)===J(b))return t;if(b!==undefined&&J(t)===J(b))return m;
+  if(Array.isArray(m)&&Array.isArray(t)){
+    const ida=a=>a.every(x=>isO(x)&&x.id!=null);
+    if(ida(m)&&ida(t)){
+      const ba=Array.isArray(b)?b.filter(x=>isO(x)&&x.id!=null):[],B=new Map(ba.map(x=>[x.id,x])),M=new Map(m.map(x=>[x.id,x])),T=new Map(t.map(x=>[x.id,x]));
+      const ids=m.map(x=>x.id);
+      t.forEach((x,i)=>{if(M.has(x.id))return;const bx=B.get(x.id);if(bx&&J(bx)===J(x))return; // 自分が消して相手は未変更 → 消す
+        let pi=-1;for(let k=i-1;k>=0;k--){pi=ids.indexOf(t[k].id);if(pi>=0)break}ids.splice(pi+1,0,x.id)});
+      const out=[];for(const id of ids){const mm=M.get(id),tt=T.get(id),bb=B.get(id);
+        if(mm&&tt)out.push(merge3(bb,mm,tt));
+        else if(mm){if(bb&&J(bb)===J(mm))continue;out.push(mm)}   // 相手が消して自分は未変更 → 消す
+        else out.push(tt)}
+      return out}
+    if(m.length===t.length&&Array.isArray(b)&&b.length===m.length&&m.every(isO))return m.map((x,i)=>merge3(b[i],x,t[i]));
+    return m}
+  if(isO(m)&&isO(t)){const o={},bo=isO(b)?b:{};
+    for(const k of new Set([...Object.keys(m),...Object.keys(t)])){
+      if(!(k in t)){if(k in bo&&J(bo[k])===J(m[k]))continue;o[k]=m[k];continue}
+      if(!(k in m)){if(k in bo&&J(bo[k])===J(t[k]))continue;o[k]=t[k];continue}
+      o[k]=merge3(bo[k],m[k],t[k])}
+    return o}
+  return m;
+}
 const live={
   fb:null,subs:{},timers:{},last:{},
   async init(){
@@ -1853,18 +1879,45 @@ const live={
     return this.fb={uid:auth.currentUser.uid,
       get:async id=>{const d=await F.getDoc(F.doc(store,'groups',id));return d.exists()?d.data():null},
       set:(id,v)=>F.setDoc(F.doc(store,'groups',id),v),
+      tx:(id,fn)=>F.runTransaction(store,async t=>{const ref=F.doc(store,'groups',id),d=await t.get(ref),v=fn(d.exists()?d.data():null);if(v)t.set(ref,v);return v}),
       watch:(id,cb)=>F.onSnapshot(F.doc(store,'groups',id),d=>cb(d.exists()?d.data():null))};
   },
-  strip(p){const x=JSON.parse(JSON.stringify(p));delete x.su;x.spots.forEach(s=>{if(String(s.photo||'').startsWith('data:'))delete s.photo;delete s.pt});return x},
+  strip(p){const x=JSON.parse(JSON.stringify(p));delete x.su;delete x.stok;x.spots.forEach(s=>{if(String(s.photo||'').startsWith('data:'))delete s.photo;delete s.pt});return x},
   body(p){const x=this.strip(p);delete x.u;return JSON.stringify(x)},
-  push(p){
-    if(!p?.gid||!this.fb)return;
+  // 最後に同期した内容（3者マージの基準）。端末に保存して、オフライン中の変更も失わない
+  base(gid,v){const k='router-base:'+gid;if(v!==undefined){try{localStorage.setItem(k,v)}catch(_){}return v}try{return localStorage.getItem(k)}catch(_){return null}},
+  dirty(p){return (p.u||0)>(p.su||0)},
+  tok(r){return r?(r.rev||0)+':'+r.u:''},   // サーバー上の版（端末の時計のずれに影響されない）
+  // 他のメンバーの変更と自分の変更を、スポット・予定・支払いの単位で合わせる
+  mergeIn(p,remoteData){
+    let b=null,t=null;try{b=JSON.parse(this.base(p.gid)||'null')}catch(_){}try{t=JSON.parse(remoteData)}catch(_){return null}
+    const mine=this.strip(p);delete mine.u;delete t.u;if(b)delete b.u;
+    const m=merge3(b||t,mine,t);return m},
+  replaceLocal(p,x,tok){
+    x=normalize({plans:[x]}).plans[0];
+    x.spots.forEach(s=>{const o=p.spots.find(y=>y.id===s.id);if(o){if(!s.photo&&o.photo)s.photo=o.photo;if(o.pt)s.pt=o.pt}});
+    const now=Date.now();x.id=p.id;x.gid=p.gid;x.u=now;x.su=now;x.stok=tok;
+    const i=db.plans.indexOf(p);if(i>=0)db.plans[i]=x;return x},
+  push(p,now){
+    if(!p?.gid)return;
+    if(!this.fb){setLive('wait');return}
     clearTimeout(this.timers[p.gid]);
     this.timers[p.gid]=setTimeout(async()=>{
-      const body=this.body(p);if(this.last[p.gid]===body)return;
-      try{await this.fb.set(p.gid,{data:JSON.stringify(this.strip(p)),u:p.u,by:this.fb.uid,name:db.me||''});this.last[p.gid]=body;p.su=p.u;setLive('ok')}
-      catch(e){setLive('err')}
-    },700);
+      const gid=p.gid;p=db.plans.find(x=>x.gid===gid);if(!p)return;
+      const body=this.body(p);if(this.last[gid]===body&&!this.dirty(p))return;
+      setLive('sync');
+      try{
+        let merged=null;const u0=p.u;
+        const wrote=await this.fb.tx(gid,r=>{
+          merged=null;
+          if(r&&this.tok(r)!==(p.stok||'')&&r.data!==JSON.stringify(this.strip(p)))merged=this.mergeIn(p,r.data);   // 自分が知らない更新がある → 合わせてから書く
+          return {data:JSON.stringify(merged||this.strip(p)),u:Date.now(),rev:(r&&r.rev||0)+1,by:this.fb.uid,name:db.me||''}});
+        const cur=db.plans.find(x=>x.gid===gid)||p,tk=this.tok(wrote);
+        if(merged){const x=this.replaceLocal(cur,merged,tk);this.last[gid]=this.body(x);save(false);render();if(SHEETS.length&&detail)refreshSheet()}
+        else{cur.su=u0;cur.stok=tk;if(cur.u===u0)this.last[gid]=this.body(cur);save(false);if(this.dirty(cur))this.push(cur)}
+        this.base(gid,wrote.data);setLive('ok');
+      }catch(e){diag('同期エラー',String(e&&e.message||e).slice(0,120));setLive('err');clearTimeout(this.retry);this.retry=setTimeout(()=>db.plans.filter(x=>x.gid&&this.dirty(x)).forEach(x=>this.push(x)),8000)}
+    },now?0:700);
   },
   me(p){ // 自分をメンバー一覧に登録・更新
     if(!p?.gid||!this.fb)return;const m=p.members=p.members||{},n=db.me||'メンバー',cur=m[this.fb.uid];
@@ -1873,16 +1926,20 @@ const live={
   apply(gid,r){
     if(!r)return;
     const p=db.plans.find(x=>x.gid===gid);if(!p)return;
-    if(r.by===this.fb.uid&&r.u<=(p.u||0))return;          // 自分の書き込み
-    if(r.u<=(p.su||0)&&r.u<=(p.u||0))return;               // 既に反映済み
-    let x;try{x=JSON.parse(r.data)}catch(_){return}
-    x=normalize({plans:[x]}).plans[0];
-    x.spots.forEach(s=>{const o=p.spots.find(y=>y.id===s.id);if(o&&!s.photo&&o.photo)s.photo=o.photo});
-    x.id=p.id;x.gid=gid;x.u=r.u;x.su=r.u;
-    db.plans[db.plans.indexOf(p)]=x;this.last[gid]=this.body(x);
+    const tk=this.tok(r);if(tk===(p.stok||''))return;                       // 反映済み
+    if(!p.stok&&r.u<=(p.su||0)&&!r.rev)return;                              // 旧形式で反映済み
+    if(r.data===JSON.stringify(this.strip(p))){p.stok=tk;this.base(gid,r.data);save(false);return}  // 自分の書き込み
+    let x,np;
+    if(this.dirty(p)&&this.body(p)!==this.last[gid]){                       // まだ送っていない自分の変更がある → 合わせる
+      x=this.mergeIn(p,r.data);if(!x)return;
+      np=this.replaceLocal(p,x,tk);this.base(gid,r.data);np.u=Date.now()+1;this.push(np,1);
+    }else{
+      try{x=JSON.parse(r.data)}catch(_){return}
+      np=this.replaceLocal(p,x,tk);this.base(gid,r.data);this.last[gid]=this.body(np);
+    }
     save(false);render();if(SHEETS.length&&detail)refreshSheet();
-    if(r.by!==this.fb.uid&&x.id===db.cur)toast(`${r.name||'メンバー'}さんがプランを更新しました`);
-    setTimeout(()=>this.me(x),500);
+    if(r.by!==this.fb.uid&&np.id===db.cur)toast(`${r.name||'メンバー'}さんがプランを更新しました`);
+    setTimeout(()=>{const q=db.plans.find(y=>y.gid===gid);if(q)this.me(q)},500);
   },
   watch(p){
     if(!p.gid||this.subs[p.gid])return;
@@ -1891,7 +1948,7 @@ const live={
   async start(){
     const fb=await this.init().catch(()=>null);if(!fb)return toast('サーバーに接続できませんでした');
     const p=P();if(!p.gid){const a=new Uint8Array(18);crypto.getRandomValues(a);p.gid=b64u.enc(a).replace(/[-_]/g,'x')}
-    p.u=Date.now();await fb.set(p.gid,{data:JSON.stringify(this.strip(p)),u:p.u,by:fb.uid,name:db.me||''});this.last[p.gid]=this.body(p);p.su=p.u;
+    p.u=Date.now();const data=JSON.stringify(this.strip(p));const v={data,u:p.u,rev:1,by:fb.uid,name:db.me||''};await fb.set(p.gid,v);this.last[p.gid]=this.body(p);p.su=p.u;p.stok=this.tok(v);this.base(p.gid,data);
     save(false);this.me(p);this.watch(p);render();refreshSheet();this.invite();
   },
   async invite(){
@@ -1907,7 +1964,9 @@ const live={
     incoming={...x,gid,_live:r};openSheet(joinHTML);
   },
   leave(){const p=P();if(this.subs[p.gid]){this.subs[p.gid]();delete this.subs[p.gid]}delete p.gid;delete p.su;save(false);render();closeSheet();toast('このプランの共有をやめました（手元には残ります）')},
-  async boot(){if(!db.plans.some(p=>p.gid))return;const fb=await this.init().catch(()=>null);if(!fb)return setLive('err');db.plans.forEach(p=>{this.watch(p);this.me(p)})}
+  async boot(){if(!db.plans.some(p=>p.gid))return;let fb=null;for(let i=0;i<3&&!fb;i++){fb=await this.init().catch(e=>{diag('接続エラー',String(e&&e.message||e).slice(0,120));return null});if(!fb)await new Promise(r=>setTimeout(r,3000*(i+1)))}
+    if(!fb){setLive('err');addEventListener('online',()=>this.boot(),{once:true});return}
+    db.plans.filter(p=>p.gid).forEach(p=>{this.watch(p);this.me(p);if(this.dirty(p))this.push(p)})}
 };
 function delPlanHTML(){const p=P();return `<h3><span>プランを削除しますか？</span></h3>
   <div class="card" style="box-shadow:none;background:var(--bg)"><b>${esc(p.title)}</b><div class="meta">${p.days.length}日 · 候補 ${p.spots.length}件</div></div>
@@ -1986,7 +2045,7 @@ function joinHTML(){
 }
 function joinNow(){
   const x=incoming,r=x._live;let p=db.plans.find(q=>q.gid===x.gid);
-  if(!p){delete x._live;p=normalize({plans:[x]}).plans[0];p.id=uid();p.gid=x.gid;p.u=r.u;p.su=r.u;db.plans.push(p);live.last[p.gid]=live.body(p)}
+  if(!p){delete x._live;p=normalize({plans:[x]}).plans[0];p.id=uid();p.gid=x.gid;p.u=p.su=Date.now();p.stok=live.tok(r);db.plans.push(p);live.last[p.gid]=live.body(p);live.base(p.gid,r.data)}
   db.cur=p.id;ui.day=0;ui.tab='plan';fitKey='';incoming=null;save(false);live.watch(p);live.me(p);closeSheet();render();toast('グループに参加しました');autoPhotoAll();
 }
 
