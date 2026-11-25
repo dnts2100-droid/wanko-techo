@@ -1210,7 +1210,7 @@ async function gInfo(url){
     else if(r.ok){const t=await r.text();x={final:fin};if(t.length>400){const m=parseMeta(t);x.name=m.title?.split(/\s*·\s*/)[0];x.addr=m.addr;x.lat=m.lat;x.lng=m.lng}}
     x.final=x.final||fin}catch(e){diag('中継エラー',String(e&&e.name||e))}}
   const u=parsePlaceURL(x.final||url);
-  const info={name:x.name&&!/^Google/.test(x.name)?x.name:(u.name||''),addr:x.addr||u.addr||'',lat:x.lat??u.lat,lng:x.lng??u.lng,photo:x.image&&!/staticmap|maps\.google|logo/.test(x.image)?x.image:''};
+  if(x.addr)x.addr=(x.addr.match(ADDR_RE)||[])[0]||x.addr;const info={name:x.name&&!/^Google/.test(x.name)?x.name:(u.name||''),addr:x.addr||u.addr||'',lat:x.lat??u.lat,lng:x.lng??u.lng,photo:x.image&&!/staticmap|maps\.google|logo/.test(x.image)?x.image:''};
   if(info.lat==null&&info.addr){const g=await geocodeAddr(info.addr);if(g){info.lat=g.lat;info.lng=g.lng}}
   if(info.lat==null&&info.name){const g=await geocodeAddr(info.name);if(g&&g.exact){info.lat=g.lat;info.lng=g.lng}}
   info.area=areaFromAddr(info.addr);
@@ -1280,7 +1280,7 @@ async function searchNear(name,center,km){
     .filter(x=>!center||x.d<=km).sort((a,b)=>(b.match-a.match)||(a.d-b.d));
 }
 // Googleマップで店名を検索し、その位置を返す（中継サーバー経由）
-async function gQuery(q){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),12000);const r=await fetch(PROXY_URL+'/?q='+encodeURIComponent(q.trim()),{signal:ac.signal});clearTimeout(tm);const j=await r.json();diag('G検索',q,j.lat,j.lng,j.st);return j.lat!=null?j:null}catch(e){diag('G検索エラー',q);return null}}
+async function gQuery(q){try{const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),12000);const r=await fetch(PROXY_URL+'/?q='+encodeURIComponent(q.trim()),{signal:ac.signal});clearTimeout(tm);const j=await r.json();if(j.addr)j.addr=(j.addr.match(ADDR_RE)||[])[0]||j.addr;diag('G検索',q,j.lat,j.lng,j.st);return j.lat!=null?j:null}catch(e){diag('G検索エラー',q);return null}}
 async function locate(r){
   r.loc='busy';const el=$('#pstLoc');if(el)el.innerHTML=locLine(r);
   let center=null;
