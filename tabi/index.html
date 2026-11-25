@@ -1345,13 +1345,14 @@ function renderQuick(){
   el.innerHTML=show?`<button class="qbtn" data-act="extAgain">↗ ${ui.lastKind==='gmaps'?'Googleマップ':'食べログ'}に戻る</button><button class="qbtn pri" data-act="quickPaste">📋 貼り付けて追加</button><button class="qx" data-act="quickClose" aria-label="閉じる">${I.x}</button>`:'';
   el.classList.toggle('on',!!show);
 }
-async function quickAdd(text){
+async function quickAdd(text){try{return await quickAdd0(text)}catch(e){diag('エラー',String(e&&e.stack||e).slice(0,300));toast('追加できませんでした',()=>openSheet(diagHTML),'理由を見る')}}
+async function quickAdd0(text){
   diag('貼り付け',String(text).replace(/\s+/g,' ').slice(0,200));
   let r=parsePaste(text);if(!r)return toast('コピーした内容が見つかりません');
   diag('読み取り',{n:r.name,addr:r.addr,url:(r.url||'').slice(0,60),area:r.area});
   if(!r.name){toast('場所の名前を読み取っています…');r=await enrich(r)}
   let noname=false;if(!r.name){r.name=isShortMaps(r.url)||/google/.test(r.url)?'Googleマップの場所':'名称未設定の場所';noname=true}
-  const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||x.name===r.name);
+  const p=P(),dup=p.spots.find(x=>(r.url&&x.url===r.url)||(!noname&&x.name===r.name&&(!hasLL(x)||!hasLL(r)||x.approx||dist(x,r)<.3)));
   if(dup)return toast(`「${dup.name}」は追加済みです`);
   const sn=snap(),sp={id:uid(),name:r.name,area:r.area||'',genre:r.genre||'その他',stay:gOf(r.genre).stay,url:r.url,memo:r.addr?'住所 '+r.addr:'',addr:r.addr||'',photo:r.photo||''};
   if(hasLL(r)){sp.lat=r.lat;sp.lng=r.lng;if(r.approx)sp.approx=1}
@@ -1378,7 +1379,7 @@ function openExt(kind){
   ui.lastExt=url;ui.lastKind=kind;saveUI();renderQuick();
   openURL(url);
 }
-document.addEventListener('paste',e=>{if(e.target.id==='pasteIn'){const t=e.clipboardData?.getData('text');if(t){e.preventDefault();e.target.value=t;handlePaste(t)}}});
+document.addEventListener('paste',e=>{if(e.target.id==='pasteIn'){const t=e.clipboardData?.getData('text');if(t){e.preventDefault();e.target.value='';ui.pst=null;quickAdd(t)}}});
 
 function resultsHTML(){
   if(ui.fState==='loading')return `<div class="state">🔎 探しています…（最大1分ほど）</div>`;
@@ -1641,6 +1642,13 @@ async function autoPhoto(s,force){
 }
 // 以前に追加した食べログ由来の候補で、エリアから大きく離れた位置になっているものを自動で見直す
 async function recheckSpots(){
+  // 名前や位置を読み取れなかったGoogleマップの候補を、もう一度読み直す
+  for(const sp of P().spots.filter(x=>x.url&&/google|goo\.gl/.test(x.url)&&(x.name==='Googleマップの場所'||!hasLL(x)||x.approx))){
+    const r=await enrich({url:sp.url,name:sp.name==='Googleマップの場所'?'':sp.name,addr:sp.addr||''});
+    let ch=false;if(r.name&&sp.name==='Googleマップの場所'){sp.name=r.name;ch=true;if(sp.genre==='その他'||sp.genre==='観光')sp.genre=(GWORD.find(([re])=>re.test(r.name))||[])[1]||sp.genre}
+    if(hasLL(r)&&!r.approx){sp.lat=r.lat;sp.lng=r.lng;delete sp.approx;ch=true}
+    if(ch){diag('再読込OK',sp.name);save(false);render()}
+  }
   for(const sp of P().spots){
     if(sp.achk)continue;sp.achk=1;
     const sa=splitAddr(sp.name);
@@ -2264,7 +2272,7 @@ const ACT={
   quickClose:()=>{ui.lastExt='';saveUI();renderQuick()},
   openTabelog:()=>openExt('tabelog'),
   openGmaps:()=>openExt('gmaps'),
-  pasteClip:async()=>{try{const t=await navigator.clipboard.readText();if(!t)throw 0;handlePaste(t)}catch(_){toast('入力欄を長押しして「ペースト」してください');$('#pasteIn')?.focus()}},
+  pasteClip:async()=>{try{const t=await navigator.clipboard.readText();if(!t)throw 0;quickAdd(t)}catch(_){toast('入力欄を長押しして「ペースト」してください');$('#pasteIn')?.focus()}},
   pstGenre:el=>{ui.pst.genre=el.dataset.g;document.querySelectorAll('[data-act=pstGenre]').forEach(c=>c.classList.toggle('on',c.dataset.g===ui.pst.genre))},
   pstCancel:()=>{ui.pst=null;renderStock()},
   pstAdd:el=>addFromPaste(!!el.dataset.day),
@@ -2345,7 +2353,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter'&&e.target.id==='titleIn'){e.preventDefault();ACT.titleOk()}
   if(e.key==='Enter'&&e.target.id==='meIn'){e.preventDefault();ACT.meOk()}
   if(e.key==='Enter'&&e.target.id==='spotQ'){e.preventDefault();ui.spotQ=e.target.value;spotSearch()}
-  if(e.key==='Enter'&&e.target.id==='pasteIn'){e.preventDefault();clearTimeout(pasteT);handlePaste(e.target.value)}
+  if(e.key==='Enter'&&e.target.id==='pasteIn'){e.preventDefault();clearTimeout(pasteT);const v=e.target.value;e.target.value='';if(v.trim())quickAdd(v)}
   if(e.key==='Enter'&&e.target.id==='locQ'){e.preventDefault();ACT.locSearch()}
   if(e.key==='Enter'&&e.target.id==='phQ'){e.preventDefault();photoSearch()}
   if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role=button][data-act]')){e.preventDefault();e.target.click()}
@@ -2360,7 +2368,7 @@ document.addEventListener('input',e=>{const f=e.target.dataset.f;if(!f)return;
   if(f==='pay.t'&&pay){pay.t=e.target.value;return}
   if(f==='pay.fix'&&pay){(pay.fix=pay.fix||{})[e.target.dataset.id]=+e.target.value.replace(/[^0-9]/g,'')||0;payUpdate();return}
   if(f==='kAll'){ui.kAll=e.target.checked;renderKit();return}
-  if(f==='paste'){clearTimeout(pasteT);const v=e.target.value;pasteT=setTimeout(()=>{if(v.trim().length>=2)handlePaste(v)},900);return}
+  if(f==='paste'){clearTimeout(pasteT);const el=e.target,v=el.value;pasteT=setTimeout(()=>{if(/https?:\/\//.test(v)||v.trim().length>=2){el.value='';quickAdd(v)}},1200);return}
   if(f==='pst.name'&&ui.pst){ui.pst.name=e.target.value;return}
   if(f==='pst.area'&&ui.pst){ui.pst.area=e.target.value;return}
   if(f==='memo'&&detail){S(detail.sid).memo=e.target.value;save();return}
